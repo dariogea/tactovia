@@ -1,7 +1,7 @@
 # Contexto permanente de ScoutAnalyzer
 
 Última actualización: 23 de julio de 2026  
-Versión estable: 0.4.1
+Versión estable: 0.5.0
 
 ## Objetivo
 
@@ -22,7 +22,9 @@ informes y diseñar jugadas en un Playbook.
 - Línea temporal navegable y tabla ordenable.
 - Estadísticas de partido, equipo y jugador con gráficos personalizables.
 - Exportación CSV/XLSX, clips seleccionados y PDF.
-- Playbook con carpetas, fases, jugadores, texto y exportación PNG/PDF.
+- Playbook 2.0 organizado en Dibujar, Animar, Notas y Presentación.
+- Plantillas tácticas, ataque y defensa, acciones temporizadas, fases
+  inteligentes, reproducción animada y exportación PNG/PDF/WebM.
 
 ## Actualizaciones limpias
 
@@ -37,19 +39,24 @@ informes y diseñar jugadas en un Playbook.
 
 ## Verificación estable
 
-- 19 pruebas automáticas superadas.
+- 23 pruebas automáticas superadas.
 - Prueba multimedia real superada:
   `VIDEO_SEEK_OK duration=12.00 seek=7.25 playback=8.46 rate=2x ranges=1`.
-- DMG 0.4.1 validado, abierto y aplicación macOS instalada.
+- Compilación de producción 0.5.0 superada.
+- Revisión visual completa del Playbook 2.0 superada sin errores de consola.
+- DMG 0.5.0 validado, abierto y aplicación macOS instalada.
+- Paquetes de Windows 0.5.0 construidos y comprobados estructuralmente, pero
+  pendientes de prueba física en Windows.
 - Paquetes de Windows construidos, pero pendientes de prueba física en Windows.
 - La carpeta `release` se redujo de 2,6 GB acumulados a unos 444 MB con tres
   archivos distribuibles.
 
 ## Referencias
 
-- Historial detallado: `TRASPASO-SCOUTANALYZER-0.4.1.md`.
+- Historial detallado: `TRASPASO-SCOUTANALYZER-0.5.0.md`.
 - Feedback comprobado: `docs/FEEDBACK-0.4.md`.
 - Atajos: `docs/ATAJOS.md`.
+- Guía del Playbook: `docs/PLAYBOOK-2.md`.
 - Hoja de ruta: `docs/ROADMAP.md`.
 
 ## Protocolo al cambiar de ordenador
@@ -66,8 +73,9 @@ Los vídeos, análisis `.scout.json`, datos locales, `node_modules`, `dist` y
 ## Próximas prioridades
 
 1. Probar físicamente el instalador, vídeo y exportaciones en Windows.
-2. Añadir icono propio e identidad visual.
-3. Importar y exportar plantillas de etiquetas.
-4. Crear filtros combinados y listas de reproducción.
-5. Exportar selecciones como un único vídeo de highlights.
-6. Comparar varios partidos.
+2. Probar la exportación WebM en un segundo Mac y en Windows.
+3. Añadir icono propio e identidad visual.
+4. Importar y exportar plantillas de etiquetas.
+5. Crear filtros combinados y listas de reproducción.
+6. Exportar selecciones como un único vídeo de highlights.
+7. Comparar varios partidos.

@@ -1,7 +1,7 @@
 # Documento de traspaso — ScoutAnalyzer
 
 Fecha de preparación: 23 de julio de 2026  
-Versión actual: 0.4.1
+Versión actual: 0.5.0
 Estado: aplicación funcional instalada y verificada en macOS Apple Silicon
 
 ## 1. Objetivo del proyecto
@@ -39,7 +39,7 @@ La aplicación instalada está en:
 /Applications/ScoutAnalyzer.app
 ```
 
-La copia instalada fue actualizada desde la versión 0.2.0 a la 0.4.1.
+La copia instalada fue actualizada desde la versión 0.2.0 a la 0.5.0.
 
 ## 3. Tecnología
 
@@ -157,26 +157,33 @@ docs/FEEDBACK-0.4.md
 - Informe PDF con resumen y registro cronológico.
 - El CSV no contiene Resultado ni Descriptor.
 
-### Playbook
+### Playbook 2.0
 
-- Biblioteca de jugadas con buscador.
-- Carpetas personales.
-- Carpetas vinculadas a equipos.
-- Creación, renombrado y eliminación de carpetas.
-- Guardado explícito de la jugada en la biblioteca.
-- Duplicado y eliminación de jugadas.
-- Media pista o pista completa.
+- Editor propio inspirado funcionalmente en los flujos profesionales de un
+  creador de jugadas, sin copiar código ni recursos de terceros.
+- Cuatro espacios de trabajo: Dibujar, Animar, Notas y Presentación.
+- Biblioteca con buscador, carpetas personales o vinculadas a equipos,
+  duplicado, movimiento, guardado y eliminación de jugadas.
+- Media pista, pista completa horizontal y pista completa vertical.
+- Plantillas: pista vacía, 5 abiertos, Princeton, caja, 1-4 bajo, cuernos,
+  1-4 alto, Flex y defensas zonales.
 - Colores configurables para parqué, exterior, líneas, zona y acentos.
-- Grosor de líneas configurable mediante tamaños.
-- Herramientas de selección, jugador, balón, flecha, línea, texto y borrador.
-- Jugadores neutros del 1 al 5.
-- Jugadores reales procedentes de los equipos.
-- Los elementos ya dibujados se pueden seleccionar y mover.
-- Varias fases por jugada.
-- Una fase nueva copia los objetos de la anterior para recolocarlos.
-- Descripción y notas del entrenador.
-- Exportación PNG de la fase actual.
-- Exportación PDF de todas las fases.
+- Jugadores de ataque, defensa y con balón; jugadores neutros del 1 al 5 y
+  jugadores reales procedentes de la base de datos.
+- Herramientas de balón, cono, aro, texto, líneas, flechas, formas e imagen.
+- Acciones específicas de bote, pase, corte, bloqueo, tiro y mano a mano.
+- Inspector para modificar objetos, colores y tiempos de las acciones.
+- Fases inteligentes que aplican los desplazamientos y cambios de posesión.
+- Opciones para duplicar, vaciar, reflejar, reordenar y eliminar fases.
+- Línea temporal con orden, inicio y duración de cada acción.
+- Reproducción de una fase o de la jugada completa a distintas velocidades.
+- Descripción general, notas por fase, títulos, texto, listas de comprobación,
+  archivos locales y enlaces de referencia.
+- Presentación clásica o avanzada, con bloques ordenables y estilo
+  configurable.
+- Exportación PNG de una fase, PDF de la jugada y vídeo animado WebM.
+- Conversión automática y sin pérdida de las jugadas creadas en versiones
+  anteriores.
 
 ### Ajustes y diseño general
 
@@ -228,9 +235,12 @@ VIDEO_SEEK_OK duration=12.00 seek=7.25 playback=8.46 rate=2x ranges=1
 
 También se superaron:
 
-- 19 pruebas automáticas.
+- 23 pruebas automáticas.
+- Pruebas específicas de migración, plantillas, fase inteligente, transferencia
+  de balón, reflejo y duración de acciones.
 - Renderizado de los cinco componentes principales.
 - Compilación de producción con Vite.
+- Revisión visual del Playbook 2.0 en sus cuatro modos, sin errores de consola.
 - Arranque de la aplicación macOS ya empaquetada.
 - Verificación interna de que Mac y Windows contienen el mismo bundle.
 - Validación completa del DMG mediante `hdiutil verify`.
@@ -240,17 +250,17 @@ También se superaron:
 Dentro de la carpeta `release`:
 
 ```text
-ScoutAnalyzer-0.4.1-mac-arm64.dmg
-ScoutAnalyzer-0.4.1-win-x64.exe
-ScoutAnalyzer-0.4.1-win-x64.zip
+ScoutAnalyzer-0.5.0-mac-arm64.dmg
+ScoutAnalyzer-0.5.0-win-x64.exe
+ScoutAnalyzer-0.5.0-win-x64.zip
 ```
 
 Huellas SHA-256:
 
 ```text
-fefdaa8e09fffb7d5aef08decd461fd9002f06339c074deeb72dd052e56eed8d  ScoutAnalyzer-0.4.1-mac-arm64.dmg
-f414c80cd4370fe3a745db1c34a01fb8ab68692ddde69de50b14889d404d4d57  ScoutAnalyzer-0.4.1-win-x64.exe
-3779b210bb01f82a1d52a183a79ddb4d6083f0e3bcb71501065cb92ba5de4e02  ScoutAnalyzer-0.4.1-win-x64.zip
+3e4622e974c71361ec9111ca87c345b1b73832f0a8467d0f67f2dce1f9408e74  ScoutAnalyzer-0.5.0-mac-arm64.dmg
+8fa6c5816e434af6fcbf583b64a8069616a84bba2affd65a55c9ab2c92a1c522  ScoutAnalyzer-0.5.0-win-x64.exe
+bccbcd5902a35e775407a259e0aeb743c331b7ccedccd2cebdc6c96ee285be77  ScoutAnalyzer-0.5.0-win-x64.zip
 ```
 
 El instalador de Windows fue empaquetado y comprobado internamente desde macOS,
@@ -295,7 +305,7 @@ separado si también se quieren utilizar en el otro ordenador.
 Quiero continuar el desarrollo de ScoutAnalyzer desde otro ordenador.
 
 Lee completamente el documento de traspaso que he adjuntado antes de modificar
-nada. La versión actual es la 0.4.1. Conserva las funciones existentes y no
+nada. La versión actual es la 0.5.0. Conserva las funciones existentes y no
 elimines datos, instaladores ni cambios ya implementados.
 
 Primero revisa la carpeta del proyecto y confirma:
@@ -313,9 +323,10 @@ la aplicación.
 ## 10. Prioridades recomendadas para la siguiente versión
 
 1. Probar físicamente el instalador y la reproducción en Windows.
-2. Añadir un icono propio y una identidad visual definitiva.
-3. Importar y exportar plantillas de etiquetas.
-4. Crear filtros combinados y listas de reproducción de eventos.
-5. Exportar una selección como un único vídeo de highlights.
-6. Comparar estadísticas entre varios partidos.
-7. Preparar firma y notarización antes de una distribución pública.
+2. Probar la exportación WebM en un segundo Mac y en Windows.
+3. Añadir un icono propio y una identidad visual definitiva.
+4. Importar y exportar plantillas de etiquetas.
+5. Crear filtros combinados y listas de reproducción de eventos.
+6. Exportar una selección como un único vídeo de highlights.
+7. Comparar estadísticas entre varios partidos.
+8. Preparar firma y notarización antes de una distribución pública.

@@ -1,0 +1,87 @@
+# Guía del Playbook 2.0
+
+El Playbook permite diseñar, animar, explicar y exportar jugadas sin salir de
+ScoutAnalyzer. Todo se guarda dentro del análisis local `.scout.json`.
+
+## Crear una jugada
+
+1. Abre **Playbook**.
+2. Pulsa `+` en la biblioteca o dentro de una carpeta.
+3. Elige media pista, pista completa horizontal o vertical.
+4. Selecciona una formación inicial o una pista vacía.
+5. Pulsa **Empezar a dibujar**.
+
+Las carpetas pueden ser personales o estar vinculadas a un equipo. Las jugadas
+también se pueden duplicar, mover de carpeta o asociar a un equipo.
+
+## Dibujar
+
+- Selecciona **Ataque** o **Defensa** antes de colocar un jugador.
+- Activa **Jugador con balón** si quieres marcar la posesión.
+- Puedes utilizar jugadores neutros del 1 al 5 o jugadores reales del equipo.
+- Pulsa una herramienta y después haz clic o arrastra sobre la pista.
+- Con **Seleccionar** puedes mover cualquier elemento.
+- La tecla `Supr` o `Retroceso` elimina el elemento seleccionado.
+
+Acciones disponibles:
+
+- **Bote**: desplazamiento del jugador manteniendo la posesión.
+- **Pase**: trayectoria del balón hacia otro jugador.
+- **Corte**: desplazamiento sin bote.
+- **Bloqueo**: movimiento terminado con el símbolo de pantalla.
+- **Tiro**: trayectoria del lanzamiento.
+- **Mano a mano**: desplazamiento y cambio de posesión.
+
+Para crear una acción, selecciónala y arrastra desde el jugador que la realiza
+hasta el destino. El inspector permite cambiar color, inicio y duración.
+
+## Fases
+
+- **Siguiente inteligente** aplica los movimientos y cambios de balón de la fase
+  actual y crea el estado siguiente.
+- **Duplicar** copia objetos, acciones y notas.
+- **Vacía** añade una fase sin elementos.
+- **Reflejar** invierte la fase sobre la pista.
+- Las flechas permiten cambiar su orden.
+
+## Animar
+
+El modo **Animar** reproduce la fase actual o toda la jugada. Cada acción tiene:
+
+- Orden.
+- Segundo de inicio.
+- Duración.
+
+La duración total de la fase se puede establecer manualmente o calcular con
+**Ajustar automáticamente**. También se puede mostrar u ocultar el título de la
+fase y reproducir a 0,5×, 1×, 1,5× o 2×.
+
+## Notas y recursos
+
+La jugada y cada fase disponen de:
+
+- Descripción.
+- Texto libre.
+- Títulos.
+- Listas de comprobación.
+- Archivos locales de vídeo, imagen, audio o PDF.
+- Enlaces de referencia o YouTube.
+
+Los archivos adjuntos se conservan como referencias a su ubicación original.
+Si se trasladan a otro ordenador, deben copiarse por separado.
+
+## Presentación y exportación
+
+La vista **Clásica** genera un documento preparado para usar. La vista
+**Avanzada** permite ordenar bloques de descripción, fases, notas, recursos o
+texto personalizado.
+
+Formatos:
+
+- **PNG**: imagen de la fase seleccionada.
+- **PDF**: documento completo con todas las fases.
+- **WebM**: vídeo animado de la jugada completa.
+- **Copiar resumen**: texto preparado para compartir por mensajería o correo.
+
+Los enlaces públicos requerirán la futura sincronización de ScoutAnalyzer. En
+esta versión, todos los datos siguen siendo locales.

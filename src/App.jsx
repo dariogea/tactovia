@@ -18,13 +18,12 @@ import {
   statisticsFor
 } from "./lib/analysis.js";
 import {
-  createBlankPlaybook,
-  createPlaybookPlay,
   createBlankProject,
   defaultPreferences,
   defaultTeams,
   emptyContext
 } from "./lib/defaults.js";
+import { migratePlaybook } from "./lib/playbook.js";
 import { enrichTeam, sortPlayersByNumber } from "./lib/roster.js";
 import {
   eventToShortcut,
@@ -37,38 +36,6 @@ const appVersion = __APP_VERSION__;
 const autosaveKey = "scout-analyzer-autosave-v1";
 const preferencesKey = "scout-analyzer-preferences-v3";
 const teamsLibraryKey = "scout-analyzer-teams-v1";
-
-function migratePlaybook(playbook) {
-  if (!playbook?.plays?.length) return createBlankPlaybook();
-  const folders = playbook.folders?.length
-    ? playbook.folders
-    : [{ id: "folder-general", name: "General", teamId: "" }];
-  return {
-    folders,
-    plays: playbook.plays.map((play, index) => {
-      const base = createPlaybookPlay(index + 1, play.folderId || folders[0].id);
-      const phases = play.phases?.length
-        ? play.phases.map((phase, phaseIndex) => ({
-            id: phase.id || crypto.randomUUID(),
-            name: phase.name || `Fase ${phaseIndex + 1}`,
-            objects: phase.objects || []
-          }))
-        : [
-            {
-              id: crypto.randomUUID(),
-              name: "Fase 1",
-              objects: play.objects || []
-            }
-          ];
-      return {
-        ...base,
-        ...play,
-        folderId: play.folderId || folders[0].id,
-        phases
-      };
-    })
-  };
-}
 
 function migrateProject(project) {
   const teams =
@@ -84,7 +51,7 @@ function migrateProject(project) {
       : null;
   return {
     ...project,
-    version: 4,
+    version: 5,
     teams,
     match: validMatch,
     playbook: migratePlaybook(project.playbook),
@@ -125,7 +92,7 @@ function readAutosave() {
   try {
     const stored = JSON.parse(localStorage.getItem(autosaveKey));
     if (
-      [1, 2, 3, 4].includes(stored?.version) &&
+      [1, 2, 3, 4, 5].includes(stored?.version) &&
       Array.isArray(stored.events) &&
       Array.isArray(stored.template?.tags)
     ) {
@@ -752,10 +719,16 @@ function App() {
     const result =
       payload.format === "pdf"
         ? await desktop.exportPlaybookPdf(payload)
-        : await desktop.exportPlaybookPng(payload);
+        : payload.format === "video"
+          ? await desktop.exportPlaybookVideo(payload)
+          : await desktop.exportPlaybookPng(payload);
     if (result.error) notify(result.error);
     else if (!result.canceled) {
-      notify(`Jugada exportada como ${payload.format.toUpperCase()}.`);
+      notify(
+        payload.format === "video"
+          ? "Animación del Playbook exportada."
+          : `Jugada exportada como ${payload.format.toUpperCase()}.`
+      );
       desktop.revealFile(result.filePath);
     }
   }

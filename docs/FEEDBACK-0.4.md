@@ -40,6 +40,24 @@
 - Flechas, líneas, balón, texto, descripción y notas del entrenador.
 - Exportación de la fase actual a PNG y de todas las fases a PDF.
 
+### Evolución Playbook 2.0 — versión 0.5
+
+- Cuatro modos profesionales: Dibujar, Animar, Notas y Presentación.
+- Plantillas Vacía, Tradicional, 5 abiertos, Princeton, Box, 1-4 bajo, Horns,
+  1-4 alto, Flex y defensas zonales 2-3, 3-2 y 1-3-1.
+- Pistas de media cancha, completa horizontal y completa vertical.
+- Jugadores de ataque, defensa, con balón, neutros o vinculados a la plantilla.
+- Acciones específicas: bote, pase, corte, bloqueo, tiro y mano a mano.
+- Cronología editable con inicio, duración, orden y velocidad de reproducción.
+- Fases inteligentes que aplican movimientos y transferencias de balón.
+- Fases duplicadas, vacías, reflejadas, reordenables y eliminables.
+- Objetos adicionales: cono, aro, rectángulo, círculo, triángulo e imagen.
+- Descripción y notas estructuradas tanto para la jugada como para cada fase.
+- Recursos locales y enlaces asociados a la jugada o a una fase concreta.
+- Presentación clásica o mediante bloques configurables.
+- Exportación PNG, PDF y vídeo animado WebM.
+- Migración automática de las jugadas creadas con el Playbook anterior.
+
 ## Informe, exportación y ajustes
 
 - Una sola tarjeta de datos con selector CSV/XLSX.

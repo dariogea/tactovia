@@ -39,14 +39,25 @@
 - Arrastre continuo reforzado en ambas líneas temporales. ✓
 - Limpieza de instaladores antiguos y copias duplicadas de la aplicación. ✓
 
-## Versión 0.5 — Colaboración
+## Versión 0.5 — Playbook 2.0
+
+- Editor reorganizado en Dibujar, Animar, Notas y Presentación. ✓
+- Plantillas de ataque y defensas zonales. ✓
+- Acciones de bote, pase, corte, bloqueo, tiro y mano a mano. ✓
+- Fases inteligentes, vacías, duplicadas y reflejadas. ✓
+- Línea temporal y reproducción animada por fase o completa. ✓
+- Notas estructuradas y recursos asociados a jugadas y fases. ✓
+- Presentación clásica o avanzada y exportación PNG/PDF/WebM. ✓
+- Conversión automática de las jugadas creadas en versiones anteriores. ✓
+
+## Versión 0.6 — Colaboración
 
 - Cuenta personal y espacios de equipo.
 - Sincronización opcional de análisis.
 - Comentarios de entrenadores y jugadores.
 - Roles, permisos y enlaces compartidos.
 
-## Versión 0.6 — Asistencia mediante IA
+## Versión 0.7 — Asistencia mediante IA
 
 - Lectura opcional del marcador.
 - Sugerencias de cortes y detección de cambios de posesión.

@@ -274,15 +274,106 @@ function reportHtml(report) {
 }
 
 function playbookHtml(play) {
+  const settings = {
+    mode: "classic",
+    layout: "large-grid",
+    showDescription: true,
+    showPhaseTitles: true,
+    showPhaseDescription: true,
+    showNotes: true,
+    showAttachments: true,
+    ...(play.outputSettings || {})
+  };
+  const noteBlocks = (play.noteBlocks || [])
+    .filter((block) => block.content)
+    .map(
+      (block) =>
+        `<p class="${escapeHtml(block.type || "paragraph")}">${
+          block.type === "check" ? (block.checked ? "☑ " : "☐ ") : ""
+        }${escapeHtml(block.content)}</p>`
+    )
+    .join("");
+  const attachments = (play.attachments || [])
+    .map(
+      (attachment) =>
+        `<li>${escapeHtml(attachment.name || "Recurso")}${
+          attachment.url ? ` · ${escapeHtml(attachment.url)}` : ""
+        }</li>`
+    )
+    .join("");
   const phases = (play.images || [])
     .filter((item) => /^data:image\/png;base64,/.test(item.dataUrl || ""))
-    .map(
-      (item, index) => `
+    .map((item, index) => {
+      const phaseNotes = (item.noteBlocks || [])
+        .filter((block) => block.content)
+        .map(
+          (block) =>
+            `<p class="${escapeHtml(block.type || "paragraph")}">${
+              block.type === "check" ? (block.checked ? "☑ " : "☐ ") : ""
+            }${escapeHtml(block.content)}</p>`
+        )
+        .join("");
+      const phaseAttachments = (item.attachments || [])
+        .map(
+          (attachment) =>
+            `<li>${escapeHtml(attachment.name || "Recurso")}${
+              attachment.url ? ` · ${escapeHtml(attachment.url)}` : ""
+            }</li>`
+        )
+        .join("");
+      return `
         <section class="phase">
-          <h2>${index + 1}. ${escapeHtml(item.name || `Fase ${index + 1}`)}</h2>
+          ${
+            settings.showPhaseTitles
+              ? `<h2>${index + 1}. ${escapeHtml(item.name || `Fase ${index + 1}`)}</h2>`
+              : ""
+          }
           <img src="${item.dataUrl}" alt="">
+          ${
+            settings.showPhaseDescription && item.description
+              ? `<p class="phase-description">${escapeHtml(item.description)}</p>`
+              : ""
+          }
+          ${
+            settings.showNotes && phaseNotes
+              ? `<div class="phase-notes">${phaseNotes}</div>`
+              : ""
+          }
+          ${
+            settings.showAttachments && phaseAttachments
+              ? `<div class="phase-resources"><strong>Recursos</strong><ul>${phaseAttachments}</ul></div>`
+              : ""
+          }
         </section>`
-    )
+    })
+    .join("");
+  const descriptionSection =
+    settings.showDescription && play.description
+      ? `<section class="text-card"><strong>Descripción</strong><p>${escapeHtml(play.description)}</p></section>`
+      : "";
+  const notesSection =
+    settings.showNotes && (play.notes || noteBlocks)
+      ? `<section class="text-card"><strong>Notas del entrenador</strong>${
+          play.notes ? `<p>${escapeHtml(play.notes)}</p>` : ""
+        }${noteBlocks}</section>`
+      : "";
+  const attachmentsSection =
+    settings.showAttachments && attachments
+      ? `<section class="text-card"><strong>Recursos adjuntos</strong><ul>${attachments}</ul></section>`
+      : "";
+  const phaseSection = `<section class="phases ${escapeHtml(settings.layout)}">${phases || "<p>No hay fases para exportar.</p>"}</section>`;
+  const classicBody = `${descriptionSection}${notesSection}${phaseSection}${attachmentsSection}`;
+  const advancedBody = (settings.blocks || [])
+    .map((block) => {
+      if (block.type === "description") return descriptionSection;
+      if (block.type === "phases") return phaseSection;
+      if (block.type === "notes") return notesSection;
+      if (block.type === "attachments") return attachmentsSection;
+      if (block.type === "custom") {
+        return `<section class="text-card"><strong>${escapeHtml(block.title || "Bloque")}</strong><p>${escapeHtml(block.content || "")}</p></section>`;
+      }
+      return "";
+    })
     .join("");
   return `<!doctype html>
     <html lang="es">
@@ -292,16 +383,30 @@ function playbookHtml(play) {
           @page { size: A4 landscape; margin: 12mm; }
           * { box-sizing: border-box; }
           body { margin: 0; color: #172033; font: 12px Arial, sans-serif; }
-          header { border-left: 7px solid #ea5b2a; padding: 4px 0 4px 14px; margin-bottom: 16px; }
+          header { border-left: 7px solid ${escapeHtml(play.teamColor || "#ea5b2a")}; padding: 4px 0 4px 14px; margin-bottom: 16px; }
           h1 { margin: 0 0 4px; font-size: 26px; }
           header p { margin: 2px 0; color: #647083; }
-          .phase { break-after: page; }
-          .phase:last-child { break-after: auto; }
           h2 { margin: 0 0 10px; font-size: 17px; }
-          img { display: block; width: 100%; max-height: 155mm; object-fit: contain; border: 1px solid #d7dce5; border-radius: 6px; }
-          .notes { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin: 12px 0 18px; }
-          .notes div { min-height: 45px; padding: 10px; border: 1px solid #d7dce5; border-radius: 6px; }
-          .notes strong { display: block; margin-bottom: 4px; color: #0f766e; font-size: 10px; text-transform: uppercase; }
+          .text-card { break-inside: avoid; margin: 0 0 12px; padding: 12px; border: 1px solid #d7dce5; border-radius: 8px; }
+          .text-card strong { display: block; margin-bottom: 6px; color: ${escapeHtml(play.teamColor || "#0f766e")}; font-size: 10px; text-transform: uppercase; }
+          .text-card p { margin: 5px 0; white-space: pre-wrap; }
+          .text-card .heading { font-size: 16px; font-weight: 700; }
+          .phases { display: grid; gap: 12px; align-items: start; }
+          .phases.large-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+          .phases.small-grid { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+          .phases.rows { grid-template-columns: 1fr; }
+          .phase { break-inside: avoid; padding: 10px; border: 1px solid #d7dce5; border-radius: 8px; }
+          .phase h2 { margin-bottom: 8px; font-size: 14px; }
+          .phase img { display: block; width: 100%; max-height: 108mm; object-fit: contain; border-radius: 5px; }
+          .small-grid .phase img { max-height: 75mm; }
+          .rows .phase { display: grid; grid-template-columns: minmax(0, 2fr) minmax(180px, 1fr); gap: 12px; }
+          .rows .phase h2 { grid-column: 1 / -1; }
+          .phase-description { margin: 8px 0 0; color: #566274; white-space: pre-wrap; }
+          .phase-notes, .phase-resources { margin-top: 8px; padding-top: 7px; border-top: 1px solid #e5e8ee; }
+          .phase-notes p { margin: 4px 0; }
+          .phase-notes .heading { font-size: 14px; font-weight: 700; }
+          .phase-resources strong { display: block; margin-bottom: 4px; font-size: 10px; text-transform: uppercase; color: #647083; }
+          ul { margin: 0; padding-left: 18px; }
         </style>
       </head>
       <body>
@@ -309,11 +414,7 @@ function playbookHtml(play) {
           <h1>${escapeHtml(play.name || "Jugada")}</h1>
           <p>${escapeHtml(play.teamName || "Sin equipo asociado")}</p>
         </header>
-        <div class="notes">
-          <div><strong>Descripción</strong>${escapeHtml(play.description || "—")}</div>
-          <div><strong>Notas del entrenador</strong>${escapeHtml(play.notes || "—")}</div>
-        </div>
-        ${phases || "<p>No hay fases para exportar.</p>"}
+        ${settings.mode === "advanced" ? advancedBody || classicBody : classicBody}
       </body>
     </html>`;
 }
@@ -580,6 +681,51 @@ app.whenReady().then(() => {
     }
   });
 
+  ipcMain.handle("playbook:select-attachment", async () => {
+    const result = await dialog.showOpenDialog(mainWindow, {
+      title: "Añadir recurso al Playbook",
+      properties: ["openFile"],
+      filters: [
+        {
+          name: "Vídeo, imagen, audio o documento",
+          extensions: [
+            "mp4",
+            "m4v",
+            "mov",
+            "webm",
+            "png",
+            "jpg",
+            "jpeg",
+            "webp",
+            "gif",
+            "mp3",
+            "wav",
+            "m4a",
+            "pdf"
+          ]
+        }
+      ]
+    });
+    if (result.canceled || !result.filePaths[0]) return { canceled: true };
+    const filePath = result.filePaths[0];
+    const extension = path.extname(filePath).toLowerCase();
+    const type = [".mp4", ".m4v", ".mov", ".webm"].includes(extension)
+      ? "video"
+      : [".png", ".jpg", ".jpeg", ".webp", ".gif"].includes(extension)
+        ? "image"
+        : [".mp3", ".wav", ".m4a"].includes(extension)
+          ? "audio"
+          : "document";
+    return {
+      canceled: false,
+      item: {
+        name: path.basename(filePath),
+        path: filePath,
+        type
+      }
+    };
+  });
+
   ipcMain.handle("project:open", async () => {
     const result = await dialog.showOpenDialog(mainWindow, {
       title: "Abrir análisis",
@@ -777,6 +923,25 @@ app.whenReady().then(() => {
       return { canceled: false, error: error.message };
     } finally {
       exportWindow.destroy();
+    }
+  });
+
+  ipcMain.handle("export:playbook-video", async (_event, payload) => {
+    const result = await dialog.showSaveDialog(mainWindow, {
+      title: "Exportar animación del Playbook",
+      defaultPath: `${safeFilePart(payload.name)}.webm`,
+      filters: [{ name: "Vídeo WebM", extensions: ["webm"] }]
+    });
+    if (result.canceled || !result.filePath) return { canceled: true };
+    try {
+      const buffer = Buffer.from(payload.buffer || []);
+      if (buffer.length === 0) {
+        throw new Error("La animación no contiene datos de vídeo.");
+      }
+      fs.writeFileSync(result.filePath, buffer);
+      return { canceled: false, filePath: result.filePath };
+    } catch (error) {
+      return { canceled: false, error: error.message };
     }
   });
 

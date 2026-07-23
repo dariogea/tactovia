@@ -1,3 +1,5 @@
+import { createBlankPlaybook } from "./playbook.js";
+
 export const tagPalette = [
   "#FF6B35",
   "#2DD4BF",
@@ -192,55 +194,16 @@ export const defaultPreferences = {
   }
 };
 
-export function createPlaybookPhase(name = "Fase 1", objects = []) {
-  return {
-    id: crypto.randomUUID(),
-    name,
-    objects: objects.map((object) => ({ ...object, id: crypto.randomUUID() }))
-  };
-}
-
-export function createPlaybookPlay(index = 1, folderId = "folder-general") {
-  const now = new Date().toISOString();
-  return {
-    id: crypto.randomUUID(),
-    name: `Jugada ${index}`,
-    folderId,
-    teamId: "",
-    court: "half",
-    description: "",
-    notes: "",
-    updatedAt: now,
-    savedAt: "",
-    courtStyle: {
-      background: "#c98f55",
-      outOfBounds: "#102133",
-      lines: "#ffffff",
-      paint: "#b9783e",
-      accent: "#ff6b35",
-      lineWidth: 3
-    },
-    phases: [createPlaybookPhase()]
-  };
-}
-
-export function createBlankPlaybook() {
-  return {
-    folders: [
-      {
-        id: "folder-general",
-        name: "General",
-        teamId: ""
-      }
-    ],
-    plays: [createPlaybookPlay()]
-  };
-}
+export {
+  createBlankPlaybook,
+  createPlaybookPhase,
+  createPlaybookPlay
+} from "./playbook.js";
 
 export function createBlankProject(teams = defaultTeams) {
   const now = new Date().toISOString();
   return {
-    version: 4,
+    version: 5,
     id: crypto.randomUUID(),
     projectName: "Nuevo análisis",
     createdAt: now,

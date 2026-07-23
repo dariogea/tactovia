@@ -11,7 +11,7 @@
 ## Antes de modificar
 
 1. Lee `PROJECT_CONTEXT.md`.
-2. Lee `TRASPASO-SCOUTANALYZER-0.4.1.md` cuando necesites el historial completo.
+2. Lee `TRASPASO-SCOUTANALYZER-0.5.0.md` cuando necesites el historial completo.
 3. Revisa el estado actual y conserva las funciones existentes.
 4. No edites ni elimines vídeos, análisis personales o instaladores sin una
    petición explícita.

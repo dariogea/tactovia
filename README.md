@@ -1,4 +1,4 @@
-# ScoutAnalyzer 0.4.1
+# ScoutAnalyzer 0.5.0
 
 Aplicación de escritorio para analizar vídeo local y etiquetar acciones de
 baloncesto. La primera versión funciona sin conexión y mantiene tanto el vídeo
@@ -25,8 +25,11 @@ como los análisis en el ordenador.
 - Exportación de uno o varios clips MP4.
 - Organización de clips por etiqueta, equipo o jugador.
 - Informe PDF con resumen y registro de acciones.
-- Playbook por carpetas y equipos, con guardado explícito, fases, estilos de
-  pista, texto y exportación PNG/PDF.
+- Playbook 2.0 con biblioteca por carpetas y equipos, plantillas tácticas,
+  jugadores ofensivos y defensivos, acciones temporizadas, fases inteligentes,
+  animación completa, notas por bloques, recursos adjuntos y presentación
+  configurable.
+- Exportación del Playbook como PNG, PDF o vídeo animado WebM.
 - Guardado automático local y archivos de proyecto `.scout.json`.
 - Limpieza automática de versiones anteriores y archivos intermedios de
   empaquetado.
@@ -35,14 +38,14 @@ como los análisis en el ordenador.
 
 El instalador generado para Apple Silicon está en:
 
-`release/ScoutAnalyzer-0.4.1-mac-arm64.dmg`
+`release/ScoutAnalyzer-0.5.0-mac-arm64.dmg`
 
 1. Abre el DMG.
 2. Arrastra ScoutAnalyzer a Aplicaciones.
 3. Al no estar firmado todavía con una cuenta de desarrollador de Apple, macOS
    puede mostrar un aviso. Pulsa Control y haz clic sobre la aplicación, elige
    **Abrir** y confirma.
-4. Comprueba que en la esquina superior izquierda aparece **Versión 0.4.1**.
+4. Comprueba que en la esquina superior izquierda aparece **Versión 0.5.0**.
 
 Al iniciar una actualización instalada en Aplicaciones, las copias anteriores
 identificadas como ScoutAnalyzer se mueven a la Papelera. El DMG debe seguir
@@ -52,11 +55,11 @@ instalándose con el nombre `ScoutAnalyzer.app`.
 
 El instalador generado para Windows x64 está en:
 
-`release/ScoutAnalyzer-0.4.1-win-x64.exe`
+`release/ScoutAnalyzer-0.5.0-win-x64.exe`
 
 También existe una versión portable:
 
-`release/ScoutAnalyzer-0.4.1-win-x64.zip`
+`release/ScoutAnalyzer-0.5.0-win-x64.zip`
 
 En la versión portable hay que descomprimir primero todo el archivo y después
 abrir `ScoutAnalyzer.exe`. Como el programa todavía no dispone de certificado
@@ -75,6 +78,25 @@ de firma, Windows SmartScreen puede mostrar un aviso de editor desconocido.
 6. Revisa o corrige los eventos desde la tabla inferior.
 7. Guarda el análisis para crear un archivo `.scout.json`.
 8. Usa **Informe y exportación** para generar datos, clips o PDF.
+
+## Playbook 2.0
+
+El Playbook se organiza en cuatro modos:
+
+1. **Dibujar**: coloca jugadores, utiliza plantillas tácticas y traza botes,
+   pases, cortes, bloqueos, tiros y manos a mano.
+2. **Animar**: configura el orden, inicio y duración de cada acción, reproduce
+   una fase o la jugada completa y ajusta su velocidad.
+3. **Notas**: añade explicación general, información por fase, bloques de
+   texto, listas y recursos locales o enlaces.
+4. **Presentación**: configura el documento final y exporta PNG, PDF o vídeo
+   animado WebM.
+
+La opción **Siguiente inteligente** crea una fase nueva aplicando los
+movimientos y los cambios de posesión definidos en la fase actual. Las jugadas
+de versiones anteriores se convierten automáticamente al nuevo formato.
+
+La guía detallada está en `docs/PLAYBOOK-2.md`.
 
 Atajos generales:
 
