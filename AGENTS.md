@@ -11,7 +11,7 @@
 ## Antes de modificar
 
 1. Lee `PROJECT_CONTEXT.md`.
-2. Lee `TRASPASO-SCOUTANALYZER-0.4.0.md` cuando necesites el historial completo.
+2. Lee `TRASPASO-SCOUTANALYZER-0.4.1.md` cuando necesites el historial completo.
 3. Revisa el estado actual y conserva las funciones existentes.
 4. No edites ni elimines vídeos, análisis personales o instaladores sin una
    petición explícita.
@@ -36,4 +36,3 @@
 - No añadas `node_modules`, `dist` o `release`.
 - Mantén los instaladores y vídeos en almacenamiento privado externo.
 - Antes de cambiar de ordenador, deja el repositorio comprobado y sincronizado.
-

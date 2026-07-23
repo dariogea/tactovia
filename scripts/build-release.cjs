@@ -1,17 +1,12 @@
 const { spawnSync } = require("node:child_process");
+const fs = require("node:fs");
 const path = require("node:path");
+const { pruneReleaseDirectory } = require("./release-files.cjs");
 
 const workspaceRoot = path.resolve(__dirname, "..");
-const bundledRuntimeRoot =
-  "/Users/dariogealopez/.cache/codex-runtimes/codex-primary-runtime/dependencies";
-const executableSearchPath = [
-  path.join(bundledRuntimeRoot, "node", "bin"),
-  path.join(bundledRuntimeRoot, "bin", "fallback"),
-  "/usr/bin",
-  "/bin",
-  "/usr/sbin",
-  "/sbin"
-].join(path.delimiter);
+const packageJson = JSON.parse(
+  fs.readFileSync(path.join(workspaceRoot, "package.json"), "utf8")
+);
 const builderCli = path.join(
   workspaceRoot,
   "node_modules",
@@ -20,23 +15,32 @@ const builderCli = path.join(
   "cli",
   "cli.js"
 );
-const targets = process.argv.slice(2);
+const defaultTargets =
+  process.platform === "win32"
+    ? ["--win", "nsis", "zip", "--x64"]
+    : ["--mac", "dmg", "--arm64"];
+const targets = process.argv.length > 2 ? process.argv.slice(2) : defaultTargets;
+const executableSearchPath = [
+  path.dirname(process.execPath),
+  path.join(workspaceRoot, "node_modules", ".bin"),
+  process.env.PATH
+].filter(Boolean).join(path.delimiter);
+const releaseDirectory = path.join(workspaceRoot, "release");
 
-if (targets.length === 0) {
-  throw new Error(
-    "Indica los destinos, por ejemplo: --mac dmg zip --arm64"
-  );
-}
+pruneReleaseDirectory(releaseDirectory, packageJson.version);
 
 const result = spawnSync(process.execPath, [builderCli, ...targets], {
   cwd: workspaceRoot,
   env: {
     ...process.env,
     PATH: executableSearchPath,
-    npm_config_user_agent: "pnpm/11.9.0"
+    npm_config_user_agent:
+      process.env.npm_config_user_agent || "pnpm/11.9.0"
   },
   stdio: "inherit"
 });
+
+pruneReleaseDirectory(releaseDirectory, packageJson.version);
 
 if (result.error) throw result.error;
 process.exit(result.status ?? 1);

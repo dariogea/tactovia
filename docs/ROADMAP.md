@@ -37,6 +37,7 @@
 - Preferencias persistentes y color personalizado para gráficas. ✓
 - Guardado explícito de jugadas en la biblioteca. ✓
 - Arrastre continuo reforzado en ambas líneas temporales. ✓
+- Limpieza de instaladores antiguos y copias duplicadas de la aplicación. ✓
 
 ## Versión 0.5 — Colaboración
 

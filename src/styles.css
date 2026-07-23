@@ -367,29 +367,6 @@ textarea:focus-visible,
   background: var(--teal);
 }
 
-.time-readout {
-  margin-left: auto;
-  color: #dce9f2;
-  font-variant-numeric: tabular-nums;
-  font-weight: 750;
-}
-
-.speed-control {
-  display: flex;
-  align-items: center;
-  gap: 7px;
-  color: var(--muted);
-  font-size: 11px;
-}
-
-.speed-control select {
-  padding: 7px;
-  border: 1px solid var(--line);
-  border-radius: 6px;
-  color: #eef3f8;
-  background: var(--panel-2);
-}
-
 .tagging-panel {
   padding: 18px;
   min-width: 0;
@@ -690,7 +667,6 @@ kbd {
 }
 
 .tag-pill i,
-.bar-label i,
 .report-stats i {
   width: 7px;
   height: 7px;
@@ -775,57 +751,6 @@ kbd {
 
 .chart-card {
   padding: 22px;
-}
-
-.bar-chart {
-  display: grid;
-  gap: 15px;
-  margin-top: 26px;
-}
-
-.bar-row {
-  display: grid;
-  grid-template-columns: minmax(130px, 220px) minmax(200px, 1fr) 40px 65px;
-  align-items: center;
-  gap: 14px;
-}
-
-.bar-label {
-  display: flex;
-  align-items: center;
-  gap: 9px;
-  overflow: hidden;
-}
-
-.bar-label span {
-  overflow: hidden;
-  font-size: 12px;
-  font-weight: 650;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-
-.bar-rail {
-  height: 10px;
-  overflow: hidden;
-  border-radius: 99px;
-  background: #192838;
-}
-
-.bar-fill {
-  height: 100%;
-  min-width: 3px;
-  border-radius: inherit;
-}
-
-.bar-row strong {
-  text-align: right;
-}
-
-.bar-row small {
-  color: var(--muted);
-  font-variant-numeric: tabular-nums;
-  text-align: right;
 }
 
 .report-hero {

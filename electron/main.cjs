@@ -10,6 +10,10 @@ const { spawn } = require("node:child_process");
 const fs = require("node:fs");
 const path = require("node:path");
 const ExcelJS = require("exceljs");
+const {
+  findMacAppBundle,
+  findPreviousMacApplications
+} = require("./installations.cjs");
 const { createMediaResponse } = require("./media.cjs");
 
 protocol.registerSchemesAsPrivileged([
@@ -98,6 +102,40 @@ function createMainWindow() {
     mainWindow.loadURL("http://127.0.0.1:5173");
   } else {
     mainWindow.loadFile(path.join(__dirname, "..", "dist", "index.html"));
+  }
+}
+
+async function cleanPreviousMacInstallations() {
+  if (process.platform !== "darwin" || !app.isPackaged) return;
+  const currentBundlePath = findMacAppBundle(process.execPath);
+  if (!currentBundlePath) return;
+
+  const candidates = findPreviousMacApplications({
+    currentBundlePath,
+    currentVersion: app.getVersion(),
+    bundleIdentifier: "com.scoutanalyzer.desktop",
+    applicationRoots: [
+      "/Applications",
+      path.join(app.getPath("home"), "Applications")
+    ]
+  });
+  const removed = [];
+  for (const candidate of candidates) {
+    try {
+      await shell.trashItem(candidate);
+      removed.push(path.basename(candidate));
+    } catch {
+      // An application without write permissions is left untouched.
+    }
+  }
+  if (removed.length > 0) {
+    await dialog.showMessageBox(mainWindow, {
+      type: "info",
+      title: "Actualización completada",
+      message: "ScoutAnalyzer se ha actualizado correctamente.",
+      detail: `Las copias anteriores se han movido a la Papelera: ${removed.join(", ")}.`,
+      buttons: ["Aceptar"]
+    });
   }
 }
 
@@ -751,6 +789,7 @@ app.whenReady().then(() => {
   });
 
   createMainWindow();
+  cleanPreviousMacInstallations().catch(() => {});
 
   app.on("activate", () => {
     if (BrowserWindow.getAllWindows().length === 0) createMainWindow();

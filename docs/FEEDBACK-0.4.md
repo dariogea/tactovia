@@ -49,3 +49,14 @@
 - Catálogo completo de botones existentes para decidir cuáles se muestran.
 - Guía editable de atajos para saltos, fotogramas, volumen, eventos y
   velocidades de 0,5× a 16×.
+
+## Instalación y archivos generados
+
+- La versión de mantenimiento 0.4.1 restaura los comandos completos de
+  desarrollo y empaquetado.
+- Una compilación nueva elimina automáticamente los instaladores antiguos.
+- Solo se conservan el DMG actual, el instalador de Windows y el ZIP portable.
+- Se eliminan carpetas desempaquetadas, `blockmaps` e informes temporales.
+- Windows utiliza una única ubicación de instalación.
+- macOS mueve a la Papelera otras copias instaladas de ScoutAnalyzer con una
+  versión igual o anterior.

@@ -1,0 +1,54 @@
+import test from "node:test";
+import assert from "node:assert/strict";
+import fs from "node:fs";
+import os from "node:os";
+import path from "node:path";
+import { createRequire } from "node:module";
+
+const require = createRequire(import.meta.url);
+const {
+  assertReleaseDirectory,
+  deliverableNames,
+  pruneReleaseDirectory
+} = require("../scripts/release-files.cjs");
+
+test("conserva únicamente los tres instaladores útiles de la versión actual", () => {
+  assert.deepEqual(
+    [...deliverableNames("0.4.1")].sort(),
+    [
+      "ScoutAnalyzer-0.4.1-mac-arm64.dmg",
+      "ScoutAnalyzer-0.4.1-win-x64.exe",
+      "ScoutAnalyzer-0.4.1-win-x64.zip"
+    ].sort()
+  );
+});
+
+test("elimina versiones anteriores, blockmaps y carpetas intermedias", () => {
+  const parent = fs.mkdtempSync(path.join(os.tmpdir(), "scout-release-"));
+  const release = path.join(parent, "release");
+  fs.mkdirSync(path.join(release, "win-unpacked"), { recursive: true });
+  [
+    "ScoutAnalyzer-0.4.0-mac-arm64.dmg",
+    "ScoutAnalyzer-0.4.1-mac-arm64.dmg",
+    "ScoutAnalyzer-0.4.1-mac-arm64.dmg.blockmap",
+    "builder-debug.yml"
+  ].forEach((name) => fs.writeFileSync(path.join(release, name), "test"));
+
+  try {
+    const removed = pruneReleaseDirectory(release, "0.4.1");
+    assert.ok(removed.includes("ScoutAnalyzer-0.4.0-mac-arm64.dmg"));
+    assert.ok(removed.includes("win-unpacked"));
+    assert.deepEqual(fs.readdirSync(release), [
+      "ScoutAnalyzer-0.4.1-mac-arm64.dmg"
+    ]);
+  } finally {
+    fs.rmSync(parent, { recursive: true, force: true });
+  }
+});
+
+test("rechaza limpiar cualquier carpeta que no se llame release", () => {
+  assert.throws(
+    () => assertReleaseDirectory("/private/tmp/ScoutAnalyzer"),
+    /carpeta release/
+  );
+});

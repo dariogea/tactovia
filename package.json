@@ -1,15 +1,78 @@
 {
   "name": "scout-analyzer",
-  "version": "0.4.0",
+  "version": "0.4.1",
   "private": true,
   "author": "ScoutAnalyzer",
   "description": "Analizador de vídeo y etiquetado para scouting de baloncesto",
   "packageManager": "pnpm@11.9.0",
   "main": "electron/main.cjs",
   "type": "module",
+  "scripts": {
+    "dev": "concurrently -k \"vite\" \"wait-on http://127.0.0.1:5173 && electron .\"",
+    "build": "vite build",
+    "start": "electron .",
+    "test": "node --test",
+    "test:video": "electron scripts/verify-video-seek.cjs",
+    "clean:release": "node scripts/clean-release.cjs",
+    "dist": "pnpm build && node scripts/build-release.cjs",
+    "dist:mac": "pnpm build && node scripts/build-release.cjs --mac dmg --arm64",
+    "dist:win": "pnpm build && node scripts/build-release.cjs --win nsis zip --x64"
+  },
+  "build": {
+    "appId": "com.scoutanalyzer.desktop",
+    "productName": "ScoutAnalyzer",
+    "asar": true,
+    "files": [
+      "dist/**/*",
+      "electron/**/*",
+      "package.json"
+    ],
+    "directories": {
+      "output": "release"
+    },
+    "mac": {
+      "category": "public.app-category.sports",
+      "extraResources": [
+        {
+          "from": "vendor/ffmpeg/darwin-${arch}",
+          "to": "ffmpeg"
+        }
+      ],
+      "target": [
+        "dmg"
+      ]
+    },
+    "win": {
+      "extraResources": [
+        {
+          "from": "vendor/ffmpeg/win32-x64",
+          "to": "ffmpeg"
+        }
+      ],
+      "target": [
+        "nsis",
+        "zip"
+      ]
+    },
+    "nsis": {
+      "oneClick": false,
+      "allowToChangeInstallationDirectory": false,
+      "createDesktopShortcut": "always",
+      "createStartMenuShortcut": true
+    },
+    "artifactName": "${productName}-${version}-${os}-${arch}.${ext}"
+  },
   "dependencies": {
     "exceljs": "^4.4.0",
     "react": "^19.2.8",
     "react-dom": "^19.2.8"
+  },
+  "devDependencies": {
+    "@vitejs/plugin-react": "^6.0.4",
+    "concurrently": "^10.0.3",
+    "electron": "^43.2.0",
+    "electron-builder": "^26.15.3",
+    "vite": "^8.1.5",
+    "wait-on": "^9.1.0"
   }
 }

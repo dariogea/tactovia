@@ -1,7 +1,7 @@
 # Documento de traspaso — ScoutAnalyzer
 
 Fecha de preparación: 23 de julio de 2026  
-Versión actual: 0.4.0  
+Versión actual: 0.4.1
 Estado: aplicación funcional instalada y verificada en macOS Apple Silicon
 
 ## 1. Objetivo del proyecto
@@ -39,7 +39,7 @@ La aplicación instalada está en:
 /Applications/ScoutAnalyzer.app
 ```
 
-La copia instalada fue actualizada desde la versión 0.2.0 a la 0.4.0.
+La copia instalada fue actualizada desde la versión 0.2.0 a la 0.4.1.
 
 ## 3. Tecnología
 
@@ -189,6 +189,21 @@ docs/FEEDBACK-0.4.md
   línea temporal y Playbook.
 - La versión aparece en la esquina superior izquierda de la aplicación.
 
+### Actualizaciones y limpieza
+
+- Cada compilación empieza eliminando los instaladores y carpetas intermedias
+  de versiones anteriores.
+- Al terminar se conservan únicamente tres archivos distribuibles: DMG para
+  macOS, instalador EXE para Windows y ZIP portátil para Windows.
+- Ya no se genera un ZIP redundante para macOS.
+- En macOS, al abrir una versión instalada en `Aplicaciones`, ScoutAnalyzer
+  busca otras copias instaladas del mismo producto con una versión igual o
+  anterior y las mueve a la Papelera.
+- La comprobación utiliza el identificador interno de la aplicación para no
+  tocar otras aplicaciones con nombres parecidos.
+- En Windows, el instalador mantiene un único destino fijo y reutiliza el mismo
+  identificador de aplicación para actualizar la instalación existente.
+
 ## 5. Corrección y validación del vídeo
 
 Se añadió una prueba de integración real:
@@ -213,7 +228,7 @@ VIDEO_SEEK_OK duration=12.00 seek=7.25 playback=8.46 rate=2x ranges=1
 
 También se superaron:
 
-- 13 pruebas automáticas.
+- 19 pruebas automáticas.
 - Renderizado de los cinco componentes principales.
 - Compilación de producción con Vite.
 - Arranque de la aplicación macOS ya empaquetada.
@@ -225,18 +240,17 @@ También se superaron:
 Dentro de la carpeta `release`:
 
 ```text
-ScoutAnalyzer-0.4.0-mac-arm64.dmg
-ScoutAnalyzer-0.4.0-mac-arm64.zip
-ScoutAnalyzer-0.4.0-win-x64.exe
-ScoutAnalyzer-0.4.0-win-x64.zip
+ScoutAnalyzer-0.4.1-mac-arm64.dmg
+ScoutAnalyzer-0.4.1-win-x64.exe
+ScoutAnalyzer-0.4.1-win-x64.zip
 ```
 
 Huellas SHA-256:
 
 ```text
-ad05974cfb9631b5d6a54d0fde73dd9d6d049fd9aa81aff6901ae6752cf13ae5  ScoutAnalyzer-0.4.0-mac-arm64.dmg
-3d7feddd7fb1211f42ccc3d46551f54a5282b24fc3421b6e76cbf4177b30b3c7  ScoutAnalyzer-0.4.0-win-x64.exe
-f20594d0709f3faf252899606114a93ab3ed0791ab5e4d744d3f39698a115bb3  ScoutAnalyzer-0.4.0-win-x64.zip
+fefdaa8e09fffb7d5aef08decd461fd9002f06339c074deeb72dd052e56eed8d  ScoutAnalyzer-0.4.1-mac-arm64.dmg
+f414c80cd4370fe3a745db1c34a01fb8ab68692ddde69de50b14889d404d4d57  ScoutAnalyzer-0.4.1-win-x64.exe
+3779b210bb01f82a1d52a183a79ddb4d6083f0e3bcb71501065cb92ba5de4e02  ScoutAnalyzer-0.4.1-win-x64.zip
 ```
 
 El instalador de Windows fue empaquetado y comprobado internamente desde macOS,
@@ -249,7 +263,9 @@ pero todavía debe probarse físicamente en un ordenador Windows x64.
 - Solo existe compilación de macOS para Apple Silicon.
 - Windows requiere procesador x64.
 - El vídeo no se incluye dentro del archivo `.scout.json`; se conserva su ruta.
-- No hay sincronización entre ordenadores.
+- El código fuente se sincroniza mediante el repositorio privado de GitHub.
+- Los vídeos, análisis personales y datos locales de la aplicación no se
+  sincronizan automáticamente entre ordenadores.
 - No hay cuentas, colaboración ni almacenamiento en la nube.
 - No hay análisis automático mediante inteligencia artificial.
 - No hay prueba física completada en Windows.
@@ -257,21 +273,17 @@ pero todavía debe probarse físicamente en un ordenador Windows x64.
 
 ## 8. Cómo continuar desde otro ordenador
 
-Para revisar solamente el contexto:
-
-1. Copiar este archivo al otro ordenador.
-2. Abrir un chat nuevo.
-3. Adjuntar este archivo.
-4. Pegar el mensaje incluido en el apartado siguiente.
-
 Para continuar programando:
 
-1. Copiar además la carpeta completa del proyecto.
-2. No es necesario copiar `node_modules`; puede reinstalarse.
-3. Conservar `vendor/ffmpeg`, `package.json`, `pnpm-lock.yaml`, `src`,
-   `electron`, `scripts`, `test`, `docs` y `release`.
+1. Abrir GitHub Desktop en el ordenador que se vaya a utilizar.
+2. Seleccionar el repositorio privado `ScoutAnalyzer`.
+3. Pulsar **Fetch origin** y después **Pull origin** si hay cambios.
 4. Abrir esa carpeta como proyecto local en Codex.
-5. Adjuntar este documento al primer mensaje.
+5. Pedir a Codex que lea `AGENTS.md` y `PROJECT_CONTEXT.md`.
+6. Al terminar, guardar y subir los cambios antes de cambiar de ordenador.
+
+No es necesario sincronizar `node_modules`, `dist` ni `release`; se regeneran
+en el ordenador de trabajo y están excluidos del repositorio.
 
 Los análisis personales creados con ScoutAnalyzer se guardan en archivos
 `.scout.json`. Esos archivos y los vídeos originales deben copiarse por
@@ -283,7 +295,7 @@ separado si también se quieren utilizar en el otro ordenador.
 Quiero continuar el desarrollo de ScoutAnalyzer desde otro ordenador.
 
 Lee completamente el documento de traspaso que he adjuntado antes de modificar
-nada. La versión actual es la 0.4.0. Conserva las funciones existentes y no
+nada. La versión actual es la 0.4.1. Conserva las funciones existentes y no
 elimines datos, instaladores ni cambios ya implementados.
 
 Primero revisa la carpeta del proyecto y confirma:
@@ -307,4 +319,3 @@ la aplicación.
 5. Exportar una selección como un único vídeo de highlights.
 6. Comparar estadísticas entre varios partidos.
 7. Preparar firma y notarización antes de una distribución pública.
-

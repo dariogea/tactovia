@@ -1,4 +1,4 @@
-# ScoutAnalyzer 0.4
+# ScoutAnalyzer 0.4.1
 
 Aplicación de escritorio para analizar vídeo local y etiquetar acciones de
 baloncesto. La primera versión funciona sin conexión y mantiene tanto el vídeo
@@ -28,29 +28,35 @@ como los análisis en el ordenador.
 - Playbook por carpetas y equipos, con guardado explícito, fases, estilos de
   pista, texto y exportación PNG/PDF.
 - Guardado automático local y archivos de proyecto `.scout.json`.
+- Limpieza automática de versiones anteriores y archivos intermedios de
+  empaquetado.
 
 ## Instalar en macOS
 
 El instalador generado para Apple Silicon está en:
 
-`release/ScoutAnalyzer-0.4.0-mac-arm64.dmg`
+`release/ScoutAnalyzer-0.4.1-mac-arm64.dmg`
 
 1. Abre el DMG.
 2. Arrastra ScoutAnalyzer a Aplicaciones.
 3. Al no estar firmado todavía con una cuenta de desarrollador de Apple, macOS
    puede mostrar un aviso. Pulsa Control y haz clic sobre la aplicación, elige
    **Abrir** y confirma.
-4. Comprueba que en la esquina superior izquierda aparece **Versión 0.4.0**.
+4. Comprueba que en la esquina superior izquierda aparece **Versión 0.4.1**.
+
+Al iniciar una actualización instalada en Aplicaciones, las copias anteriores
+identificadas como ScoutAnalyzer se mueven a la Papelera. El DMG debe seguir
+instalándose con el nombre `ScoutAnalyzer.app`.
 
 ## Instalar en Windows
 
 El instalador generado para Windows x64 está en:
 
-`release/ScoutAnalyzer-0.4.0-win-x64.exe`
+`release/ScoutAnalyzer-0.4.1-win-x64.exe`
 
 También existe una versión portable:
 
-`release/ScoutAnalyzer-0.4.0-win-x64.zip`
+`release/ScoutAnalyzer-0.4.1-win-x64.zip`
 
 En la versión portable hay que descomprimir primero todo el archivo y después
 abrir `ScoutAnalyzer.exe`. Como el programa todavía no dispone de certificado
@@ -104,11 +110,17 @@ pnpm test
 pnpm test:video
 pnpm build
 pnpm dist
+pnpm clean:release
 ```
 
 Los ejecutables de FFmpeg para macOS Apple Silicon y Windows x64 se mantienen
 separados en `vendor/ffmpeg` y se incorpora únicamente el correspondiente a cada
 paquete.
+
+Cada empaquetado elimina automáticamente instaladores de versiones anteriores,
+carpetas desempaquetadas, archivos `blockmap` e informes temporales. La carpeta
+`release` conserva únicamente el DMG actual, el instalador de Windows y el ZIP
+portable de Windows.
 
 ## Alcance de esta versión
 
