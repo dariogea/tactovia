@@ -1,0 +1,51 @@
+# Revisión del feedback — ScoutAnalyzer 0.4
+
+## Etiquetado
+
+- El vídeo se sirve por rangos y se valida con una prueba real que salta al
+  segundo 7,25 y continúa reproduciendo.
+- La barra superior y la línea temporal inferior permiten pulsar y arrastrar
+  para cambiar de momento.
+- Por defecto solo se muestran `−10 s`, `Reproducir/Pausar` y `+10 s`.
+- El resto de controles se puede activar desde Ajustes.
+- Solo existe el campo Nota rápida; no hay Resultado ni Descriptor.
+- Los jugadores aparecen ordenados por dorsal.
+- Después de elegir un vídeo es obligatorio seleccionar dos equipos distintos.
+  El mismo diálogo permite crear equipos o abrir sus fichas.
+
+## Estadísticas
+
+- Ámbito de partido, equipo o jugador.
+- Gráficos de barras, anillo y evolución temporal.
+- Recuento o duración acumulada.
+- Color por equipo, por etiqueta o personalizado.
+- Las opciones del gráfico se conservan al cambiar de pestaña.
+- Comparativas de equipos y jugadores con logos, fotos y colores del club.
+
+## Equipos y jugadores
+
+- Vista rápida y detallada independientes para equipos.
+- Vista rápida y detallada independientes para jugadores.
+- Logo de club, fotografía de jugador, colores e información deportiva.
+- Plantillas siempre ordenadas por dorsal.
+
+## Playbook
+
+- Biblioteca con buscador, carpetas personales y carpetas vinculadas a equipos.
+- Guardado explícito, duplicado y eliminación de jugadas.
+- Media pista o pista completa con colores y grosor de línea editables.
+- Jugadores neutros del 1 al 5 y jugadores reales de las plantillas.
+- Selección y movimiento de elementos ya dibujados.
+- Varias fases; cada fase nueva copia la anterior para recolocar jugadores.
+- Flechas, líneas, balón, texto, descripción y notas del entrenador.
+- Exportación de la fase actual a PNG y de todas las fases a PDF.
+
+## Informe, exportación y ajustes
+
+- Una sola tarjeta de datos con selector CSV/XLSX.
+- Clips: todos o selección manual, orden configurado y carpetas por etiqueta,
+  equipo o jugador.
+- Tamaños de interfaz y etiquetas expresados como Pequeño, Mediano o Grande.
+- Catálogo completo de botones existentes para decidir cuáles se muestran.
+- Guía editable de atajos para saltos, fotogramas, volumen, eventos y
+  velocidades de 0,5× a 16×.

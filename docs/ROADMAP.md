@@ -1,0 +1,57 @@
+# Hoja de ruta de ScoutAnalyzer
+
+## Versión 0.1 — MVP local
+
+- Reproductor local.
+- Etiquetas configurables de instante e intervalo.
+- Línea temporal y base de datos de eventos.
+- Estadísticas, CSV, clips MP4 e informe PDF.
+- Archivos de análisis portables.
+
+## Versión 0.2 — Flujo avanzado de scouting
+
+- Equipos, plantillas y dorsales reutilizables. ✓
+- Filtros combinados y playlists.
+- Exportación selectiva y carpetas organizadas. ✓
+- Exportación de un único vídeo de highlights.
+- Plantillas importables y exportables.
+- Editor inicial de jugadas sobre una pista de baloncesto. ✓
+- Comparación entre varios partidos.
+
+## Versión 0.3 — Flujo profesional local
+
+- Lectura por rangos y navegación precisa del vídeo. ✓
+- Partido obligatorio con dos equipos de la base de datos. ✓
+- Fichas rápidas y detalladas con logos y fotografías. ✓
+- Estadísticas visuales por equipo, jugador y etiqueta. ✓
+- Playbook con biblioteca, carpetas, fases y estilos configurables. ✓
+- Exportación del playbook en PNG y PDF. ✓
+- Ajustes simplificados por tamaños y más atajos. ✓
+
+## Versión 0.4 — Revisión de experiencia y fiabilidad
+
+- Prueba real de salto y avance del reproductor sobre MP4. ✓
+- Tres controles de reproducción visibles por defecto. ✓
+- Identificación visible de la versión instalada. ✓
+- Vistas rápida y detallada independientes para equipos y jugadores. ✓
+- Preferencias persistentes y color personalizado para gráficas. ✓
+- Guardado explícito de jugadas en la biblioteca. ✓
+- Arrastre continuo reforzado en ambas líneas temporales. ✓
+
+## Versión 0.5 — Colaboración
+
+- Cuenta personal y espacios de equipo.
+- Sincronización opcional de análisis.
+- Comentarios de entrenadores y jugadores.
+- Roles, permisos y enlaces compartidos.
+
+## Versión 0.6 — Asistencia mediante IA
+
+- Lectura opcional del marcador.
+- Sugerencias de cortes y detección de cambios de posesión.
+- Búsqueda en lenguaje natural sobre las etiquetas.
+- Resúmenes de tendencias, siempre revisables por el analista.
+
+La IA debe asistir al etiquetado, no sustituir silenciosamente las decisiones
+del analista. Cada acción propuesta automáticamente deberá indicar su origen y
+permitir confirmación o corrección.

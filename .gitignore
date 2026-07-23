@@ -1,0 +1,23 @@
+node_modules/
+.pnpm-store/
+dist/
+release/
+qa-artifacts/
+.DS_Store
+*.log
+
+# Vídeos y análisis personales
+*.scout.json
+*.mp4
+*.m4v
+*.mov
+*.webm
+*.ogv
+
+# Credenciales y configuración privada
+.env
+.env.*
+!.env.example
+*.key
+*.pem
+
