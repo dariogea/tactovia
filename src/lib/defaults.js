@@ -15,11 +15,20 @@ export const tagPalette = [
 
 export const defaultTags = [
   {
-    id: "tag-shot-made",
-    name: "Canasta",
+    id: "tag-shot-made-2",
+    name: "Canasta de 2P",
     color: "#2DD4BF",
     mode: "point",
     shortcut: "1",
+    before: 5,
+    after: 3
+  },
+  {
+    id: "tag-shot-made-3",
+    name: "Canasta de 3P",
+    color: "#60A5FA",
+    mode: "point",
+    shortcut: "2",
     before: 5,
     after: 3
   },
@@ -28,7 +37,7 @@ export const defaultTags = [
     name: "Tiro fallado",
     color: "#FF6B35",
     mode: "point",
-    shortcut: "2",
+    shortcut: "3",
     before: 5,
     after: 3
   },
@@ -37,7 +46,7 @@ export const defaultTags = [
     name: "Rebote ofensivo",
     color: "#FBBF24",
     mode: "point",
-    shortcut: "3",
+    shortcut: "4",
     before: 4,
     after: 3
   },
@@ -46,7 +55,7 @@ export const defaultTags = [
     name: "Rebote defensivo",
     color: "#60A5FA",
     mode: "point",
-    shortcut: "4",
+    shortcut: "5",
     before: 4,
     after: 3
   },
@@ -55,7 +64,7 @@ export const defaultTags = [
     name: "Pérdida",
     color: "#FB7185",
     mode: "point",
-    shortcut: "5",
+    shortcut: "6",
     before: 6,
     after: 3
   },
@@ -64,7 +73,7 @@ export const defaultTags = [
     name: "Recuperación",
     color: "#34D399",
     mode: "point",
-    shortcut: "6",
+    shortcut: "7",
     before: 5,
     after: 3
   },
@@ -73,7 +82,7 @@ export const defaultTags = [
     name: "Pick & Roll",
     color: "#A78BFA",
     mode: "interval",
-    shortcut: "7",
+    shortcut: "8",
     before: 1,
     after: 1
   },
@@ -82,7 +91,7 @@ export const defaultTags = [
     name: "Transición",
     color: "#38BDF8",
     mode: "interval",
-    shortcut: "8",
+    shortcut: "9",
     before: 1,
     after: 1
   },
@@ -91,7 +100,7 @@ export const defaultTags = [
     name: "Posesión",
     color: "#C084FC",
     mode: "interval",
-    shortcut: "9",
+    shortcut: "0",
     before: 0,
     after: 0
   }
@@ -100,7 +109,8 @@ export const defaultTags = [
 export const emptyContext = {
   teamId: "",
   playerId: "",
-  notes: ""
+  notes: "",
+  shotZoneId: ""
 };
 
 export const defaultTeams = [
@@ -203,7 +213,7 @@ export {
 export function createBlankProject(teams = defaultTeams) {
   const now = new Date().toISOString();
   return {
-    version: 6,
+    version: 7,
     id: crypto.randomUUID(),
     projectName: "Nuevo análisis",
     createdAt: now,

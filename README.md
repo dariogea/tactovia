@@ -1,4 +1,4 @@
-# ScoutAnalyzer 0.6.0
+# ScoutAnalyzer 0.8.0
 
 Aplicación de escritorio para analizar vídeo local y etiquetar acciones de
 baloncesto. La primera versión funciona sin conexión y mantiene tanto el vídeo
@@ -7,10 +7,24 @@ como los análisis en el ordenador.
 ## Funciones incluidas
 
 - Reproducción de vídeos MP4, MOV, M4V, WebM y OGV.
+- Acceso mediante perfil local, contraseña y sesión separada, sin enviar
+  credenciales fuera del ordenador.
+- Selección inicial del deporte y flujo para crear, continuar o abrir una
+  sesión de análisis en cada arranque.
+- Sistema visual renovado con modo automático, claro y oscuro.
+- Preferencia de apariencia persistente y adaptación en tiempo real al tema de
+  Windows o macOS.
+- Navegación flotante, superficies translúcidas, controles compactos y
+  jerarquía visual unificada en todas las pestañas.
 - Biblioteca histórica local en SQLite para competiciones, temporadas, equipos,
   plantillas, partidos, análisis y acciones.
-- Competición piloto preparada para Primera División Masculina GESA FBRM
-  2026/27.
+- Catálogo inicial de Primera División Masculina GESA FBRM 2026/27 con sus 16
+  equipos oficiales, ocho partidos de la primera jornada, sedes, ciudades,
+  colores de trabajo y enlaces de procedencia.
+- Doce jugadores ficticios con nombre y dorsal por equipo para probar el MVP,
+  siempre identificados visualmente como `DEMO` y sin datos personales reales.
+- Siete escudos obtenidos de fuentes oficiales y nueve identidades provisionales
+  claramente diferenciadas hasta disponer de los archivos autorizados.
 - Importación administrativa mediante una plantilla Excel de equipos,
   jugadores y partidos.
 - Identidad única de jugador separada de sus plantillas por temporada.
@@ -23,9 +37,14 @@ como los análisis en el ordenador.
 - Selección obligatoria de los dos equipos del partido al cargar el vídeo.
 - Plantilla completamente configurable: nombre, color, comportamiento, atajo y
   segundos anteriores/posteriores.
-- Contexto por acción: equipo, jugador y nota rápida.
+- Contexto por acción: equipo, jugador, zona de pista y nota rápida.
+- Etiquetas predeterminadas separadas para canasta de 2P y canasta de 3P.
+- Mapa interactivo con diez zonas de tiro; la zona y su valor quedan guardados
+  en el evento, SQLite, CSV, Excel y PDF.
 - Línea temporal navegable, edición y selección de eventos.
-- Estadísticas personalizables y persistentes por etiqueta, equipo y jugador.
+- Ventanas informativas de etiqueta, equipo y jugador desde la tabla de eventos.
+- Panel estadístico interactivo tipo Power BI con filtros globales, indicadores,
+  evolución, rankings y mapa de tiro.
 - Paneles de vídeo y etiquetado redimensionables mediante arrastre.
 - Reproductor verificado con saltos reales, lectura por rangos, tres controles
   visibles por defecto y atajos configurables hasta ×16.
@@ -35,7 +54,9 @@ como los análisis en el ordenador.
 - Exportación de uno o varios clips MP4.
 - Organización de clips por etiqueta, equipo o jugador.
 - Informe PDF con resumen y registro de acciones.
-- Playbook 2.0 con biblioteca por carpetas y equipos, plantillas tácticas,
+- Resumen ejecutivo copiable para compartir con el cuerpo técnico.
+- Playbook 2.0 con interfaz simplificada, modo concentrado, biblioteca por
+  carpetas y equipos, plantillas tácticas,
   jugadores ofensivos y defensivos, acciones temporizadas, fases inteligentes,
   animación completa, notas por bloques, recursos adjuntos y presentación
   configurable.
@@ -51,14 +72,14 @@ como los análisis en el ordenador.
 
 El instalador generado para Apple Silicon está en:
 
-`release/ScoutAnalyzer-0.6.0-mac-arm64.dmg`
+`release/ScoutAnalyzer-0.8.0-mac-arm64.dmg`
 
 1. Abre el DMG.
 2. Arrastra ScoutAnalyzer a Aplicaciones.
 3. Al no estar firmado todavía con una cuenta de desarrollador de Apple, macOS
    puede mostrar un aviso. Pulsa Control y haz clic sobre la aplicación, elige
    **Abrir** y confirma.
-4. Comprueba que en la esquina superior izquierda aparece **Versión 0.6.0**.
+4. Comprueba que en la esquina superior izquierda aparece **Versión 0.8.0**.
 
 Al iniciar una actualización instalada en Aplicaciones, las copias anteriores
 identificadas como ScoutAnalyzer se mueven a la Papelera. El DMG debe seguir
@@ -68,11 +89,11 @@ instalándose con el nombre `ScoutAnalyzer.app`.
 
 El instalador generado para Windows x64 está en:
 
-`release/ScoutAnalyzer-0.6.0-win-x64.exe`
+`release/ScoutAnalyzer-0.8.0-win-x64.exe`
 
 También existe una versión portable:
 
-`release/ScoutAnalyzer-0.6.0-win-x64.zip`
+`release/ScoutAnalyzer-0.8.0-win-x64.zip`
 
 En la versión portable hay que descomprimir primero todo el archivo y después
 abrir `ScoutAnalyzer.exe`. Como el programa todavía no dispone de certificado
@@ -80,28 +101,34 @@ de firma, Windows SmartScreen puede mostrar un aviso de editor desconocido.
 
 ## Primer análisis
 
-1. Pulsa **Seleccionar vídeo**.
-2. Selecciona los dos equipos del partido.
-3. Cambia el nombre del análisis en la parte superior.
-4. Completa, si quieres, equipo, jugador y nota rápida.
-5. Pulsa una etiqueta o utiliza su atajo.
+1. Crea o abre tu perfil local e inicia sesión.
+2. Selecciona **Baloncesto** y elige nueva sesión, continuar o abrir archivo.
+3. Pulsa **Seleccionar vídeo**.
+4. Selecciona los dos equipos del partido.
+5. Cambia el nombre del análisis en la parte superior.
+6. Completa equipo, jugador, zona de pista y, si quieres, nota rápida.
+7. Pulsa una etiqueta o utiliza su atajo.
    - Una etiqueta de instante se guarda al pulsarla.
    - Una etiqueta de intervalo se inicia con la primera pulsación y termina con
      la segunda.
-6. Revisa o corrige los eventos desde la tabla inferior.
-7. Guarda el análisis para crear un archivo `.scout.json`.
-8. Usa **Informe y exportación** para generar datos, clips o PDF.
+8. Revisa o corrige los eventos desde la tabla inferior.
+9. Guarda el análisis para crear un archivo `.scout.json`.
+10. Usa **Informe y exportación** para generar datos, clips o PDF.
 
 ## Biblioteca de scouting
 
-La pestaña **Biblioteca** reúne el histórico deportivo de la aplicación:
+La pestaña **Competiciones y equipos** reúne el histórico deportivo y la
+edición de equipos y jugadores:
 
-1. En **Administración**, guarda la plantilla Excel.
-2. Completa equipos, jugadores y partidos conservando sus códigos.
-3. Importa el libro y revisa los posibles avisos.
-4. En **Partidos**, elige **Usar en etiquetado** para cargar los dos equipos y
+1. Explora cada competición y, dentro de ella, sus equipos.
+2. Revisa partidos y jugadores desde la misma pestaña.
+3. En **Administración**, guarda la plantilla Excel cuando quieras sustituir
+   las fichas `DEMO` por plantillas oficiales.
+4. Completa equipos, jugadores y partidos conservando sus códigos.
+5. Importa el libro y revisa los posibles avisos.
+6. En **Partidos**, elige **Usar en etiquetado** para cargar los dos equipos y
    sus plantillas en el análisis.
-5. Crea periódicamente una copia de seguridad desde Administración.
+7. Crea periódicamente una copia de seguridad desde Administración.
 
 Los análisis existentes se incorporan automáticamente a la nueva base local al
 abrir esta versión. El archivo de vídeo no se copia ni se sube.
@@ -110,6 +137,9 @@ La estructura futura de cuentas y permisos ya está definida, pero la
 sincronización entre ordenadores todavía no se activa hasta crear y configurar
 el servicio de nube. La guía técnica y de permisos está en
 `docs/BASE-DATOS-0.6.md`.
+
+La procedencia y las limitaciones de uso de los datos iniciales están
+documentadas en `docs/CATALOGO-FBRM-2026-27.md`.
 
 ## Playbook 2.0
 
@@ -135,13 +165,26 @@ horizontal anterior se recolocan automáticamente al abrirlas.
 
 La guía detallada está en `docs/PLAYBOOK-2.md`.
 
+## Apariencia
+
+El selector de la cabecera y la sección **Perfil y ajustes > Apariencia** permiten
+elegir:
+
+- **Automático**: sigue el modo claro u oscuro del sistema y responde a sus
+  cambios.
+- **Claro**: fondo luminoso, tarjetas blancas y controles de alto contraste.
+- **Oscuro**: superficies grafito pensadas para sesiones largas de análisis.
+
+La elección se guarda localmente. Los vídeos, la pista y los documentos del
+Playbook conservan sus fondos específicos para no alterar el contenido.
+
 Atajos generales:
 
 - `Espacio`: reproducir o pausar.
 - `←` / `→`: retroceder o avanzar diez segundos.
 - `Ctrl+S` o `Cmd+S`: guardar el análisis.
 - Los atajos de las etiquetas se configuran desde **Configurar**.
-- La guía completa está en `docs/ATAJOS.md` y dentro de **Ajustes**.
+- La guía completa está en `docs/ATAJOS.md` y dentro de **Perfil y ajustes**.
 
 ## Privacidad y archivos
 
@@ -184,8 +227,8 @@ portable de Windows.
 
 ## Alcance de esta versión
 
-Esta versión incorpora la base histórica local y prepara el modelo compartido.
-No incluye todavía cuentas activas, sincronización entre ordenadores, vídeo en
+Esta versión incorpora un perfil local para organizar el acceso. No es todavía
+una cuenta en la nube y no sincroniza entre ordenadores. Tampoco incluye vídeo en
 directo, plantillas compartidas ni reconocimiento automático mediante IA. El
 instalador de Windows ha sido
 empaquetado y verificado estructuralmente desde macOS; su prueba de ejecución

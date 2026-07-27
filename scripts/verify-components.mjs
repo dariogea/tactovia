@@ -17,6 +17,9 @@ try {
     { Playbook },
     { MatchSetup },
     { DatabaseLibrary },
+    { ScoutingLibrary },
+    { AccessFlow },
+    { ProfilePanel },
     defaults
   ] =
     await Promise.all([
@@ -26,6 +29,9 @@ try {
       vite.ssrLoadModule("/src/components/Playbook.jsx"),
       vite.ssrLoadModule("/src/components/MatchSetup.jsx"),
       vite.ssrLoadModule("/src/components/DatabaseLibrary.jsx"),
+      vite.ssrLoadModule("/src/components/ScoutingLibrary.jsx"),
+      vite.ssrLoadModule("/src/components/AccessFlow.jsx"),
+      vite.ssrLoadModule("/src/components/ProfilePanel.jsx"),
       vite.ssrLoadModule("/src/lib/defaults.js")
     ]);
 
@@ -36,7 +42,10 @@ try {
     React.createElement(SettingsPanel, {
       preferences: defaults.defaultPreferences,
       tags: project.template.tags,
-      onChange() {}
+      onChange() {},
+      themeMode: "system",
+      resolvedTheme: "dark",
+      onThemeModeChange() {}
     }),
     React.createElement(Playbook, {
       playbook: project.playbook,
@@ -75,7 +84,57 @@ try {
       onImport() {},
       onCreateTemplate() {},
       onBackup() {},
+      onUseMatch() {},
+      onManageTeams() {}
+    }),
+    React.createElement(ScoutingLibrary, {
+      snapshot: {
+        cloud: { configured: false },
+        totals: { teams: 2, players: 1, matches: 0, analyses: 0, events: 0 },
+        competitions: [],
+        competitionTeams: [],
+        teams: [],
+        players: [],
+        rosters: [],
+        matches: []
+      },
+      teams: project.teams,
+      onTeamsChange() {},
+      onRefresh() {},
+      onImport() {},
+      onCreateTemplate() {},
+      onBackup() {},
       onUseMatch() {}
+    }),
+    React.createElement(AccessFlow, {
+      account: null,
+      authenticated: false,
+      sport: "",
+      project,
+      canContinue: false,
+      onAccountChange() {},
+      onAuthenticated() {},
+      onSelectSport() {},
+      onNew() {},
+      onContinue() {},
+      onOpen() {}
+    }),
+    React.createElement(ProfilePanel, {
+      account: {
+        id: "local",
+        name: "Analista",
+        email: "analista@example.com",
+        role: "Analista",
+        passwordHash: "hash"
+      },
+      onAccountChange() {},
+      onLogout() {},
+      preferences: defaults.defaultPreferences,
+      onPreferencesChange() {},
+      tags: project.template.tags,
+      themeMode: "system",
+      resolvedTheme: "dark",
+      onThemeModeChange() {}
     })
   ];
 

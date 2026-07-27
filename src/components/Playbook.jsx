@@ -113,41 +113,21 @@ function PhaseStrip({
       </div>
       <div className="phase-creation-buttons">
         <button className="button primary" onClick={onSmartNext}>
-          Siguiente inteligente
+          + Nueva fase
         </button>
         <button className="button ghost" onClick={onClone}>
           Duplicar
         </button>
-        <button className="button ghost" onClick={onEmpty}>
-          Vacía
-        </button>
-        <button className="button ghost" onClick={onMirror}>
-          Reflejar
-        </button>
-        <button
-          className="mini-button"
-          onClick={() => onMove(-1)}
-          disabled={selectedIndex <= 0}
-          aria-label="Mover fase a la izquierda"
-        >
-          ←
-        </button>
-        <button
-          className="mini-button"
-          onClick={() => onMove(1)}
-          disabled={selectedIndex < 0 || selectedIndex >= phases.length - 1}
-          aria-label="Mover fase a la derecha"
-        >
-          →
-        </button>
-        <button
-          className="mini-button danger-text"
-          onClick={onDelete}
-          disabled={phases.length === 1}
-          aria-label="Eliminar fase"
-        >
-          ×
-        </button>
+        <details className="phase-more-menu">
+          <summary>Más</summary>
+          <div>
+            <button onClick={onEmpty}>Crear fase vacía</button>
+            <button onClick={onMirror}>Reflejar fase</button>
+            <button onClick={() => onMove(-1)} disabled={selectedIndex <= 0}>Mover a la izquierda</button>
+            <button onClick={() => onMove(1)} disabled={selectedIndex < 0 || selectedIndex >= phases.length - 1}>Mover a la derecha</button>
+            <button className="danger-text" onClick={onDelete} disabled={phases.length === 1}>Eliminar fase</button>
+          </div>
+        </details>
       </div>
     </div>
   );
@@ -1840,6 +1820,7 @@ export function Playbook({
   const [selected, setSelected] = useState(null);
   const [librarySearch, setLibrarySearch] = useState("");
   const [templatePicker, setTemplatePicker] = useState(null);
+  const [libraryOpen, setLibraryOpen] = useState(true);
   const historyRef = useRef({ past: [], future: [] });
 
   const play =
@@ -2041,24 +2022,33 @@ export function Playbook({
   if (!play || !phase) return null;
 
   return (
-    <section className="playbook-view professional-playbook playbook-v2">
-      <PlayLibrary
-        playbook={playbook}
-        teams={teams}
-        play={play}
-        search={librarySearch}
-        onSearch={setLibrarySearch}
-        onSelectPlay={setSelectedPlayId}
-        onAddPlay={(folderId = playbook.folders[0]?.id) =>
-          setTemplatePicker({ folderId })
-        }
-        onAddFolder={addFolder}
-        onRenameFolder={renameFolder}
-        onDeleteFolder={deleteFolder}
-      />
+    <section className={`playbook-view professional-playbook playbook-v2 ${libraryOpen ? "" : "library-collapsed"}`}>
+      {libraryOpen && (
+        <PlayLibrary
+          playbook={playbook}
+          teams={teams}
+          play={play}
+          search={librarySearch}
+          onSearch={setLibrarySearch}
+          onSelectPlay={setSelectedPlayId}
+          onAddPlay={(folderId = playbook.folders[0]?.id) =>
+            setTemplatePicker({ folderId })
+          }
+          onAddFolder={addFolder}
+          onRenameFolder={renameFolder}
+          onDeleteFolder={deleteFolder}
+        />
+      )}
 
       <div className="playbook-workspace playbook-v2-workspace">
         <header className="playbook-v2-header">
+          <button
+            className="playbook-library-toggle"
+            onClick={() => setLibraryOpen((current) => !current)}
+            title={libraryOpen ? "Ocultar biblioteca" : "Mostrar biblioteca"}
+          >
+            {libraryOpen ? "←" : "☰"}
+          </button>
           <div className="playbook-title-group">
             <input
               className="play-title-input"

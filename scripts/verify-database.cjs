@@ -16,7 +16,7 @@ let service;
 async function run() {
   const databasePath = path.join(temporaryDirectory, "scoutanalyzer.db");
   const backupPath = path.join(temporaryDirectory, "scoutanalyzer-copia.db");
-  service = createDatabaseService(databasePath);
+  service = createDatabaseService(databasePath, { seedOfficialCatalog: false });
   const now = new Date().toISOString();
 
   service.syncProject({
@@ -71,7 +71,7 @@ async function run() {
   });
 
   const snapshot = service.snapshot();
-  assert.equal(snapshot.databaseVersion, 1);
+  assert.equal(snapshot.databaseVersion, 2);
   assert.equal(snapshot.totals.teams, 2);
   assert.equal(snapshot.totals.players, 1);
   assert.equal(snapshot.totals.matches, 1);

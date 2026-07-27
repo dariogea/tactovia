@@ -1,13 +1,15 @@
 import { useEffect, useMemo, useRef, useState } from "react";
-import { DatabaseLibrary } from "./components/DatabaseLibrary.jsx";
+import { AccessFlow } from "./components/AccessFlow.jsx";
 import { EventEditor } from "./components/EventEditor.jsx";
 import { ExportClipsModal } from "./components/ExportClipsModal.jsx";
 import { MatchSetup } from "./components/MatchSetup.jsx";
 import { Playbook } from "./components/Playbook.jsx";
-import { RosterManager } from "./components/RosterManager.jsx";
-import { SettingsPanel } from "./components/SettingsPanel.jsx";
+import { ProfilePanel } from "./components/ProfilePanel.jsx";
+import { ScoutingLibrary } from "./components/ScoutingLibrary.jsx";
+import { ShotCourtSelector } from "./components/ShotCourt.jsx";
 import { StatsPanel } from "./components/StatsPanel.jsx";
 import { TagEditor } from "./components/TagEditor.jsx";
+import { ThemeSelector } from "./components/ThemeSelector.jsx";
 import { Timeline } from "./components/Timeline.jsx";
 import {
   clamp,
@@ -20,23 +22,57 @@ import {
 } from "./lib/analysis.js";
 import {
   createBlankProject,
+  defaultTags,
   defaultPreferences,
   defaultTeams,
   emptyContext
 } from "./lib/defaults.js";
 import { migratePlaybook } from "./lib/playbook.js";
 import { enrichTeam, sortPlayersByNumber } from "./lib/roster.js";
+import { accountInitials, readLocalAccount } from "./lib/account.js";
 import {
   eventToShortcut,
   nextPlaybackSpeed,
   playbackControls
 } from "./lib/playback.js";
+import {
+  normalizeThemeMode,
+  resolveThemeMode,
+  themeStorageKey
+} from "./lib/theme.js";
+import { isShotTag, shotZoneById } from "./lib/shotZones.js";
 
 const desktop = window.scoutDesktop;
 const appVersion = __APP_VERSION__;
 const autosaveKey = "scout-analyzer-autosave-v1";
 const preferencesKey = "scout-analyzer-preferences-v3";
 const teamsLibraryKey = "scout-analyzer-teams-v1";
+
+function migrateBasketballTags(tags = []) {
+  const hasTwo = tags.some((tag) => tag.id === "tag-shot-made-2");
+  const hasThree = tags.some((tag) => tag.id === "tag-shot-made-3");
+  const withoutLegacy = tags.filter((tag) => tag.id !== "tag-shot-made");
+  const shotDefaults = defaultTags.filter(
+    (tag) => tag.id === "tag-shot-made-2" || tag.id === "tag-shot-made-3"
+  );
+  return [
+    ...(hasTwo ? [] : [shotDefaults[0]]),
+    ...(hasThree ? [] : [shotDefaults[1]]),
+    ...withoutLegacy
+  ].filter(Boolean);
+}
+
+function readThemeMode() {
+  try {
+    return normalizeThemeMode(localStorage.getItem(themeStorageKey));
+  } catch {
+    return "system";
+  }
+}
+
+function systemPrefersDark() {
+  return window.matchMedia?.("(prefers-color-scheme: dark)")?.matches ?? true;
+}
 
 function migrateProject(project) {
   const teams =
@@ -52,9 +88,13 @@ function migrateProject(project) {
       : null;
   return {
     ...project,
-    version: 6,
+    version: 7,
     teams,
     match: validMatch,
+    template: {
+      ...(project.template || {}),
+      tags: migrateBasketballTags(project.template?.tags || defaultTags)
+    },
     playbook: migratePlaybook(project.playbook),
     events: (project.events || []).map((event) => {
       const { outcome, ...rest } = event;
@@ -64,7 +104,16 @@ function migrateProject(project) {
           event.teamId ||
           (event.team === "Rival" ? "team-rival" : event.team ? "team-own" : ""),
         playerId: event.playerId || "",
-        notes: event.notes || outcome || ""
+        notes: event.notes || outcome || "",
+        tagId:
+          event.tagId === "tag-shot-made" ? "tag-shot-made-2" : event.tagId,
+        tagName:
+          event.tagId === "tag-shot-made" || event.tagName === "Canasta"
+            ? "Canasta de 2P"
+            : event.tagName,
+        shotZoneId: event.shotZoneId || "",
+        shotZoneName: event.shotZoneName || "",
+        shotPoints: Number(event.shotPoints) || 0
       };
     })
   };
@@ -89,11 +138,21 @@ function hasValidMatch(project) {
   );
 }
 
+function hasMeaningfulAnalysis(project) {
+  return Boolean(
+    project?.video?.path ||
+      project?.video?.name ||
+      project?.match?.homeTeamId ||
+      project?.match?.awayTeamId ||
+      (project?.events || []).length > 0
+  );
+}
+
 function readAutosave() {
   try {
     const stored = JSON.parse(localStorage.getItem(autosaveKey));
     if (
-      [1, 2, 3, 4, 5, 6].includes(stored?.version) &&
+      [1, 2, 3, 4, 5, 6, 7].includes(stored?.version) &&
       Array.isArray(stored.events) &&
       Array.isArray(stored.template?.tags)
     ) {
@@ -123,6 +182,10 @@ function readPreferences() {
 
 function App() {
   const [project, setProject] = useState(readAutosave);
+  const [account, setAccount] = useState(readLocalAccount);
+  const [authenticated, setAuthenticated] = useState(false);
+  const [selectedSport, setSelectedSport] = useState("");
+  const [workspaceReady, setWorkspaceReady] = useState(false);
   const [projectFilePath, setProjectFilePath] = useState("");
   const [videoUrl, setVideoUrl] = useState("");
   const [currentTime, setCurrentTime] = useState(0);
@@ -143,6 +206,9 @@ function App() {
   const [databaseLoading, setDatabaseLoading] = useState(false);
   const [databaseError, setDatabaseError] = useState("");
   const [databaseImportReport, setDatabaseImportReport] = useState(null);
+  const [themeMode, setThemeMode] = useState(readThemeMode);
+  const [prefersDark, setPrefersDark] = useState(systemPrefersDark);
+  const [profileMenuOpen, setProfileMenuOpen] = useState(false);
   const videoRef = useRef(null);
   const pendingSeekRef = useRef(null);
   const scrubbingRef = useRef(false);
@@ -173,15 +239,20 @@ function App() {
     [selectedTeam, context.playerId]
   );
   const eventContext = useMemo(
-    () => ({
-      ...context,
-      teamName: selectedTeam?.name || "",
-      playerName: selectedPlayer
-        ? [selectedPlayer.number ? `#${selectedPlayer.number}` : "", selectedPlayer.name]
-            .filter(Boolean)
-            .join(" ")
-        : ""
-    }),
+    () => {
+      const zone = shotZoneById(context.shotZoneId);
+      return {
+        ...context,
+        teamName: selectedTeam?.name || "",
+        playerName: selectedPlayer
+          ? [selectedPlayer.number ? `#${selectedPlayer.number}` : "", selectedPlayer.name]
+              .filter(Boolean)
+              .join(" ")
+          : "",
+        shotZoneName: zone?.name || "",
+        shotPoints: zone?.points || 0
+      };
+    },
     [context, selectedPlayer, selectedTeam]
   );
 
@@ -215,12 +286,31 @@ function App() {
     localStorage.setItem(preferencesKey, JSON.stringify(preferences));
   }, [preferences]);
 
+  const resolvedTheme = resolveThemeMode(themeMode, prefersDark);
+
+  useEffect(() => {
+    document.documentElement.dataset.theme = resolvedTheme;
+    document.documentElement.dataset.themePreference = themeMode;
+    document.documentElement.style.colorScheme = resolvedTheme;
+    localStorage.setItem(themeStorageKey, themeMode);
+  }, [resolvedTheme, themeMode]);
+
+  useEffect(() => {
+    const media = window.matchMedia?.("(prefers-color-scheme: dark)");
+    if (!media) return undefined;
+    const handleChange = (event) => setPrefersDark(event.matches);
+    media.addEventListener?.("change", handleChange);
+    return () => media.removeEventListener?.("change", handleChange);
+  }, []);
+
   useEffect(() => {
     if (!desktop?.initializeDatabase) return undefined;
     let active = true;
     setDatabaseLoading(true);
     desktop
-      .initializeDatabase({ legacyProject: project })
+      .initializeDatabase({
+        legacyProject: hasMeaningfulAnalysis(project) ? project : null
+      })
       .then((result) => {
         if (!active) return;
         if (result.ok) {
@@ -244,7 +334,11 @@ function App() {
   }, []);
 
   useEffect(() => {
-    if (!databaseReadyRef.current || !desktop?.syncProjectToDatabase) {
+    if (
+      !databaseReadyRef.current ||
+      !desktop?.syncProjectToDatabase ||
+      !hasMeaningfulAnalysis(project)
+    ) {
       return undefined;
     }
     window.clearTimeout(databaseSyncTimerRef.current);
@@ -454,6 +548,10 @@ function App() {
       notify("Selecciona los dos equipos del partido antes de etiquetar.");
       return;
     }
+    if (isShotTag(tag) && !context.shotZoneId) {
+      notify("Selecciona primero la zona de la pista para registrar el tiro.");
+      return;
+    }
     const time = video.currentTime;
     const duration = video.duration || project.video.duration || 0;
 
@@ -558,12 +656,12 @@ function App() {
   }
 
   async function openProject() {
-    if (!desktop) return;
+    if (!desktop) return false;
     const result = await desktop.openProject();
-    if (result.canceled) return;
+    if (result.canceled) return false;
     if (result.error) {
       notify(result.error);
-      return;
+      return false;
     }
     const migrated = migrateProject(result.project);
     setProject(migrated);
@@ -581,6 +679,7 @@ function App() {
         ? "Análisis abierto."
         : "Análisis abierto, pero falta localizar el vídeo original."
     );
+    return true;
   }
 
   async function saveProject() {
@@ -760,6 +859,31 @@ function App() {
     notify("Nuevo análisis creado.");
   }
 
+  function startNewSession() {
+    setProject(createBlankProject(readTeamLibrary()));
+    setProjectFilePath("");
+    setVideoUrl("");
+    setCurrentTime(0);
+    setIsPlaying(false);
+    setActiveIntervals({});
+    setSelectedEventIds(new Set());
+    setContext({ ...emptyContext });
+    setActiveView("tagging");
+    setWorkspaceReady(true);
+  }
+
+  async function openSessionFromGate() {
+    const opened = await openProject();
+    if (opened) setWorkspaceReady(true);
+  }
+
+  function logout() {
+    setAuthenticated(false);
+    setSelectedSport("");
+    setWorkspaceReady(false);
+    setProfileMenuOpen(false);
+  }
+
   function undoLastEvent() {
     if (project.events.length === 0) return;
     const last = project.events[project.events.length - 1];
@@ -920,6 +1044,28 @@ function App() {
     }
   }
 
+  async function copyExecutiveSummary() {
+    const leadingStats = stats
+      .slice(0, 6)
+      .map((item) => `${item.name}: ${item.count}`)
+      .join(" · ");
+    const home = project.teams.find((team) => team.id === project.match?.homeTeamId);
+    const away = project.teams.find((team) => team.id === project.match?.awayTeamId);
+    const summary = [
+      project.projectName,
+      home && away ? `${home.name} vs ${away.name}` : "",
+      `${project.events.length} acciones · ${formatTime(project.video?.duration || 0)} analizados`,
+      leadingStats,
+      `Generado con ScoutAnalyzer ${appVersion}`
+    ].filter(Boolean).join("\n");
+    try {
+      await navigator.clipboard.writeText(summary);
+      notify("Resumen copiado. Ya puedes pegarlo en un mensaje o documento.");
+    } catch {
+      notify("No se pudo copiar el resumen.");
+    }
+  }
+
   async function exportPlaybook(payload) {
     if (!desktop) return;
     const result =
@@ -996,6 +1142,27 @@ function App() {
     window.addEventListener("pointerup", stop);
   }
 
+  if (!authenticated || !selectedSport || !workspaceReady) {
+    return (
+      <AccessFlow
+        account={account}
+        authenticated={authenticated}
+        sport={selectedSport}
+        project={project}
+        canContinue={hasMeaningfulAnalysis(project)}
+        onAccountChange={setAccount}
+        onAuthenticated={(nextAccount) => {
+          setAccount(nextAccount);
+          setAuthenticated(true);
+        }}
+        onSelectSport={setSelectedSport}
+        onNew={startNewSession}
+        onContinue={() => setWorkspaceReady(true)}
+        onOpen={openSessionFromGate}
+      />
+    );
+  }
+
   return (
     <div className="app-shell">
       <header className="topbar">
@@ -1018,9 +1185,29 @@ function App() {
           aria-label="Nombre del análisis"
         />
         <div className="top-actions">
+          <ThemeSelector value={themeMode} onChange={setThemeMode} compact />
           <button className="button ghost" onClick={newProject}>Nuevo</button>
           <button className="button ghost" onClick={openProject}>Abrir</button>
           <button className="button primary" onClick={saveProject}>Guardar</button>
+          <div className="profile-menu-wrap">
+            <button
+              className={`profile-trigger ${activeView === "profile" ? "active" : ""}`}
+              onClick={() => setProfileMenuOpen((current) => !current)}
+              aria-label="Abrir perfil"
+            >
+              <span>{accountInitials(account)}</span>
+              <div><strong>{account?.name}</strong><small>{account?.role || "Analista"}</small></div>
+              <i>⌄</i>
+            </button>
+            {profileMenuOpen && (
+              <div className="profile-popover">
+                <div><span>{accountInitials(account)}</span><strong>{account?.name}</strong><small>{account?.email}</small></div>
+                <button onClick={() => { setActiveView("profile"); setProfileMenuOpen(false); }}>Perfil y ajustes</button>
+                <button onClick={() => { setWorkspaceReady(false); setProfileMenuOpen(false); }}>Cambiar sesión</button>
+                <button className="danger-text" onClick={logout}>Cerrar sesión</button>
+              </div>
+            )}
+          </div>
         </div>
       </header>
 
@@ -1044,13 +1231,7 @@ function App() {
             refreshDatabase();
           }}
         >
-          Biblioteca
-        </button>
-        <button
-          className={activeView === "roster" ? "active" : ""}
-          onClick={() => setActiveView("roster")}
-        >
-          Equipos y jugadores
+          Competiciones y equipos
         </button>
         <button
           className={activeView === "playbook" ? "active" : ""}
@@ -1063,12 +1244,6 @@ function App() {
           onClick={() => setActiveView("report")}
         >
           Informe y exportación
-        </button>
-        <button
-          className={activeView === "settings" ? "active" : ""}
-          onClick={() => setActiveView("settings")}
-        >
-          Ajustes
         </button>
       </nav>
 
@@ -1262,6 +1437,14 @@ function App() {
                   </label>
                 </div>
 
+                <ShotCourtSelector
+                  value={context.shotZoneId}
+                  onChange={(shotZoneId) =>
+                    setContext((current) => ({ ...current, shotZoneId }))
+                  }
+                  compact
+                />
+
                 <div
                   className="tag-grid"
                   style={{
@@ -1313,6 +1496,7 @@ function App() {
               duration={project.video?.duration || 0}
               events={project.events}
               teams={project.teams}
+              tags={project.template.tags}
               selectedIds={selectedEventIds}
               onSeek={seekTo}
               onToggleSelected={toggleSelected}
@@ -1325,23 +1509,13 @@ function App() {
         {activeView === "stats" && <StatsPanel project={project} />}
 
         {activeView === "database" && (
-          <DatabaseLibrary
+          <ScoutingLibrary
             snapshot={databaseSnapshot}
             loading={databaseLoading}
             error={databaseError}
             importReport={databaseImportReport}
-            onRefresh={refreshDatabase}
-            onImport={importDatabaseCatalog}
-            onCreateTemplate={createDatabaseImportTemplate}
-            onBackup={backupDatabase}
-            onUseMatch={useDatabaseMatch}
-          />
-        )}
-
-        {activeView === "roster" && (
-          <RosterManager
             teams={project.teams}
-            onChange={(teams) => {
+            onTeamsChange={(teams) => {
               updateProject((current) => {
                 const matchStillValid =
                   current.match &&
@@ -1357,6 +1531,11 @@ function App() {
                 }));
               }
             }}
+            onRefresh={refreshDatabase}
+            onImport={importDatabaseCatalog}
+            onCreateTemplate={createDatabaseImportTemplate}
+            onBackup={backupDatabase}
+            onUseMatch={useDatabaseMatch}
           />
         )}
 
@@ -1372,11 +1551,17 @@ function App() {
           />
         )}
 
-        {activeView === "settings" && (
-          <SettingsPanel
+        {activeView === "profile" && (
+          <ProfilePanel
+            account={account}
+            onAccountChange={setAccount}
+            onLogout={logout}
             preferences={preferences}
-            onChange={setPreferences}
+            onPreferencesChange={setPreferences}
             tags={project.template.tags}
+            themeMode={themeMode}
+            resolvedTheme={resolvedTheme}
+            onThemeModeChange={setThemeMode}
           />
         )}
 
@@ -1433,6 +1618,12 @@ function App() {
                 <p>Resumen general, recuentos por etiqueta y registro cronológico de acciones.</p>
                 <button className="button secondary" onClick={exportReport}>Crear informe PDF</button>
               </article>
+              <article className="export-card">
+                <div className="export-icon">TXT</div>
+                <h2>Resumen para compartir</h2>
+                <p>Copia una síntesis ejecutiva del partido para el cuerpo técnico.</p>
+                <button className="button ghost" onClick={copyExecutiveSummary}>Copiar resumen</button>
+              </article>
             </div>
 
             <article className="report-preview">
@@ -1468,7 +1659,7 @@ function App() {
           onTeamsChange={(teams) =>
             updateProject((current) => ({ ...current, teams }))
           }
-          onManageTeams={() => setActiveView("roster")}
+          onManageTeams={() => setActiveView("database")}
           onConfirm={(match) => {
             updateProject((current) => ({ ...current, match }));
             setContext((current) => ({

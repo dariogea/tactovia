@@ -1,5 +1,6 @@
 import { useMemo, useRef, useState } from "react";
 import { formatTime } from "../lib/analysis.js";
+import { shotZoneById } from "../lib/shotZones.js";
 
 const columns = [
   { key: "start", label: "Tiempo" },
@@ -19,11 +20,91 @@ function compareValues(left, right, key) {
   });
 }
 
+function InformationPopup({ detail, onClose }) {
+  if (!detail) return null;
+  const { type, event, team, player, tag } = detail;
+  const zone = shotZoneById(event.shotZoneId);
+  const title =
+    type === "team"
+      ? team?.name || event.team
+      : type === "player"
+        ? player?.name || event.player
+        : tag?.name || event.tagName;
+  return (
+    <div className="modal-backdrop information-backdrop" onMouseDown={onClose}>
+      <section
+        className="modal information-popup"
+        role="dialog"
+        aria-modal="true"
+        onMouseDown={(pointerEvent) => pointerEvent.stopPropagation()}
+        style={{ "--detail-color": tag?.color || team?.primaryColor || event.color }}
+      >
+        <div className="information-popup-hero">
+          {type === "team" && team?.logo ? (
+            <img src={team.logo} alt="" />
+          ) : type === "player" && player?.photo ? (
+            <img src={player.photo} alt="" />
+          ) : (
+            <span>
+              {type === "player"
+                ? `#${player?.number || "—"}`
+                : (team?.shortName || tag?.name || event.tagName).slice(0, 3)}
+            </span>
+          )}
+          <div>
+            <span className="eyebrow">
+              {type === "team" ? "Equipo" : type === "player" ? "Jugador" : "Etiqueta"}
+            </span>
+            <h2>{title}</h2>
+            <p>Acción registrada en {formatTime(event.anchor ?? event.start, true)}</p>
+          </div>
+          <button className="icon-button" onClick={onClose} aria-label="Cerrar">×</button>
+        </div>
+        <div className="information-facts">
+          {type === "team" && (
+            <>
+              <div><span>Ciudad</span><strong>{team?.city || "Sin indicar"}</strong></div>
+              <div><span>Categoría</span><strong>{team?.category || "Sin indicar"}</strong></div>
+              <div><span>Pabellón</span><strong>{team?.arena || "Sin indicar"}</strong></div>
+              <div><span>Plantilla</span><strong>{team?.players?.length || 0} jugadores</strong></div>
+            </>
+          )}
+          {type === "player" && (
+            <>
+              <div><span>Dorsal</span><strong>#{player?.number || "—"}</strong></div>
+              <div><span>Posición</span><strong>{player?.position || "Sin indicar"}</strong></div>
+              <div><span>Altura</span><strong>{player?.height ? `${player.height} cm` : "Sin indicar"}</strong></div>
+              <div><span>Equipo</span><strong>{team?.name || event.team || "Sin indicar"}</strong></div>
+            </>
+          )}
+          {type === "tag" && (
+            <>
+              <div><span>Tipo</span><strong>{event.mode === "interval" ? "Intervalo" : "Instante"}</strong></div>
+              <div><span>Clip</span><strong>{formatTime(event.start, true)} – {formatTime(event.end, true)}</strong></div>
+              <div><span>Zona</span><strong>{zone?.name || event.shotZoneName || "Sin registrar"}</strong></div>
+              <div><span>Valor</span><strong>{event.shotPoints ? `${event.shotPoints} puntos` : "No aplica"}</strong></div>
+            </>
+          )}
+        </div>
+        <div className="information-event-summary">
+          <span>Contexto de la acción</span>
+          <p>
+            {[event.team, event.player, zone?.name || event.shotZoneName, event.notes]
+              .filter(Boolean)
+              .join(" · ") || "No se añadieron datos adicionales."}
+          </p>
+        </div>
+      </section>
+    </div>
+  );
+}
+
 export function Timeline({
   currentTime,
   duration,
   events,
   teams = [],
+  tags = [],
   selectedIds,
   onSeek,
   onToggleSelected,
@@ -31,12 +112,33 @@ export function Timeline({
   onDelete
 }) {
   const [sort, setSort] = useState({ key: "start", direction: "asc" });
+  const [detail, setDetail] = useState(null);
   const draggingRef = useRef(false);
   const safeDuration = Math.max(duration || 0, 1);
   const teamsById = useMemo(
     () => new Map(teams.map((team) => [team.id, team])),
     [teams]
   );
+  const tagsById = useMemo(
+    () => new Map(tags.map((tag) => [tag.id, tag])),
+    [tags]
+  );
+
+  function showDetail(type, event) {
+    const team = teamsById.get(event.teamId);
+    const player =
+      team?.players?.find((candidate) => candidate.id === event.playerId) ||
+      teams
+        .flatMap((candidate) => candidate.players || [])
+        .find((candidate) => candidate.id === event.playerId);
+    setDetail({
+      type,
+      event,
+      team,
+      player,
+      tag: tagsById.get(event.tagId)
+    });
+  }
   const orderedEvents = useMemo(
     () =>
       events.slice().sort((left, right) => {
@@ -203,26 +305,45 @@ export function Timeline({
                     </button>
                   </td>
                   <td>
-                    <span className="tag-pill">
+                    <button
+                      type="button"
+                      className="tag-pill event-detail-button"
+                      onClick={() => showDetail("tag", event)}
+                      title="Ver información de la etiqueta"
+                    >
                       <i style={{ background: event.color }} />
                       {event.tagName}
-                    </span>
+                    </button>
                   </td>
                   <td>
                     {event.team ? (
-                      <span
-                        className="event-team-pill"
+                      <button
+                        type="button"
+                        className="event-team-pill event-detail-button"
                         style={{
                           "--event-team-color":
                             teamsById.get(event.teamId)?.primaryColor || "#64748b"
                         }}
+                        onClick={() => showDetail("team", event)}
+                        title="Ver ficha del equipo"
                       >
                         <i />
                         {event.team}
-                      </span>
+                      </button>
                     ) : "—"}
                   </td>
-                  <td>{event.player || "—"}</td>
+                  <td>
+                    {event.player ? (
+                      <button
+                        type="button"
+                        className="event-player-link event-detail-button"
+                        onClick={() => showDetail("player", event)}
+                        title="Ver ficha del jugador"
+                      >
+                        {event.player}
+                      </button>
+                    ) : "—"}
+                  </td>
                   <td className="notes-cell">{event.notes || "—"}</td>
                   <td>
                     <div className="row-actions">
@@ -243,6 +364,7 @@ export function Timeline({
           </table>
         )}
       </div>
+      <InformationPopup detail={detail} onClose={() => setDetail(null)} />
     </section>
   );
 }

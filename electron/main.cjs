@@ -227,6 +227,7 @@ function reportHtml(report) {
           <td>${escapeHtml(event.tag)}</td>
           <td>${escapeHtml(event.team)}</td>
           <td>${escapeHtml(event.player)}</td>
+          <td>${escapeHtml(event.shotZone)}</td>
           <td>${escapeHtml(event.notes)}</td>
         </tr>`
     )
@@ -271,8 +272,8 @@ function reportHtml(report) {
         </table>
         <h2>Registro de acciones</h2>
         <table>
-          <thead><tr><th>Tiempo</th><th>Etiqueta</th><th>Equipo</th><th>Jugador</th><th>Notas</th></tr></thead>
-          <tbody>${events || '<tr><td colspan="5">Todavía no hay eventos.</td></tr>'}</tbody>
+          <thead><tr><th>Tiempo</th><th>Etiqueta</th><th>Equipo</th><th>Jugador</th><th>Zona</th><th>Notas</th></tr></thead>
+          <tbody>${events || '<tr><td colspan="6">Todavía no hay eventos.</td></tr>'}</tbody>
         </table>
         <footer>Generado localmente con ScoutAnalyzer.</footer>
       </body>
@@ -523,6 +524,8 @@ async function createAnalysisWorkbook(project) {
     { header: "Tipo", key: "mode", width: 13 },
     { header: "Equipo", key: "team", width: 24 },
     { header: "Jugador", key: "player", width: 25 },
+    { header: "Zona de pista", key: "shotZone", width: 27 },
+    { header: "Valor de tiro", key: "shotPoints", width: 14 },
     { header: "Notas", key: "notes", width: 42 },
     { header: "ID evento", key: "id", width: 38 }
   ];
@@ -539,6 +542,8 @@ async function createAnalysisWorkbook(project) {
         mode: event.mode === "interval" ? "Intervalo" : "Instante",
         team: event.team || null,
         player: event.player || null,
+        shotZone: event.shotZoneName || event.shotZoneId || null,
+        shotPoints: event.shotPoints || null,
         notes: event.notes || null,
         id: event.id
       });
@@ -548,7 +553,7 @@ async function createAnalysisWorkbook(project) {
   });
   eventsSheet.autoFilter = {
     from: "A1",
-    to: "I1"
+    to: "K1"
   };
 
   const teamsSheet = workbook.addWorksheet("Equipos", {

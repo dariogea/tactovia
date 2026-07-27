@@ -23,10 +23,17 @@ test("formatTime presenta minutos, horas y décimas", () => {
 });
 
 test("un evento puntual respeta el inicio del vídeo", () => {
-  const event = createPointEvent(tag, 2, 100, { team: "Propio" });
+  const event = createPointEvent(tag, 2, 100, {
+    team: "Propio",
+    shotZoneId: "paint",
+    shotZoneName: "Pintura",
+    shotPoints: 2
+  });
   assert.equal(event.start, 0);
   assert.equal(event.end, 5);
   assert.equal(event.team, "Propio");
+  assert.equal(event.shotZoneId, "paint");
+  assert.equal(event.shotPoints, 2);
 });
 
 test("un intervalo ordena los extremos y aplica márgenes", () => {

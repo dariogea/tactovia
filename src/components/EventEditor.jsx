@@ -1,6 +1,8 @@
 import { useState } from "react";
 import { formatTime } from "../lib/analysis.js";
 import { sortPlayersByNumber } from "../lib/roster.js";
+import { shotZoneById } from "../lib/shotZones.js";
+import { ShotCourtSelector } from "./ShotCourt.jsx";
 
 export function EventEditor({ event, tags, teams, duration, onClose, onSave }) {
   const [draft, setDraft] = useState({ ...event });
@@ -21,13 +23,16 @@ export function EventEditor({ event, tags, teams, duration, onClose, onSave }) {
       return;
     }
     const selectedTag = tags.find((tag) => tag.id === draft.tagId);
+    const selectedZone = shotZoneById(draft.shotZoneId);
     onSave({
       ...draft,
       start,
       end,
       tagName: selectedTag?.name || draft.tagName,
       color: selectedTag?.color || draft.color,
-      mode: selectedTag?.mode || draft.mode
+      mode: selectedTag?.mode || draft.mode,
+      shotZoneName: selectedZone?.name || "",
+      shotPoints: selectedZone?.points || 0
     });
   }
 
@@ -124,6 +129,13 @@ export function EventEditor({ event, tags, teams, duration, onClose, onSave }) {
             <span>Notas</span>
             <textarea value={draft.notes} onChange={(input) => update("notes", input.target.value)} />
           </label>
+          <div className="span-two">
+            <ShotCourtSelector
+              value={draft.shotZoneId || ""}
+              onChange={(shotZoneId) => update("shotZoneId", shotZoneId)}
+              compact
+            />
+          </div>
         </div>
         {error && <p className="form-error">{error}</p>}
         <div className="modal-actions">

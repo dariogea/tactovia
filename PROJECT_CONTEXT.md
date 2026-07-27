@@ -1,7 +1,7 @@
 # Contexto permanente de ScoutAnalyzer
 
 Última actualización: 27 de julio de 2026
-Versión estable: 0.6.0
+Versión estable: 0.8.0
 
 ## Objetivo
 
@@ -13,9 +13,24 @@ informes y diseñar jugadas en un Playbook.
 
 - Aplicación local para macOS Apple Silicon y Windows x64.
 - Electron, React y Vite.
+- Acceso con perfil y contraseña locales. No se presenta como autenticación
+  cloud: el perfil solo protege y organiza esta instalación.
+- Al iniciar se selecciona Baloncesto y se elige entre nueva sesión, continuar
+  el autoguardado o abrir un archivo.
+- Sistema visual 0.7 con navegación flotante, superficies translúcidas,
+  controles compactos y jerarquía unificada.
+- Temas automático, claro y oscuro; la preferencia se conserva localmente y el
+  modo automático responde a Windows o macOS en tiempo real.
 - Biblioteca histórica SQLite con competición, temporada, equipos, plantillas,
   jugadores, partidos, análisis y acciones relacionadas.
-- Piloto preparado para Primera División Masculina GESA FBRM 2026/27.
+- Catálogo precargado de Primera División Masculina GESA FBRM 2026/27 con 16
+  equipos oficiales, ocho partidos de la primera jornada y códigos FBRM
+  estables.
+- 192 jugadores ficticios —doce por equipo— con nombres y dorsales inventados,
+  identificados como `DEMO`, sin datos personales reales y preparados para
+  sustituirse por plantillas oficiales.
+- Siete escudos de fuentes oficiales y nueve identidades provisionales con
+  trazabilidad explícita.
 - Importador Excel/CSV con códigos estables y copia de seguridad local.
 - Validación de códigos duplicados para impedir que una importación mezcle
   identidades o sobrescriba equipos, jugadores y partidos.
@@ -26,14 +41,21 @@ informes y diseñar jugadas en un Playbook.
   la conexión real permanece pendiente hasta crear el proyecto cloud.
 - Equipos y jugadores con fichas rápidas y detalladas, logos y fotografías.
 - Partido obligatorio al cargar un vídeo.
-- Etiquetas personalizables de instante e intervalo.
+- Etiquetas personalizables de instante e intervalo. Las predeterminadas
+  distinguen canasta de 2P y de 3P; la etiqueta antigua `Canasta` migra a 2P
+  para conservar sus eventos.
+- Mapa interactivo de diez zonas. Cada tiro exige zona y conserva zona, nombre
+  y valor en el proyecto, SQLite, CSV, XLSX y PDF.
 - Nota rápida como único descriptor manual de la acción.
 - Navegación de vídeo mediante peticiones por rangos.
 - Tres controles visibles por defecto: −10 s, reproducir/pausar y +10 s.
 - Línea temporal navegable y tabla ordenable.
-- Estadísticas de partido, equipo y jugador con gráficos personalizables.
-- Exportación CSV/XLSX, clips seleccionados y PDF.
-- Playbook 2.0 organizado en Dibujar, Animar, Notas y Presentación.
+- Tabla de eventos con ventanas informativas de etiqueta, equipo y jugador.
+- Estadísticas tipo Power BI con filtros globales, KPIs, evolución, comparación,
+  ranking y mapa de tiro con acierto por zona.
+- Exportación CSV/XLSX, clips seleccionados, PDF y resumen ejecutivo copiable.
+- Playbook 2.0 con menos controles visibles, menú de acciones secundarias,
+  biblioteca ocultable y modo concentrado.
 - Plantillas tácticas, ataque y defensa, acciones temporizadas, fases
   inteligentes, reproducción animada y exportación PNG/PDF/WebM.
 - Media pista vertical con parqué, líneas profesionales y migración automática
@@ -52,29 +74,38 @@ informes y diseñar jugadas en un Playbook.
 
 ## Verificación estable
 
-- 32 pruebas automáticas superadas.
+- 40 pruebas automáticas superadas.
 - Prueba de base de datos dentro de Electron superada:
-  `DATABASE_OK version=1 teams=2 players=1 matches=1 events=1 privacy=private`.
-- Renderizado aislado de los seis paneles principales superado.
+  `DATABASE_OK version=2 teams=2 players=1 matches=1 events=1 privacy=private`.
+- Renderizado aislado de nueve paneles y flujos principales superado.
 - Prueba multimedia real superada:
   `VIDEO_SEEK_OK duration=12.00 seek=7.25 playback=8.46 rate=2x ranges=1`.
-- Compilación de producción 0.6.0 superada.
-- Revisión visual completa del Playbook 2.0 superada sin errores de consola.
-- DMG 0.6.0 generado, con suma interna válida y paquete confirmado como 0.6.0.
-- Aplicación 0.6.0 instalada y abierta desde `/Applications/ScoutAnalyzer.app`.
-- La biblioteca real se creó con esquema 1, una competición piloto y el análisis
-  local migrado; la copia 0.5.1 se movió a la Papelera.
-- EXE y ZIP de Windows 0.6.0 generados y comprobados estructuralmente como x64;
-  siguen pendientes de prueba física en Windows.
-- La carpeta `release` se redujo de 2,6 GB acumulados a unos 444 MB con tres
-  archivos distribuibles.
-- La carpeta `release` 0.6.0 contiene únicamente DMG, EXE y ZIP, unos 426 MiB
-  en total.
+- Compilación de producción 0.8.0 superada.
+- Revisión visual del acceso, deporte, sesión, Etiquetado, Estadísticas,
+  biblioteca unificada, edición de equipos, Playbook, Informe y Perfil/Ajustes
+  en temas claro y oscuro superada a 1280 px, sin desbordamiento horizontal.
+- Revisión visual del catálogo en Partidos, Equipos, Jugadores y Administración
+  superada con 16 equipos, 192 jugadores, ocho partidos y cero análisis
+  artificiales.
+- DMG 0.8.0 generado, validado mediante `hdiutil verify` y comprobado
+  internamente con versión 0.8.0.
+- Aplicación 0.8.0 instalada y abierta en macOS Apple Silicon.
+- Copia previa de la base real conservada en
+  `Library/Application Support/scout-analyzer/backups/2026-07-27-before-0.8.0`.
+- La biblioteca real migra al esquema 2 sin borrar
+  equipos, análisis ni acciones del usuario. Tras abrir 0.8.0 conserva 20
+  equipos, 193 jugadores, 10 partidos, tres análisis y un evento.
+- EXE y ZIP de Windows 0.8.0 generados y verificados estructuralmente; el
+  `app.asar` incluido declara la versión 0.8.0. La prueba física en Windows
+  continúa pendiente.
 
 ## Referencias
 
-- Historial detallado: `TRASPASO-SCOUTANALYZER-0.6.0.md`.
+- Historial detallado: `TRASPASO-SCOUTANALYZER-0.7.0.md`.
+- Historial de esta versión: `TRASPASO-SCOUTANALYZER-0.8.0.md`.
+- Sistema visual: `docs/SISTEMA-VISUAL-0.7.md`.
 - Arquitectura de datos: `docs/BASE-DATOS-0.6.md`.
+- Catálogo y procedencia: `docs/CATALOGO-FBRM-2026-27.md`.
 - Feedback comprobado: `docs/FEEDBACK-0.4.md`.
 - Atajos: `docs/ATAJOS.md`.
 - Guía del Playbook: `docs/PLAYBOOK-2.md`.
@@ -93,10 +124,13 @@ Los vídeos, análisis `.scout.json`, datos locales, `node_modules`, `dist` y
 
 ## Próximas prioridades
 
-1. Crear el proyecto Supabase del producto y activar autenticación.
-2. Conseguir autorización o un canal oficial de datos FBRM.
+1. Crear el proyecto Supabase del producto y sustituir el perfil local por
+   autenticación real sincronizada.
+2. Conseguir autorización o un canal oficial para actualizar datos y escudos
+   FBRM.
 3. Validar las políticas cloud con usuario, club y administrador.
 4. Probar físicamente el instalador, vídeo y exportaciones en Windows.
-5. Importar la plantilla real de Primera División Masculina GESA 2026/27.
-6. Crear filtros históricos combinados por jugador, equipo y acción.
+5. Sustituir las plantillas `DEMO` por las plantillas oficiales 2026/27.
+6. Conectar los filtros del panel avanzado con todos los análisis históricos,
+   no solo con la sesión abierta.
 7. Exportar selecciones como un único vídeo de highlights.

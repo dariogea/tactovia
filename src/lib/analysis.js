@@ -36,6 +36,9 @@ export function createPointEvent(tag, currentTime, videoDuration, context = {}) 
     team: context.teamName || context.team || "",
     player: context.playerName || context.player || "",
     notes: context.notes || "",
+    shotZoneId: context.shotZoneId || "",
+    shotZoneName: context.shotZoneName || "",
+    shotPoints: Number(context.shotPoints) || 0,
     createdAt: new Date().toISOString()
   };
 }
@@ -74,6 +77,9 @@ export function createIntervalEvent(
     team: context.teamName || context.team || "",
     player: context.playerName || context.player || "",
     notes: context.notes || "",
+    shotZoneId: context.shotZoneId || "",
+    shotZoneName: context.shotZoneName || "",
+    shotPoints: Number(context.shotPoints) || 0,
     createdAt: new Date().toISOString()
   };
 }
@@ -113,6 +119,7 @@ export function projectToCsv(project) {
     "Equipo",
     "ID jugador",
     "Jugador",
+    "Zona de pista",
     "Notas"
   ];
   const rows = project.events
@@ -128,6 +135,7 @@ export function projectToCsv(project) {
       event.team,
       event.playerId,
       event.player,
+      event.shotZoneName || event.shotZoneId || "",
       event.notes
     ]);
 
@@ -158,6 +166,7 @@ export function reportPayload(project) {
         tag: event.tagName,
         team: event.team,
         player: event.player,
+        shotZone: event.shotZoneName || event.shotZoneId || "",
         notes: event.notes || ""
       }))
   };

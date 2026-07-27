@@ -30,6 +30,27 @@ function playerNumberValue(player) {
   return Number.isFinite(value) ? value : Number.MAX_SAFE_INTEGER;
 }
 
+function DataBadge({ type }) {
+  if (type === "demo") {
+    return (
+      <span className="database-data-badge demo" title="Ficha ficticia para probar el MVP">
+        DEMO
+      </span>
+    );
+  }
+  if (type === "official-team") {
+    return (
+      <span
+        className="database-data-badge official"
+        title="Equipo contrastado con el calendario oficial FBRM 2026/27"
+      >
+        FBRM
+      </span>
+    );
+  }
+  return null;
+}
+
 export function DatabaseLibrary({
   snapshot,
   loading,
@@ -39,9 +60,10 @@ export function DatabaseLibrary({
   onImport,
   onCreateTemplate,
   onBackup,
-  onUseMatch
+  onUseMatch,
+  onManageTeams
 }) {
-  const [section, setSection] = useState("matches");
+  const [section, setSection] = useState("competitions");
   const [search, setSearch] = useState("");
   const [competitionSeasonId, setCompetitionSeasonId] = useState("all");
   const normalizedSearch = search.trim().toLocaleLowerCase("es");
@@ -111,6 +133,39 @@ export function DatabaseLibrary({
         ),
     [normalizedSearch, snapshot?.players]
   );
+  const competitionGroups = useMemo(() => {
+    const memberships = snapshot?.competitionTeams || [];
+    const competitions = snapshot?.competitions || [];
+    const visibleTeamIds = new Set(teams.map((team) => team.id));
+    const rows = competitions.map((competition) => ({
+      ...competition,
+      teams: memberships
+        .filter(
+          (membership) =>
+            membership.competitionSeasonId === competition.id &&
+            visibleTeamIds.has(membership.teamId)
+        )
+        .map((membership) =>
+          teams.find((team) => team.id === membership.teamId)
+        )
+        .filter(Boolean)
+    }));
+    const assigned = new Set(rows.flatMap((row) => row.teams.map((team) => team.id)));
+    const unassigned = teams.filter((team) => !assigned.has(team.id));
+    if (unassigned.length > 0) {
+      rows.push({
+        id: "local-category",
+        shortName: "Local",
+        name: "Equipos y categorías locales",
+        seasonLabel: "Sin competición asignada",
+        governingBody: "ScoutAnalyzer",
+        teamCount: unassigned.length,
+        matchCount: 0,
+        teams: unassigned
+      });
+    }
+    return rows.filter((row) => row.teams.length > 0);
+  }, [snapshot?.competitionTeams, snapshot?.competitions, teams]);
 
   return (
     <section className="database-view">
@@ -136,6 +191,12 @@ export function DatabaseLibrary({
               ? "Conexión en la nube configurada"
               : "Nube pendiente de conectar"}
           </span>
+          {snapshot?.catalog?.fbrmTeamCount > 0 && (
+            <span className="database-status ready">
+              <i />
+              Catálogo FBRM · {snapshot.catalog.fbrmTeamCount} equipos
+            </span>
+          )}
         </div>
       </div>
 
@@ -165,16 +226,16 @@ export function DatabaseLibrary({
       <div className="database-toolbar">
         <div className="segmented-control">
           <button
+            className={section === "competitions" ? "active" : ""}
+            onClick={() => setSection("competitions")}
+          >
+            Competiciones y equipos
+          </button>
+          <button
             className={section === "matches" ? "active" : ""}
             onClick={() => setSection("matches")}
           >
             Partidos
-          </button>
-          <button
-            className={section === "teams" ? "active" : ""}
-            onClick={() => setSection("teams")}
-          >
-            Equipos
           </button>
           <button
             className={section === "players" ? "active" : ""}
@@ -218,6 +279,66 @@ export function DatabaseLibrary({
       </div>
 
       {error && <div className="database-error">{error}</div>}
+
+      {section === "competitions" && (
+        <div className="competition-directory">
+          {competitionGroups.map((competition) => (
+            <article className="competition-group" key={competition.id}>
+              <header>
+                <div className="competition-identity">
+                  <span>{competition.shortName?.slice(0, 4) || "LIGA"}</span>
+                  <div>
+                    <strong>{competition.name}</strong>
+                    <small>
+                      {competition.governingBody || "Competición"} ·{" "}
+                      {competition.seasonLabel || "Temporada actual"}
+                    </small>
+                  </div>
+                </div>
+                <div className="competition-group-counts">
+                  <span><strong>{competition.teams.length}</strong> equipos</span>
+                  <span><strong>{competition.matchCount || 0}</strong> partidos</span>
+                </div>
+              </header>
+              <div className="competition-team-grid">
+                {competition.teams.map((team) => (
+                  <article
+                    className="competition-team-card"
+                    key={team.id}
+                    style={{
+                      "--library-team-color": team.primaryColor,
+                      "--library-team-secondary": team.secondaryColor
+                    }}
+                  >
+                    <TeamIdentity
+                      name={team.name}
+                      shortName={team.shortName}
+                      color={team.primaryColor}
+                      logo={team.logo}
+                    />
+                    <div className="competition-team-facts">
+                      <span><DataBadge type={team.dataStatus} />{team.city || team.category || "Equipo"}</span>
+                      <strong>{team.playerCount} jugadores</strong>
+                      <small>{team.eventCount} acciones históricas</small>
+                    </div>
+                  </article>
+                ))}
+              </div>
+            </article>
+          ))}
+          {competitionGroups.length === 0 && (
+            <div className="database-empty">
+              <strong>Todavía no hay categorías</strong>
+              <span>Crea un equipo o importa el catálogo de una competición.</span>
+            </div>
+          )}
+          <div className="competition-directory-actions">
+            <button className="button secondary" onClick={onManageTeams}>
+              Crear o editar equipos y jugadores
+            </button>
+          </div>
+        </div>
+      )}
 
       {section === "matches" && (
         <div className="database-match-list">
@@ -272,36 +393,6 @@ export function DatabaseLibrary({
         </div>
       )}
 
-      {section === "teams" && (
-        <div className="database-team-grid">
-          {teams.map((team) => (
-            <article
-              className="database-team-card"
-              key={team.id}
-              style={{ "--library-team-color": team.primaryColor }}
-            >
-              <TeamIdentity
-                name={team.name}
-                shortName={team.shortName}
-                color={team.primaryColor}
-                logo={team.logo}
-              />
-              <div>
-                <span>{team.city || team.category || "Equipo de scouting"}</span>
-                <strong>{team.playerCount} jugadores</strong>
-                <small>{team.eventCount} acciones etiquetadas</small>
-              </div>
-            </article>
-          ))}
-          {teams.length === 0 && (
-            <div className="database-empty">
-              <strong>Todavía no hay equipos</strong>
-              <span>Importa la competición o crea las fichas manualmente.</span>
-            </div>
-          )}
-        </div>
-      )}
-
       {section === "players" && (
         <div className="database-player-table">
           <div className="database-player-row header">
@@ -318,7 +409,10 @@ export function DatabaseLibrary({
                 ) : (
                   <i>#{player.number || "—"}</i>
                 )}
-                <strong>{player.name}</strong>
+                <span className="database-player-label">
+                  <strong>{player.name}</strong>
+                  <DataBadge type={player.isDemo ? "demo" : player.dataStatus} />
+                </span>
               </span>
               <span>{player.teamName || "Sin plantilla asignada"}</span>
               <span>{player.position || "Sin indicar"}</span>
@@ -371,6 +465,22 @@ export function DatabaseLibrary({
             </article>
           )}
           <div className="database-admin-grid">
+            <article className="database-catalog-card">
+            <span className="admin-step catalog">✓</span>
+            <div>
+              <h2>Catálogo FBRM 2026/27</h2>
+              <p>
+                Incluye los 16 equipos oficiales, sedes, ciudades, colores de
+                trabajo y la primera jornada. Las plantillas de prueba están
+                marcadas como DEMO y se podrán sustituir sin perder análisis.
+              </p>
+              <span className="database-admin-state">
+                {snapshot?.catalog?.officialLogoCount || 0} escudos oficiales ·{" "}
+                {snapshot?.catalog?.provisionalLogoCount || 0} identidades
+                provisionales
+              </span>
+            </div>
+            </article>
             <article>
             <span className="admin-step">1</span>
             <div>
