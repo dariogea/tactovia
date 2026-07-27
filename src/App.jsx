@@ -89,6 +89,16 @@ function hasValidMatch(project) {
   );
 }
 
+function hasMeaningfulAnalysis(project) {
+  return Boolean(
+    project?.video?.path ||
+      project?.video?.name ||
+      project?.match?.homeTeamId ||
+      project?.match?.awayTeamId ||
+      (project?.events || []).length > 0
+  );
+}
+
 function readAutosave() {
   try {
     const stored = JSON.parse(localStorage.getItem(autosaveKey));
@@ -220,7 +230,9 @@ function App() {
     let active = true;
     setDatabaseLoading(true);
     desktop
-      .initializeDatabase({ legacyProject: project })
+      .initializeDatabase({
+        legacyProject: hasMeaningfulAnalysis(project) ? project : null
+      })
       .then((result) => {
         if (!active) return;
         if (result.ok) {
@@ -244,7 +256,11 @@ function App() {
   }, []);
 
   useEffect(() => {
-    if (!databaseReadyRef.current || !desktop?.syncProjectToDatabase) {
+    if (
+      !databaseReadyRef.current ||
+      !desktop?.syncProjectToDatabase ||
+      !hasMeaningfulAnalysis(project)
+    ) {
       return undefined;
     }
     window.clearTimeout(databaseSyncTimerRef.current);

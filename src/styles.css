@@ -4411,6 +4411,36 @@ kbd {
   font-size: 10px;
 }
 
+.database-team-meta-line {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+}
+
+.database-data-badge {
+  display: inline-flex;
+  width: max-content;
+  min-height: 18px;
+  align-items: center;
+  padding: 0 6px;
+  border: 1px solid currentColor;
+  border-radius: 999px;
+  font-size: 8px !important;
+  font-weight: 900;
+  letter-spacing: 0.08em;
+  line-height: 1;
+}
+
+.database-data-badge.official {
+  color: #5eead4 !important;
+  background: rgba(45, 212, 191, 0.08);
+}
+
+.database-data-badge.demo {
+  color: #fbbf24 !important;
+  background: rgba(245, 158, 11, 0.09);
+}
+
 .database-player-table {
   overflow: hidden;
   border: 1px solid var(--line);
@@ -4447,6 +4477,12 @@ kbd {
   display: flex;
   align-items: center;
   gap: 10px;
+}
+
+.database-player-label {
+  display: grid;
+  justify-items: start;
+  gap: 4px;
 }
 
 .database-player-name img,
@@ -4569,6 +4605,19 @@ kbd {
 .admin-step.cloud {
   color: #ffffff;
   background: #2563eb;
+}
+
+.admin-step.catalog {
+  color: #07101b;
+  background: #fbbf24;
+}
+
+.database-catalog-card {
+  grid-column: 1 / -1;
+  border-color: rgba(245, 158, 11, 0.4) !important;
+  background:
+    linear-gradient(135deg, rgba(245, 158, 11, 0.08), transparent),
+    var(--panel) !important;
 }
 
 .database-cloud-card {

@@ -16,7 +16,7 @@ let service;
 async function run() {
   const databasePath = path.join(temporaryDirectory, "scoutanalyzer.db");
   const backupPath = path.join(temporaryDirectory, "scoutanalyzer-copia.db");
-  service = createDatabaseService(databasePath);
+  service = createDatabaseService(databasePath, { seedOfficialCatalog: false });
   const now = new Date().toISOString();
 
   service.syncProject({

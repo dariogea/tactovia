@@ -1,4 +1,4 @@
-# ScoutAnalyzer 0.6.0
+# ScoutAnalyzer 0.6.1
 
 Aplicación de escritorio para analizar vídeo local y etiquetar acciones de
 baloncesto. La primera versión funciona sin conexión y mantiene tanto el vídeo
@@ -9,8 +9,13 @@ como los análisis en el ordenador.
 - Reproducción de vídeos MP4, MOV, M4V, WebM y OGV.
 - Biblioteca histórica local en SQLite para competiciones, temporadas, equipos,
   plantillas, partidos, análisis y acciones.
-- Competición piloto preparada para Primera División Masculina GESA FBRM
-  2026/27.
+- Catálogo inicial de Primera División Masculina GESA FBRM 2026/27 con sus 16
+  equipos oficiales, ocho partidos de la primera jornada, sedes, ciudades,
+  colores de trabajo y enlaces de procedencia.
+- Doce jugadores ficticios por equipo para probar el MVP, siempre identificados
+  visualmente como `DEMO` y sin datos personales.
+- Siete escudos obtenidos de fuentes oficiales y nueve identidades provisionales
+  claramente diferenciadas hasta disponer de los archivos autorizados.
 - Importación administrativa mediante una plantilla Excel de equipos,
   jugadores y partidos.
 - Identidad única de jugador separada de sus plantillas por temporada.
@@ -51,14 +56,14 @@ como los análisis en el ordenador.
 
 El instalador generado para Apple Silicon está en:
 
-`release/ScoutAnalyzer-0.6.0-mac-arm64.dmg`
+`release/ScoutAnalyzer-0.6.1-mac-arm64.dmg`
 
 1. Abre el DMG.
 2. Arrastra ScoutAnalyzer a Aplicaciones.
 3. Al no estar firmado todavía con una cuenta de desarrollador de Apple, macOS
    puede mostrar un aviso. Pulsa Control y haz clic sobre la aplicación, elige
    **Abrir** y confirma.
-4. Comprueba que en la esquina superior izquierda aparece **Versión 0.6.0**.
+4. Comprueba que en la esquina superior izquierda aparece **Versión 0.6.1**.
 
 Al iniciar una actualización instalada en Aplicaciones, las copias anteriores
 identificadas como ScoutAnalyzer se mueven a la Papelera. El DMG debe seguir
@@ -68,11 +73,11 @@ instalándose con el nombre `ScoutAnalyzer.app`.
 
 El instalador generado para Windows x64 está en:
 
-`release/ScoutAnalyzer-0.6.0-win-x64.exe`
+`release/ScoutAnalyzer-0.6.1-win-x64.exe`
 
 También existe una versión portable:
 
-`release/ScoutAnalyzer-0.6.0-win-x64.zip`
+`release/ScoutAnalyzer-0.6.1-win-x64.zip`
 
 En la versión portable hay que descomprimir primero todo el archivo y después
 abrir `ScoutAnalyzer.exe`. Como el programa todavía no dispone de certificado
@@ -96,12 +101,15 @@ de firma, Windows SmartScreen puede mostrar un aviso de editor desconocido.
 
 La pestaña **Biblioteca** reúne el histórico deportivo de la aplicación:
 
-1. En **Administración**, guarda la plantilla Excel.
-2. Completa equipos, jugadores y partidos conservando sus códigos.
-3. Importa el libro y revisa los posibles avisos.
-4. En **Partidos**, elige **Usar en etiquetado** para cargar los dos equipos y
+1. Revisa el catálogo FBRM precargado en **Partidos**, **Equipos** y
+   **Jugadores**.
+2. En **Administración**, guarda la plantilla Excel cuando quieras sustituir
+   las fichas `DEMO` por plantillas oficiales.
+3. Completa equipos, jugadores y partidos conservando sus códigos.
+4. Importa el libro y revisa los posibles avisos.
+5. En **Partidos**, elige **Usar en etiquetado** para cargar los dos equipos y
    sus plantillas en el análisis.
-5. Crea periódicamente una copia de seguridad desde Administración.
+6. Crea periódicamente una copia de seguridad desde Administración.
 
 Los análisis existentes se incorporan automáticamente a la nueva base local al
 abrir esta versión. El archivo de vídeo no se copia ni se sube.
@@ -110,6 +118,9 @@ La estructura futura de cuentas y permisos ya está definida, pero la
 sincronización entre ordenadores todavía no se activa hasta crear y configurar
 el servicio de nube. La guía técnica y de permisos está en
 `docs/BASE-DATOS-0.6.md`.
+
+La procedencia y las limitaciones de uso de los datos iniciales están
+documentadas en `docs/CATALOGO-FBRM-2026-27.md`.
 
 ## Playbook 2.0
 

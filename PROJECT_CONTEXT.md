@@ -1,7 +1,7 @@
 # Contexto permanente de ScoutAnalyzer
 
 Última actualización: 27 de julio de 2026
-Versión estable: 0.6.0
+Versión estable: 0.6.1
 
 ## Objetivo
 
@@ -15,7 +15,13 @@ informes y diseñar jugadas en un Playbook.
 - Electron, React y Vite.
 - Biblioteca histórica SQLite con competición, temporada, equipos, plantillas,
   jugadores, partidos, análisis y acciones relacionadas.
-- Piloto preparado para Primera División Masculina GESA FBRM 2026/27.
+- Catálogo precargado de Primera División Masculina GESA FBRM 2026/27 con 16
+  equipos oficiales, ocho partidos de la primera jornada y códigos FBRM
+  estables.
+- 192 jugadores ficticios —doce por equipo— identificados como `DEMO`, sin
+  datos personales y preparados para sustituirse por plantillas oficiales.
+- Siete escudos de fuentes oficiales y nueve identidades provisionales con
+  trazabilidad explícita.
 - Importador Excel/CSV con códigos estables y copia de seguridad local.
 - Validación de códigos duplicados para impedir que una importación mezcle
   identidades o sobrescriba equipos, jugadores y partidos.
@@ -52,29 +58,29 @@ informes y diseñar jugadas en un Playbook.
 
 ## Verificación estable
 
-- 32 pruebas automáticas superadas.
+- 35 pruebas automáticas superadas.
 - Prueba de base de datos dentro de Electron superada:
   `DATABASE_OK version=1 teams=2 players=1 matches=1 events=1 privacy=private`.
 - Renderizado aislado de los seis paneles principales superado.
 - Prueba multimedia real superada:
   `VIDEO_SEEK_OK duration=12.00 seek=7.25 playback=8.46 rate=2x ranges=1`.
-- Compilación de producción 0.6.0 superada.
-- Revisión visual completa del Playbook 2.0 superada sin errores de consola.
-- DMG 0.6.0 generado, con suma interna válida y paquete confirmado como 0.6.0.
-- Aplicación 0.6.0 instalada y abierta desde `/Applications/ScoutAnalyzer.app`.
-- La biblioteca real se creó con esquema 1, una competición piloto y el análisis
-  local migrado; la copia 0.5.1 se movió a la Papelera.
-- EXE y ZIP de Windows 0.6.0 generados y comprobados estructuralmente como x64;
+- Compilación de producción 0.6.1 superada.
+- Revisión visual del catálogo en Partidos, Equipos, Jugadores y Administración
+  superada con 16 equipos, 192 jugadores, ocho partidos y cero análisis
+  artificiales.
+- DMG 0.6.1 generado, con suma interna válida y paquete confirmado como 0.6.1.
+- Aplicación 0.6.1 instalada y abierta desde `/Applications/ScoutAnalyzer.app`.
+- La biblioteca real mantiene el esquema 1 e incorpora el catálogo sin borrar
+  equipos, análisis ni acciones del usuario.
+- EXE y ZIP de Windows 0.6.1 generados y comprobados estructuralmente como x64;
   siguen pendientes de prueba física en Windows.
-- La carpeta `release` se redujo de 2,6 GB acumulados a unos 444 MB con tres
-  archivos distribuibles.
-- La carpeta `release` 0.6.0 contiene únicamente DMG, EXE y ZIP, unos 426 MiB
-  en total.
+- La carpeta `release` 0.6.1 contiene únicamente DMG, EXE y ZIP.
 
 ## Referencias
 
-- Historial detallado: `TRASPASO-SCOUTANALYZER-0.6.0.md`.
+- Historial detallado: `TRASPASO-SCOUTANALYZER-0.6.1.md`.
 - Arquitectura de datos: `docs/BASE-DATOS-0.6.md`.
+- Catálogo y procedencia: `docs/CATALOGO-FBRM-2026-27.md`.
 - Feedback comprobado: `docs/FEEDBACK-0.4.md`.
 - Atajos: `docs/ATAJOS.md`.
 - Guía del Playbook: `docs/PLAYBOOK-2.md`.
@@ -94,9 +100,10 @@ Los vídeos, análisis `.scout.json`, datos locales, `node_modules`, `dist` y
 ## Próximas prioridades
 
 1. Crear el proyecto Supabase del producto y activar autenticación.
-2. Conseguir autorización o un canal oficial de datos FBRM.
+2. Conseguir autorización o un canal oficial para actualizar datos y escudos
+   FBRM.
 3. Validar las políticas cloud con usuario, club y administrador.
 4. Probar físicamente el instalador, vídeo y exportaciones en Windows.
-5. Importar la plantilla real de Primera División Masculina GESA 2026/27.
+5. Sustituir las plantillas `DEMO` por las plantillas oficiales 2026/27.
 6. Crear filtros históricos combinados por jugador, equipo y acción.
 7. Exportar selecciones como un único vídeo de highlights.

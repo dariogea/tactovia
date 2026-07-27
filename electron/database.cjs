@@ -2,6 +2,10 @@ const crypto = require("node:crypto");
 const fs = require("node:fs");
 const path = require("node:path");
 const { backup, DatabaseSync } = require("node:sqlite");
+const {
+  FBRM_CATALOG_VERSION,
+  createFbrmCatalog
+} = require("./catalogs/fbrm-2026-27.cjs");
 
 const DATABASE_VERSION = 1;
 const PILOT_COMPETITION_ID = "competition-fbrm-1dm";
@@ -334,6 +338,22 @@ function seedDatabase(database) {
     INSERT INTO metadata(key, value) VALUES ('schema_version', ?)
     ON CONFLICT(key) DO UPDATE SET value = excluded.value
   `).run(String(DATABASE_VERSION));
+
+  database.prepare(`
+    DELETE FROM teams
+    WHERE id IN ('team-own', 'team-rival')
+      AND source = 'local-user'
+      AND NOT EXISTS (
+        SELECT 1 FROM roster_memberships rm WHERE rm.team_id = teams.id
+      )
+      AND NOT EXISTS (
+        SELECT 1 FROM matches m
+        WHERE m.home_team_id = teams.id OR m.away_team_id = teams.id
+      )
+      AND NOT EXISTS (
+        SELECT 1 FROM events e WHERE e.team_id = teams.id
+      )
+  `).run();
 }
 
 function mapTeamRow(row) {
@@ -354,7 +374,7 @@ function mapTeamRow(row) {
   };
 }
 
-function createDatabaseService(filePath) {
+function createDatabaseService(filePath, options = {}) {
   const database = openDatabase(filePath);
   database.exec(schemaSql());
   seedDatabase(database);
@@ -418,10 +438,24 @@ function createDatabaseService(filePath) {
     const profile = {
       clubName: team.clubName || "",
       country: team.country || "",
+      municipality: team.municipality || "",
+      province: team.province || "",
+      arenaAddress: team.arenaAddress || "",
       coach: team.coach || "",
       assistantCoach: team.assistantCoach || "",
       website: team.website || "",
       founded: team.founded || "",
+      sponsorName: team.sponsorName || "",
+      sourceLabel: team.sourceLabel || "",
+      sourceUrl: team.sourceUrl || "",
+      clubExternalId: team.clubExternalId || "",
+      clubSourceUrl: team.clubSourceUrl || "",
+      dataStatus: team.dataStatus || "",
+      verifiedAt: team.verifiedAt || "",
+      logoStatus: team.logoStatus || "",
+      officialLogoUrl: team.officialLogoUrl || "",
+      colorStatus: team.colorStatus || "",
+      detailSources: Array.isArray(team.detailSources) ? team.detailSources : [],
       notes: team.notes || ""
     };
     upsertTeam.run({
@@ -443,7 +477,9 @@ function createDatabaseService(filePath) {
     });
 
     for (const player of team.players || []) {
-      savePlayer(player, team.id, options.competitionSeasonId || null, { source });
+      savePlayer(player, team.id, options.competitionSeasonId || null, {
+        source: player.source || source
+      });
     }
   }
 
@@ -461,6 +497,10 @@ function createDatabaseService(filePath) {
       role: player.role || "",
       email: player.email || "",
       phone: player.phone || "",
+      isDemo: Boolean(player.isDemo),
+      dataStatus: player.dataStatus || "",
+      sourceUrl: player.sourceUrl || "",
+      verifiedAt: player.verifiedAt || "",
       notes: player.notes || ""
     };
     upsertPlayer.run({
@@ -875,6 +915,31 @@ function createDatabaseService(filePath) {
     return {
       databaseVersion: DATABASE_VERSION,
       pilotCompetitionSeasonId: PILOT_COMPETITION_SEASON_ID,
+      catalog: {
+        fbrmVersion:
+          database
+            .prepare("SELECT value FROM metadata WHERE key = ?")
+            .get("catalog_fbrm_2026_27_version")?.value || "",
+        fbrmTeamCount: Number(
+          database
+            .prepare(`
+              SELECT COUNT(*) AS total
+              FROM competition_teams
+              WHERE competition_season_id = ?
+            `)
+            .get(PILOT_COMPETITION_SEASON_ID).total
+        ),
+        officialLogoCount: teams.filter(
+          (team) =>
+            team.source === "official-fbrm-2026-27" &&
+            team.logoStatus === "official-bundled"
+        ).length,
+        provisionalLogoCount: teams.filter(
+          (team) =>
+            team.source === "official-fbrm-2026-27" &&
+            team.logoStatus === "provisional"
+        ).length
+      },
       cloud: {
         configured: Boolean(
           process.env.SCOUT_SUPABASE_URL && process.env.SCOUT_SUPABASE_ANON_KEY
@@ -995,6 +1060,20 @@ function createDatabaseService(filePath) {
 
   function close() {
     if (database.isOpen) database.close();
+  }
+
+  if (options.seedOfficialCatalog !== false) {
+    const installedCatalogVersion =
+      database
+        .prepare("SELECT value FROM metadata WHERE key = ?")
+        .get("catalog_fbrm_2026_27_version")?.value || "";
+    if (installedCatalogVersion !== FBRM_CATALOG_VERSION) {
+      importCatalog(createFbrmCatalog());
+      database.prepare(`
+        INSERT INTO metadata(key, value) VALUES (?, ?)
+        ON CONFLICT(key) DO UPDATE SET value = excluded.value
+      `).run("catalog_fbrm_2026_27_version", FBRM_CATALOG_VERSION);
+    }
   }
 
   return {

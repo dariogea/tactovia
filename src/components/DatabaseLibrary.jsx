@@ -30,6 +30,27 @@ function playerNumberValue(player) {
   return Number.isFinite(value) ? value : Number.MAX_SAFE_INTEGER;
 }
 
+function DataBadge({ type }) {
+  if (type === "demo") {
+    return (
+      <span className="database-data-badge demo" title="Ficha ficticia para probar el MVP">
+        DEMO
+      </span>
+    );
+  }
+  if (type === "official-team") {
+    return (
+      <span
+        className="database-data-badge official"
+        title="Equipo contrastado con el calendario oficial FBRM 2026/27"
+      >
+        FBRM
+      </span>
+    );
+  }
+  return null;
+}
+
 export function DatabaseLibrary({
   snapshot,
   loading,
@@ -136,6 +157,12 @@ export function DatabaseLibrary({
               ? "Conexión en la nube configurada"
               : "Nube pendiente de conectar"}
           </span>
+          {snapshot?.catalog?.fbrmTeamCount > 0 && (
+            <span className="database-status ready">
+              <i />
+              Catálogo FBRM · {snapshot.catalog.fbrmTeamCount} equipos
+            </span>
+          )}
         </div>
       </div>
 
@@ -287,8 +314,12 @@ export function DatabaseLibrary({
                 logo={team.logo}
               />
               <div>
-                <span>{team.city || team.category || "Equipo de scouting"}</span>
+                <span className="database-team-meta-line">
+                  <DataBadge type={team.dataStatus} />
+                  {team.city || team.category || "Equipo de scouting"}
+                </span>
                 <strong>{team.playerCount} jugadores</strong>
+                <small>{team.arena || "Pabellón pendiente"}</small>
                 <small>{team.eventCount} acciones etiquetadas</small>
               </div>
             </article>
@@ -318,7 +349,10 @@ export function DatabaseLibrary({
                 ) : (
                   <i>#{player.number || "—"}</i>
                 )}
-                <strong>{player.name}</strong>
+                <span className="database-player-label">
+                  <strong>{player.name}</strong>
+                  <DataBadge type={player.isDemo ? "demo" : player.dataStatus} />
+                </span>
               </span>
               <span>{player.teamName || "Sin plantilla asignada"}</span>
               <span>{player.position || "Sin indicar"}</span>
@@ -371,6 +405,22 @@ export function DatabaseLibrary({
             </article>
           )}
           <div className="database-admin-grid">
+            <article className="database-catalog-card">
+            <span className="admin-step catalog">✓</span>
+            <div>
+              <h2>Catálogo FBRM 2026/27</h2>
+              <p>
+                Incluye los 16 equipos oficiales, sedes, ciudades, colores de
+                trabajo y la primera jornada. Las plantillas de prueba están
+                marcadas como DEMO y se podrán sustituir sin perder análisis.
+              </p>
+              <span className="database-admin-state">
+                {snapshot?.catalog?.officialLogoCount || 0} escudos oficiales ·{" "}
+                {snapshot?.catalog?.provisionalLogoCount || 0} identidades
+                provisionales
+              </span>
+            </div>
+            </article>
             <article>
             <span className="admin-step">1</span>
             <div>
