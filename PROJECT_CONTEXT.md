@@ -1,7 +1,7 @@
 # Contexto permanente de ScoutAnalyzer
 
-Última actualización: 23 de julio de 2026  
-Versión estable: 0.5.0
+Última actualización: 27 de julio de 2026
+Versión estable: 0.5.1
 
 ## Objetivo
 
@@ -25,6 +25,8 @@ informes y diseñar jugadas en un Playbook.
 - Playbook 2.0 organizado en Dibujar, Animar, Notas y Presentación.
 - Plantillas tácticas, ataque y defensa, acciones temporizadas, fases
   inteligentes, reproducción animada y exportación PNG/PDF/WebM.
+- Media pista vertical con parqué, líneas profesionales y migración automática
+  de posiciones desde la cancha horizontal anterior.
 
 ## Actualizaciones limpias
 
@@ -39,21 +41,20 @@ informes y diseñar jugadas en un Playbook.
 
 ## Verificación estable
 
-- 23 pruebas automáticas superadas.
+- 24 pruebas automáticas superadas.
 - Prueba multimedia real superada:
   `VIDEO_SEEK_OK duration=12.00 seek=7.25 playback=8.46 rate=2x ranges=1`.
-- Compilación de producción 0.5.0 superada.
+- Compilación de producción 0.5.1 superada.
 - Revisión visual completa del Playbook 2.0 superada sin errores de consola.
-- DMG 0.5.0 validado, abierto y aplicación macOS instalada.
-- Paquetes de Windows 0.5.0 construidos y comprobados estructuralmente, pero
+- DMG 0.5.1 validado, abierto y aplicación macOS instalada.
+- Paquetes de Windows 0.5.1 construidos y comprobados estructuralmente, pero
   pendientes de prueba física en Windows.
-- Paquetes de Windows construidos, pero pendientes de prueba física en Windows.
 - La carpeta `release` se redujo de 2,6 GB acumulados a unos 444 MB con tres
   archivos distribuibles.
 
 ## Referencias
 
-- Historial detallado: `TRASPASO-SCOUTANALYZER-0.5.0.md`.
+- Historial detallado: `TRASPASO-SCOUTANALYZER-0.5.1.md`.
 - Feedback comprobado: `docs/FEEDBACK-0.4.md`.
 - Atajos: `docs/ATAJOS.md`.
 - Guía del Playbook: `docs/PLAYBOOK-2.md`.

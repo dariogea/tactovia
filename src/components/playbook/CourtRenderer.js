@@ -11,27 +11,230 @@ function clamp(value, minimum, maximum) {
   return Math.min(maximum, Math.max(minimum, value));
 }
 
-function courtKind(court) {
-  return court === "half" ? "half" : "full";
+function roundedRectangle(ctx, x, y, width, height, radius) {
+  const safeRadius = Math.min(radius, width / 2, height / 2);
+  ctx.beginPath();
+  ctx.moveTo(x + safeRadius, y);
+  ctx.lineTo(x + width - safeRadius, y);
+  ctx.quadraticCurveTo(x + width, y, x + width, y + safeRadius);
+  ctx.lineTo(x + width, y + height - safeRadius);
+  ctx.quadraticCurveTo(
+    x + width,
+    y + height,
+    x + width - safeRadius,
+    y + height
+  );
+  ctx.lineTo(x + safeRadius, y + height);
+  ctx.quadraticCurveTo(x, y + height, x, y + height - safeRadius);
+  ctx.lineTo(x, y + safeRadius);
+  ctx.quadraticCurveTo(x, y, x + safeRadius, y);
+  ctx.closePath();
 }
 
-function drawHorizontalCourt(ctx, width, height, court, requestedStyle, spacing) {
-  const style = { ...DEFAULT_COURT_STYLE, ...requestedStyle };
-  const edge = clamp(Number(spacing) || 14, 8, 40);
-  ctx.fillStyle = style.outOfBounds;
-  ctx.fillRect(0, 0, width, height);
-  ctx.fillStyle = style.background;
-  ctx.fillRect(edge, edge, width - edge * 2, height - edge * 2);
+function colorChannels(color) {
+  const normalized = String(color || "").replace("#", "");
+  if (!/^[0-9a-f]{6}$/i.test(normalized)) return [232, 191, 135];
+  return [
+    Number.parseInt(normalized.slice(0, 2), 16),
+    Number.parseInt(normalized.slice(2, 4), 16),
+    Number.parseInt(normalized.slice(4, 6), 16)
+  ];
+}
+
+function shade(color, amount) {
+  const channels = colorChannels(color).map((channel) =>
+    clamp(Math.round(channel + amount), 0, 255)
+  );
+  return `rgb(${channels.join(",")})`;
+}
+
+function drawPlanks(ctx, x, y, width, height, color, seedOffset = 0) {
+  const plankWidth = Math.max(16, Math.round(width / 32));
+  ctx.fillStyle = color;
+  ctx.fillRect(x, y, width, height);
+  for (let index = 0; index < Math.ceil(width / plankWidth); index += 1) {
+    const plankX = x + index * plankWidth;
+    const currentWidth = Math.min(plankWidth, x + width - plankX);
+    const tone = ((index * 17 + seedOffset) % 5 - 2) * 3;
+    ctx.fillStyle = shade(color, tone);
+    ctx.fillRect(plankX, y, currentWidth, height);
+
+    let segmentY = y + ((index * 47 + seedOffset * 13) % 72);
+    let segment = 0;
+    while (segmentY < y + height) {
+      const segmentHeight = 62 + ((index * 29 + segment * 37) % 74);
+      const highlight =
+        ((index + segment + seedOffset) % 3 === 0 ? 1 : -1) *
+        (3 + ((index * 7 + segment) % 4));
+      ctx.fillStyle = shade(color, tone + highlight);
+      ctx.fillRect(
+        plankX + 1,
+        segmentY,
+        Math.max(0, currentWidth - 2),
+        Math.min(segmentHeight, y + height - segmentY)
+      );
+      segmentY += segmentHeight + 1;
+      segment += 1;
+    }
+
+    ctx.fillStyle = "rgba(106, 68, 32, 0.075)";
+    ctx.fillRect(plankX, y, 1, height);
+  }
+}
+
+function courtInset(spacing) {
+  return clamp(Number(spacing) || 14, 8, 40) + 24;
+}
+
+function drawCourtSurface(ctx, width, height, style, spacing) {
+  const edge = courtInset(spacing);
+  ctx.save();
+  roundedRectangle(ctx, 0, 0, width, height, 24);
+  ctx.clip();
+  drawPlanks(ctx, 0, 0, width, height, style.outOfBounds, 4);
+  drawPlanks(
+    ctx,
+    edge,
+    edge,
+    width - edge * 2,
+    height - edge * 2,
+    style.background,
+    11
+  );
+  ctx.restore();
+
+  ctx.save();
+  roundedRectangle(ctx, 1.5, 1.5, width - 3, height - 3, 23);
+  ctx.strokeStyle = "rgba(98, 62, 29, 0.12)";
+  ctx.lineWidth = 3;
+  ctx.stroke();
+  ctx.restore();
+  return edge;
+}
+
+function fillPaint(ctx, x, y, width, height, style) {
+  if (style.paint === style.background) return;
+  ctx.save();
+  ctx.globalAlpha = 0.38;
+  ctx.fillStyle = style.paint;
+  ctx.fillRect(x, y, width, height);
+  ctx.restore();
+}
+
+function prepareCourtLines(ctx, style) {
   ctx.strokeStyle = style.lines;
   ctx.lineWidth = Number(style.lineWidth) || 3;
+  ctx.lineCap = "square";
+  ctx.lineJoin = "round";
+}
+
+function drawReferenceHalfCourt(
+  ctx,
+  width,
+  height,
+  requestedStyle,
+  spacing
+) {
+  const style = { ...DEFAULT_COURT_STYLE, ...requestedStyle };
+  const edge = drawCourtSurface(ctx, width, height, style, spacing);
+  const left = edge;
+  const right = width - edge;
+  const top = edge;
+  const bottom = height - edge;
+  const courtWidth = right - left;
+  const courtHeight = bottom - top;
+  const centerX = width / 2;
+  const laneWidth = courtWidth * 0.255;
+  const laneLength = courtHeight * 0.405;
+  const laneLeft = centerX - laneWidth / 2;
+  const laneTop = top;
+  const freeThrowY = top + laneLength;
+  const backboardY = top + courtHeight * 0.085;
+  const rimY = backboardY + courtHeight * 0.027;
+  const rimRadius = Math.max(10, courtWidth * 0.018);
+  const restrictedRadius = laneWidth * 0.31;
+
+  prepareCourtLines(ctx, style);
+  ctx.strokeRect(left, top, courtWidth, courtHeight);
+  fillPaint(ctx, laneLeft, laneTop, laneWidth, laneLength, style);
+  ctx.strokeRect(laneLeft, laneTop, laneWidth, laneLength);
+
+  ctx.beginPath();
+  ctx.arc(centerX, freeThrowY, laneWidth / 2, 0, Math.PI);
+  ctx.stroke();
+
+  ctx.beginPath();
+  ctx.moveTo(centerX - laneWidth * 0.31, backboardY);
+  ctx.lineTo(centerX + laneWidth * 0.31, backboardY);
+  ctx.stroke();
+
+  ctx.beginPath();
+  ctx.arc(centerX, rimY, rimRadius, 0, Math.PI * 2);
+  ctx.stroke();
+
+  ctx.beginPath();
+  ctx.arc(centerX, rimY, restrictedRadius, 0, Math.PI);
+  ctx.stroke();
+
+  const threePointRadius = courtWidth * 0.444;
+  const cornerOffset = courtWidth * 0.065;
+  const leftCornerX = left + cornerOffset;
+  const rightCornerX = right - cornerOffset;
+  const horizontalDistance = centerX - leftCornerX;
+  const joinOffset = Math.sqrt(
+    Math.max(0, threePointRadius ** 2 - horizontalDistance ** 2)
+  );
+  const joinY = rimY + joinOffset;
+  const leftAngle = Math.atan2(joinY - rimY, leftCornerX - centerX);
+  const rightAngle = Math.atan2(joinY - rimY, rightCornerX - centerX);
+
+  ctx.beginPath();
+  ctx.moveTo(leftCornerX, top);
+  ctx.lineTo(leftCornerX, joinY);
+  ctx.arc(
+    centerX,
+    rimY,
+    threePointRadius,
+    leftAngle,
+    rightAngle,
+    true
+  );
+  ctx.lineTo(rightCornerX, top);
+  ctx.stroke();
+
+  const hashLength = courtWidth * 0.018;
+  for (const ratio of [0.42, 0.6, 0.79]) {
+    const y = top + laneLength * ratio;
+    ctx.beginPath();
+    ctx.moveTo(laneLeft - hashLength, y);
+    ctx.lineTo(laneLeft, y);
+    ctx.moveTo(laneLeft + laneWidth, y);
+    ctx.lineTo(laneLeft + laneWidth + hashLength, y);
+    ctx.stroke();
+  }
+
+  ctx.beginPath();
+  ctx.arc(centerX, bottom, courtWidth * 0.125, Math.PI, Math.PI * 2);
+  ctx.stroke();
+}
+
+function drawFullHorizontalCourt(
+  ctx,
+  width,
+  height,
+  requestedStyle,
+  spacing
+) {
+  const style = { ...DEFAULT_COURT_STYLE, ...requestedStyle };
+  const edge = drawCourtSurface(ctx, width, height, style, spacing);
+  prepareCourtLines(ctx, style);
   ctx.strokeRect(edge, edge, width - edge * 2, height - edge * 2);
 
   function basketSide(x, direction) {
     const baseline = direction === 1 ? x + 72 : x - 72;
     const laneWidth = Math.min(205, width * 0.26);
     const laneX = direction === 1 ? x : x - laneWidth;
-    ctx.fillStyle = style.paint;
-    ctx.fillRect(laneX, height / 2 - 112, laneWidth, 224);
+    fillPaint(ctx, laneX, height / 2 - 112, laneWidth, 224, style);
     ctx.strokeStyle = style.lines;
     ctx.strokeRect(laneX, height / 2 - 112, laneWidth, 224);
     ctx.beginPath();
@@ -70,58 +273,55 @@ function drawHorizontalCourt(ctx, width, height, court, requestedStyle, spacing)
   }
 
   basketSide(edge, 1);
-  if (court === "full") {
-    basketSide(width - edge, -1);
-    ctx.beginPath();
-    ctx.moveTo(width / 2, edge);
-    ctx.lineTo(width / 2, height - edge);
-    ctx.stroke();
-    ctx.beginPath();
-    ctx.arc(width / 2, height / 2, 78, 0, Math.PI * 2);
-    ctx.stroke();
-  } else {
-    ctx.beginPath();
-    ctx.moveTo(width - 42, edge);
-    ctx.lineTo(width - 42, height - edge);
-    ctx.stroke();
-  }
-
-  ctx.fillStyle = style.accent;
+  basketSide(width - edge, -1);
   ctx.beginPath();
-  ctx.arc(court === "full" ? width / 2 : width - 42, height / 2, 5, 0, Math.PI * 2);
-  ctx.fill();
+  ctx.moveTo(width / 2, edge);
+  ctx.lineTo(width / 2, height - edge);
+  ctx.stroke();
+  ctx.beginPath();
+  ctx.arc(width / 2, height / 2, 78, 0, Math.PI * 2);
+  ctx.stroke();
 }
 
 export function drawCourt(ctx, play, options = {}) {
   const { width, height } = courtDimensions(play.court);
   const style = {
     ...DEFAULT_COURT_STYLE,
-    ...play.courtStyle,
-    ...(options.courtColor ? { background: options.courtColor } : {})
+    ...play.courtStyle
   };
+  if (options.courtColor) {
+    const paintFollowedBackground =
+      !play.courtStyle?.paint ||
+      play.courtStyle.paint === play.courtStyle.background;
+    style.background = options.courtColor;
+    style.outOfBounds = options.courtColor;
+    if (paintFollowedBackground) style.paint = options.courtColor;
+  }
+  if (play.court === "half") {
+    drawReferenceHalfCourt(
+      ctx,
+      width,
+      height,
+      style,
+      options.outOfBoundsSpacing
+    );
+    return;
+  }
   if (play.court === "full-vertical") {
     ctx.save();
     ctx.translate(width, 0);
     ctx.rotate(Math.PI / 2);
-    drawHorizontalCourt(
+    drawFullHorizontalCourt(
       ctx,
       height,
       width,
-      "full",
       style,
       options.outOfBoundsSpacing
     );
     ctx.restore();
     return;
   }
-  drawHorizontalCourt(
-    ctx,
-    width,
-    height,
-    courtKind(play.court),
-    style,
-    options.outOfBoundsSpacing
-  );
+  drawFullHorizontalCourt(ctx, width, height, style, options.outOfBoundsSpacing);
 }
 
 function drawSelection(ctx, x, y, width, height) {

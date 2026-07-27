@@ -29,14 +29,24 @@ test("migra jugadas antiguas sin perder sus objetos ni carpetas", () => {
     ]
   });
 
-  assert.equal(migrated.version, 2);
+  assert.equal(migrated.version, 3);
   assert.equal(migrated.plays[0].name, "Cuernos");
   assert.equal(migrated.plays[0].phases[0].objects[0].label, "1");
+  assert.equal(
+    migrated.plays[0].phases[0].objects[0].x,
+    (80 / 660) * 760
+  );
+  assert.equal(
+    migrated.plays[0].phases[0].objects[0].y,
+    (50 / 760) * 660
+  );
   assert.equal(
     migrated.plays[0].phases[0].objects[0].trackId,
     "player-1"
   );
   assert.deepEqual(migrated.plays[0].phases[0].actions, []);
+  assert.equal(migrated.plays[0].courtStyle.background, "#e8bf87");
+  assert.equal(migrated.plays[0].courtStyle.outOfBounds, "#e8bf87");
 });
 
 test("las plantillas ofensivas y defensivas crean cinco jugadores", () => {
@@ -48,6 +58,35 @@ test("las plantillas ofensivas y defensivas crean cinco jugadores", () => {
   assert.equal(horns.filter((item) => item.hasBall).length, 1);
   assert.equal(zone.length, 5);
   assert.equal(zone.filter((item) => item.role === "defense").length, 5);
+  assert.ok(horns[0].y > horns[3].y);
+  assert.ok(horns[1].x < horns[2].x);
+});
+
+test("no vuelve a rotar una jugada guardada con la pista nueva", () => {
+  const migrated = migratePlaybook({
+    version: 3,
+    folders: [{ id: "general", name: "General", teamId: "" }],
+    plays: [
+      {
+        id: "play-new",
+        name: "Nueva",
+        folderId: "general",
+        court: "half",
+        phases: [
+          {
+            id: "phase-new",
+            name: "Inicio",
+            objects: [
+              { id: "player-new", kind: "player", label: "1", x: 310, y: 520 }
+            ]
+          }
+        ]
+      }
+    ]
+  });
+
+  assert.equal(migrated.plays[0].phases[0].objects[0].x, 310);
+  assert.equal(migrated.plays[0].phases[0].objects[0].y, 520);
 });
 
 test("la fase inteligente aplica desplazamientos y transfiere el balón", () => {

@@ -16,12 +16,20 @@ también se pueden duplicar, mover de carpeta o asociar a un equipo.
 
 ## Dibujar
 
+- La media pista aparece en orientación vertical, con la canasta en la parte
+  superior y el semicírculo de medio campo en la parte inferior.
+- El parqué se dibuja de forma nativa con tablones de madera y conserva los
+  colores configurables de pista, zona y líneas.
 - Selecciona **Ataque** o **Defensa** antes de colocar un jugador.
 - Activa **Jugador con balón** si quieres marcar la posesión.
 - Puedes utilizar jugadores neutros del 1 al 5 o jugadores reales del equipo.
 - Pulsa una herramienta y después haz clic o arrastra sobre la pista.
 - Con **Seleccionar** puedes mover cualquier elemento.
 - La tecla `Supr` o `Retroceso` elimina el elemento seleccionado.
+
+Las jugadas guardadas con la antigua media pista horizontal se convierten una
+sola vez al nuevo sistema. Se recolocan tanto los objetos como los recorridos de
+las acciones, sin cambiar sus tiempos ni sus relaciones entre jugadores.
 
 Acciones disponibles:
 

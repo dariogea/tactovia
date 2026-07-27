@@ -49,6 +49,8 @@
 - Notas estructuradas y recursos asociados a jugadas y fases. ✓
 - Presentación clásica o avanzada y exportación PNG/PDF/WebM. ✓
 - Conversión automática de las jugadas creadas en versiones anteriores. ✓
+- Media pista vertical con parqué y marcajes profesionales. ✓
+- Migración automática de objetos y acciones desde la pista horizontal. ✓
 
 ## Versión 0.6 — Colaboración
 

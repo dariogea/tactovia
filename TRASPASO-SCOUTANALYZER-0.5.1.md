@@ -1,7 +1,7 @@
 # Documento de traspaso — ScoutAnalyzer
 
-Fecha de preparación: 23 de julio de 2026  
-Versión actual: 0.5.0
+Fecha de preparación: 27 de julio de 2026
+Versión actual: 0.5.1
 Estado: aplicación funcional instalada y verificada en macOS Apple Silicon
 
 ## 1. Objetivo del proyecto
@@ -39,7 +39,7 @@ La aplicación instalada está en:
 /Applications/ScoutAnalyzer.app
 ```
 
-La copia instalada fue actualizada desde la versión 0.2.0 a la 0.5.0.
+La copia instalada fue actualizada desde la versión 0.2.0 a la 0.5.1.
 
 ## 3. Tecnología
 
@@ -184,6 +184,10 @@ docs/FEEDBACK-0.4.md
 - Exportación PNG de una fase, PDF de la jugada y vídeo animado WebM.
 - Conversión automática y sin pérdida de las jugadas creadas en versiones
   anteriores.
+- Media pista rediseñada en orientación vertical con madera segmentada,
+  esquinas redondeadas, canasta superior, zona, arco de triple y medio campo.
+- Conversión geométrica automática de objetos y acciones procedentes de la
+  pista horizontal anterior.
 
 ### Ajustes y diseño general
 
@@ -235,7 +239,7 @@ VIDEO_SEEK_OK duration=12.00 seek=7.25 playback=8.46 rate=2x ranges=1
 
 También se superaron:
 
-- 23 pruebas automáticas.
+- 24 pruebas automáticas.
 - Pruebas específicas de migración, plantillas, fase inteligente, transferencia
   de balón, reflejo y duración de acciones.
 - Renderizado de los cinco componentes principales.
@@ -250,17 +254,17 @@ También se superaron:
 Dentro de la carpeta `release`:
 
 ```text
-ScoutAnalyzer-0.5.0-mac-arm64.dmg
-ScoutAnalyzer-0.5.0-win-x64.exe
-ScoutAnalyzer-0.5.0-win-x64.zip
+ScoutAnalyzer-0.5.1-mac-arm64.dmg
+ScoutAnalyzer-0.5.1-win-x64.exe
+ScoutAnalyzer-0.5.1-win-x64.zip
 ```
 
 Huellas SHA-256:
 
 ```text
-3e4622e974c71361ec9111ca87c345b1b73832f0a8467d0f67f2dce1f9408e74  ScoutAnalyzer-0.5.0-mac-arm64.dmg
-8fa6c5816e434af6fcbf583b64a8069616a84bba2affd65a55c9ab2c92a1c522  ScoutAnalyzer-0.5.0-win-x64.exe
-bccbcd5902a35e775407a259e0aeb743c331b7ccedccd2cebdc6c96ee285be77  ScoutAnalyzer-0.5.0-win-x64.zip
+7596db79983af53b339fac9663b1c600bcfc4044707b4eee68334e6e181e715c  ScoutAnalyzer-0.5.1-mac-arm64.dmg
+17dc3a09ece920beedad44098086add3ced74e0e1eb1100c4b30023e9f9b92aa  ScoutAnalyzer-0.5.1-win-x64.exe
+219324825feb313bb9c01988253150c2355cc940548863a8f55aeacd8d4408a3  ScoutAnalyzer-0.5.1-win-x64.zip
 ```
 
 El instalador de Windows fue empaquetado y comprobado internamente desde macOS,
@@ -305,7 +309,7 @@ separado si también se quieren utilizar en el otro ordenador.
 Quiero continuar el desarrollo de ScoutAnalyzer desde otro ordenador.
 
 Lee completamente el documento de traspaso que he adjuntado antes de modificar
-nada. La versión actual es la 0.5.0. Conserva las funciones existentes y no
+nada. La versión actual es la 0.5.1. Conserva las funciones existentes y no
 elimines datos, instaladores ni cambios ya implementados.
 
 Primero revisa la carpeta del proyecto y confirma:

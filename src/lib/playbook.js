@@ -1,7 +1,15 @@
 export const DEFAULT_COURT_STYLE = {
+  background: "#e8bf87",
+  outOfBounds: "#e8bf87",
+  lines: "#ffffff",
+  paint: "#e8bf87",
+  accent: "#0f9d8f",
+  lineWidth: 3.5
+};
+
+const LEGACY_COURT_STYLE = {
   background: "#c98f55",
   outOfBounds: "#102133",
-  lines: "#ffffff",
   paint: "#b9783e",
   accent: "#ff6b35",
   lineWidth: 3
@@ -164,7 +172,7 @@ export function createPlaybookPlay(
 
 export function createBlankPlaybook() {
   return {
-    version: 2,
+    version: 3,
     folders: [
       {
         id: "folder-general",
@@ -174,6 +182,61 @@ export function createBlankPlaybook() {
     ],
     plays: [createPlaybookPlay()]
   };
+}
+
+function transposeLegacyHalfCourtItem(item) {
+  const { width, height } = courtDimensions("half");
+  const next = { ...item };
+  if (
+    Number.isFinite(Number(next.x)) &&
+    Number.isFinite(Number(next.y))
+  ) {
+    const previousX = Number(next.x);
+    const previousY = Number(next.y);
+    next.x = (previousY / height) * width;
+    next.y = (previousX / width) * height;
+  }
+  if (
+    Number.isFinite(Number(next.x1)) &&
+    Number.isFinite(Number(next.y1))
+  ) {
+    const previousX = Number(next.x1);
+    const previousY = Number(next.y1);
+    next.x1 = (previousY / height) * width;
+    next.y1 = (previousX / width) * height;
+  }
+  if (
+    Number.isFinite(Number(next.x2)) &&
+    Number.isFinite(Number(next.y2))
+  ) {
+    const previousX = Number(next.x2);
+    const previousY = Number(next.y2);
+    next.x2 = (previousY / height) * width;
+    next.y2 = (previousX / width) * height;
+  }
+  return next;
+}
+
+function transposeLegacyHalfCourtPhase(phase) {
+  return {
+    ...phase,
+    objects: (phase.objects || []).map(transposeLegacyHalfCourtItem),
+    actions: (phase.actions || []).map(transposeLegacyHalfCourtItem)
+  };
+}
+
+function migrateCourtStyle(style = {}, updateLegacyDefaults = false) {
+  const next = { ...DEFAULT_COURT_STYLE, ...style };
+  if (!updateLegacyDefaults) return next;
+  for (const key of Object.keys(LEGACY_COURT_STYLE)) {
+    if (
+      style[key] === undefined ||
+      style[key] === LEGACY_COURT_STYLE[key]
+    ) {
+      next[key] = DEFAULT_COURT_STYLE[key];
+    }
+  }
+  return next;
 }
 
 function normalizePhase(phase = {}, index = 0, legacyObjects = []) {
@@ -208,6 +271,7 @@ function normalizePhase(phase = {}, index = 0, legacyObjects = []) {
 
 export function migratePlaybook(playbook) {
   if (!playbook?.plays?.length) return createBlankPlaybook();
+  const updateLegacyCourt = (Number(playbook.version) || 1) < 3;
   const folders = playbook.folders?.length
     ? playbook.folders.map((folder) => ({
         id: folder.id || newId(),
@@ -216,7 +280,7 @@ export function migratePlaybook(playbook) {
       }))
     : [{ id: "folder-general", name: "General", teamId: "" }];
   return {
-    version: 2,
+    version: 3,
     folders,
     plays: playbook.plays.map((play, index) => {
       const folderId = play.folderId || folders[0].id;
@@ -224,14 +288,18 @@ export function migratePlaybook(playbook) {
       const sourcePhases = play.phases?.length
         ? play.phases
         : [{ name: "Fase 1", objects: play.objects || [] }];
+      const court = ["half", "full", "full-vertical"].includes(play.court)
+        ? play.court
+        : "half";
+      const normalizedPhases = sourcePhases.map((phase, phaseIndex) =>
+        normalizePhase(phase, phaseIndex, play.objects)
+      );
       return {
         ...base,
         ...play,
         id: play.id || base.id,
         folderId,
-        court: ["half", "full", "full-vertical"].includes(play.court)
-          ? play.court
-          : "half",
+        court,
         templateId: play.templateId || "empty",
         description: play.description || "",
         notes: play.notes || "",
@@ -243,11 +311,15 @@ export function migratePlaybook(playbook) {
           ...attachment,
           id: attachment.id || newId()
         })),
-        courtStyle: { ...DEFAULT_COURT_STYLE, ...play.courtStyle },
+        courtStyle: migrateCourtStyle(
+          play.courtStyle,
+          updateLegacyCourt
+        ),
         outputSettings: cloneOutputSettings(play.outputSettings),
-        phases: sourcePhases.map((phase, phaseIndex) =>
-          normalizePhase(phase, phaseIndex, play.objects)
-        )
+        phases:
+          updateLegacyCourt && court === "half"
+            ? normalizedPhases.map(transposeLegacyHalfCourtPhase)
+            : normalizedPhases
       };
     })
   };
@@ -363,6 +435,12 @@ function defensePositions(templateId) {
 
 function mapTemplatePoint(point, court) {
   const { width, height } = courtDimensions(court);
+  if (court === "half") {
+    return {
+      x: 40 + point[1] * (width - 80),
+      y: 35 + point[0] * (height - 70)
+    };
+  }
   const vertical = court === "full-vertical";
   const usableWidth = vertical ? width - 70 : width - 80;
   const usableHeight = vertical ? height / 2 - 50 : height - 70;

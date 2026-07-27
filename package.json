@@ -1,6 +1,6 @@
 {
   "name": "scout-analyzer",
-  "version": "0.5.0",
+  "version": "0.5.1",
   "private": true,
   "author": "ScoutAnalyzer",
   "description": "Analizador de vídeo y etiquetado para scouting de baloncesto",
