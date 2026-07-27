@@ -1,7 +1,7 @@
-# Contexto permanente de ScoutAnalyzer
+# Contexto permanente de Tactovia
 
-Última actualización: 27 de julio de 2026
-Versión estable: 0.9.0
+Última actualización: 28 de julio de 2026
+Versión estable: 0.10.0
 
 ## Objetivo
 
@@ -17,10 +17,15 @@ informes y diseñar jugadas en un Playbook.
   demo. No se presenta como autenticación cloud.
 - Al iniciar se selecciona Baloncesto y se elige entre nueva sesión, continuar
   el autoguardado o abrir un archivo.
-- Sistema visual 0.7 con navegación flotante, superficies translúcidas,
-  controles compactos y jerarquía unificada.
-- Temas automático, claro y oscuro; cuatro paletas independientes —Arena,
-  Océano, Bosque y Violeta— y preferencias conservadas localmente.
+- Identidad completa Tactovia: descriptor **Plataforma de análisis deportivo**,
+  claim **Ve el juego. Decide mejor.** y claim funcional **Del vídeo a la
+  decisión.**
+- Sistema visual con Game Ink, Strategic Teal, Signal Lime, Analysis White y
+  Slate, aplicado de forma centralizada y sin alterar la densidad operativa.
+- Temas automático, claro y oscuro. Las antiguas preferencias de paleta se
+  migran a Tactovia y permanecen guardadas localmente.
+- Logos oficiales adaptativos, favicon, introducción animada respetuosa con
+  movimiento reducido, iconos de escritorio y sección “Acerca de Tactovia”.
 - Biblioteca histórica SQLite con competición, temporada, equipos, plantillas,
   jugadores, partidos, análisis y acciones relacionadas.
 - Catálogo precargado de Primera División Masculina GESA FBRM 2026/27 con 16
@@ -73,42 +78,44 @@ informes y diseñar jugadas en un Playbook.
   metadatos de versiones anteriores.
 - `release` conserva únicamente el DMG de macOS, el instalador EXE de Windows y
   el ZIP portátil de Windows de la versión actual.
-- macOS mueve a la Papelera otras copias instaladas de ScoutAnalyzer con una
-  versión igual o anterior cuando se abre la nueva aplicación instalada.
+- macOS mueve a la Papelera otras copias del mismo producto con una versión
+  igual o anterior cuando se abre Tactovia desde Aplicaciones, aunque la copia
+  anterior todavía se llame ScoutAnalyzer.
 - Windows actualiza siempre el mismo destino e identificador de instalación.
 - El proceso de empaquetado ya no depende de rutas personales del ordenador.
+- El nombre público y los paquetes son Tactovia, pero el `appId`, la carpeta
+  `scout-analyzer`, la base `scoutanalyzer.db`, las claves locales y la extensión
+  `.scout.json` se conservan para no romper los datos existentes.
 
 ## Verificación estable
 
-- 44 pruebas automáticas superadas.
+- 45 pruebas automáticas superadas.
 - Prueba de base de datos dentro de Electron superada:
   `DATABASE_OK version=2 teams=2 players=1 matches=1 events=1 privacy=private`.
 - Renderizado aislado de diez paneles y flujos principales superado.
 - Prueba multimedia real superada:
-  `VIDEO_SEEK_OK duration=12.00 seek=7.25 playback=8.46 rate=2x ranges=1`.
-- Compilación de producción 0.9.0 superada.
-- Revisión visual de acceso demo, Etiquetado, pista, Estadísticas, Biblioteca,
-  Importación, Informes y Perfil/Ajustes en temas claro y oscuro superada a
-  1280 y 1024 px, sin desbordamiento horizontal.
-- Las cuatro paletas visuales y el doble clic para deshacer zona se comprobaron
-  de forma interactiva.
-- DMG 0.9.0 generado, validado mediante `hdiutil verify` y comprobado
-  internamente con versión 0.9.0.
-- Aplicación 0.9.0 instalada y abierta en macOS Apple Silicon.
-- Copia previa de la base real conservada en
-  `Library/Application Support/scout-analyzer/backups/2026-07-27-before-0.9.0`.
-- La biblioteca real migra al esquema 2 sin borrar
-  equipos, análisis ni acciones del usuario. Tras abrir 0.9.0 conserva 20
-  equipos, 193 jugadores y dos eventos; además incorpora el autoguardado
-  significativo actual y queda con 12 partidos y cinco análisis.
-- EXE y ZIP de Windows 0.9.0 generados y verificados estructuralmente; el
-  `app.asar` incluido declara la versión 0.9.0. La prueba física en Windows
+  `VIDEO_SEEK_OK duration=12.00 seek=7.25 playback=8.45 rate=2x ranges=1`.
+- Compilación de producción 0.10.0 superada.
+- Acceso, cabecera, introducción, Perfil/Ajustes y “Acerca de” revisados en
+  claro y oscuro a 1280 y 1024 px, sin desbordamiento horizontal ni deformación
+  de logotipos.
+- Favicon de 16 y 32 px e iconos ICNS, ICO y PNG comprobados.
+- La base real se abrió sobre una copia consistente y fue reconocida sin perder
+  contenido: esquema 2, 20 equipos, 193 jugadores, 13 partidos, seis análisis y
+  48 eventos.
+- DMG 0.10.0 generado, validado con `hdiutil verify` e inspeccionado con nombre
+  Tactovia, versión 0.10.0, icono oficial y bundle ID compatible.
+- EXE y ZIP de Windows 0.10.0 generados. El ZIP contiene `Tactovia.exe`,
+  `app.asar`, FFmpeg y los recursos de marca; la prueba física en Windows
   continúa pendiente.
+- `release` contiene únicamente los tres entregables de la versión actual.
 
 ## Referencias
 
 - Historial detallado: `TRASPASO-SCOUTANALYZER-0.7.0.md`.
-- Historial de esta versión: `TRASPASO-SCOUTANALYZER-0.9.0.md`.
+- Historial anterior: `TRASPASO-SCOUTANALYZER-0.9.0.md`.
+- Historial de esta versión: `TRASPASO-TACTOVIA-0.10.0.md`.
+- Implementación y compatibilidad de marca: `BRAND_IMPLEMENTATION.md`.
 - Sistema visual: `docs/SISTEMA-VISUAL-0.7.md`.
 - Arquitectura de datos: `docs/BASE-DATOS-0.6.md`.
 - Catálogo y procedencia: `docs/CATALOGO-FBRM-2026-27.md`.

@@ -1,8 +1,12 @@
-# ScoutAnalyzer 0.9.0
+# Tactovia 0.10.0
 
-Aplicación de escritorio para analizar vídeo local y etiquetar acciones de
-baloncesto. La primera versión funciona sin conexión y mantiene tanto el vídeo
-como los análisis en el ordenador.
+**Plataforma de análisis deportivo.**
+
+Tactovia es una aplicación de escritorio para analizar vídeo local y etiquetar
+acciones de baloncesto. Funciona sin conexión y mantiene tanto el vídeo como
+los análisis en el ordenador.
+
+**Ve el juego. Decide mejor.**
 
 ## Funciones incluidas
 
@@ -11,8 +15,8 @@ como los análisis en el ordenador.
   registro, sin enviar credenciales fuera del ordenador.
 - Selección inicial del deporte y flujo para crear, continuar o abrir una
   sesión de análisis en cada arranque.
-- Sistema visual renovado con modo automático, claro y oscuro y cuatro paletas:
-  Arena, Océano, Bosque y Violeta.
+- Sistema de marca Tactovia con modo automático, claro y oscuro, Game Ink,
+  Strategic Teal y Signal Lime reservado para selección y reproducción activa.
 - Preferencia de apariencia persistente y adaptación en tiempo real al tema de
   Windows o macOS.
 - Navegación flotante, superficies translúcidas, controles compactos y
@@ -77,31 +81,31 @@ como los análisis en el ordenador.
 
 El instalador generado para Apple Silicon está en:
 
-`release/ScoutAnalyzer-0.9.0-mac-arm64.dmg`
+`release/Tactovia-0.10.0-mac-arm64.dmg`
 
 1. Abre el DMG.
-2. Arrastra ScoutAnalyzer a Aplicaciones.
+2. Arrastra Tactovia a Aplicaciones.
 3. Al no estar firmado todavía con una cuenta de desarrollador de Apple, macOS
    puede mostrar un aviso. Pulsa Control y haz clic sobre la aplicación, elige
    **Abrir** y confirma.
-4. Comprueba que en la esquina superior izquierda aparece **Versión 0.9.0**.
+4. Comprueba que en la esquina superior izquierda aparece **Versión 0.10.0**.
 
 Al iniciar una actualización instalada en Aplicaciones, las copias anteriores
-identificadas como ScoutAnalyzer se mueven a la Papelera. El DMG debe seguir
-instalándose con el nombre `ScoutAnalyzer.app`.
+identificadas mediante el mismo bundle ID se mueven a la Papelera, aunque aún
+se llamen ScoutAnalyzer. El nuevo DMG se instala como `Tactovia.app`.
 
 ## Instalar en Windows
 
 El instalador generado para Windows x64 está en:
 
-`release/ScoutAnalyzer-0.9.0-win-x64.exe`
+`release/Tactovia-0.10.0-win-x64.exe`
 
 También existe una versión portable:
 
-`release/ScoutAnalyzer-0.9.0-win-x64.zip`
+`release/Tactovia-0.10.0-win-x64.zip`
 
 En la versión portable hay que descomprimir primero todo el archivo y después
-abrir `ScoutAnalyzer.exe`. Como el programa todavía no dispone de certificado
+abrir `Tactovia.exe`. Como el programa todavía no dispone de certificado
 de firma, Windows SmartScreen puede mostrar un aviso de editor desconocido.
 
 ## Primer análisis
@@ -184,8 +188,9 @@ elegir:
 La elección se guarda localmente. Los vídeos, la pista y los documentos del
 Playbook conservan sus fondos específicos para no alterar el contenido.
 
-La paleta de color puede cambiarse por separado desde **Perfil y ajustes** sin
-alterar el modo claro u oscuro.
+La identidad cromática es común a ambos modos. Strategic Teal organiza las
+acciones y Signal Lime se reserva para foco, selección y reproducción activa.
+La guía completa de integración está en `BRAND_IMPLEMENTATION.md`.
 
 Atajos generales:
 
@@ -244,5 +249,5 @@ empaquetado y verificado estructuralmente desde macOS; su prueba de ejecución
 debe hacerse en un ordenador Windows x64.
 
 Antes de distribuir la aplicación comercialmente deben añadirse firma y
-notarización de los instaladores, una identidad visual definitiva y una revisión
-de las licencias del binario de FFmpeg incluido.
+notarización de los instaladores, validación legal del nombre y el símbolo y una
+revisión de las licencias del binario de FFmpeg incluido.

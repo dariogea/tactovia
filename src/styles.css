@@ -81,45 +81,8 @@ textarea:focus-visible,
   gap: 11px;
 }
 
-.brand-mark {
-  position: relative;
-  width: 38px;
-  height: 38px;
-  overflow: hidden;
-  border-radius: 50%;
-  background: var(--orange);
-  box-shadow: 0 0 28px rgba(255, 107, 53, 0.23);
-}
-
-.brand-mark::before,
-.brand-mark::after,
-.brand-mark span {
-  position: absolute;
-  content: "";
-  border: 2px solid rgba(20, 25, 32, 0.8);
-  border-radius: 50%;
-}
-
-.brand-mark::before {
-  inset: -3px 15px;
-}
-
-.brand-mark::after {
-  inset: 15px -3px;
-}
-
-.brand-mark span {
-  inset: 5px -12px;
-  transform: rotate(45deg);
-}
-
-.brand strong,
 .brand small {
   display: block;
-}
-
-.brand strong {
-  letter-spacing: -0.02em;
 }
 
 .brand small {
@@ -4832,39 +4795,6 @@ textarea:focus-visible,
   -webkit-backdrop-filter: blur(28px) saturate(150%);
 }
 
-.brand {
-  gap: 12px;
-}
-
-.brand-mark {
-  width: 39px;
-  height: 39px;
-  background:
-    linear-gradient(145deg, #ff865f, var(--accent));
-  box-shadow:
-    0 8px 20px rgba(240, 82, 45, 0.22),
-    inset 0 1px rgba(255, 255, 255, 0.32);
-}
-
-.brand-mark::before,
-.brand-mark::after,
-.brand-mark span {
-  border-color: rgba(20, 22, 25, 0.72);
-}
-
-.brand strong {
-  color: var(--text);
-  font-size: 15px;
-  font-weight: 760;
-  letter-spacing: -0.025em;
-}
-
-.brand small {
-  color: var(--muted);
-  font-size: 9px;
-  letter-spacing: 0.14em;
-}
-
 .project-title {
   width: min(520px, 100%);
   min-height: 42px;
@@ -6154,42 +6084,6 @@ html[data-theme="light"] .conflict-badge {
   border: 2px solid rgba(255, 255, 255, 0.18);
   border-radius: 50%;
   content: "";
-}
-
-.access-brand {
-  position: relative;
-  z-index: 2;
-  display: flex;
-  align-items: center;
-  gap: 13px;
-}
-
-.access-brand .brand-mark {
-  background: #ff6842;
-}
-
-.access-story .access-brand .brand-mark {
-  background: #ffffff;
-  box-shadow: 0 14px 34px rgba(116, 32, 17, 0.16);
-}
-
-.access-brand > div:last-child {
-  display: grid;
-  gap: 2px;
-}
-
-.access-brand strong {
-  font-size: 18px;
-  letter-spacing: -0.03em;
-}
-
-.access-brand > div:last-child > span {
-  color: var(--muted);
-  font-size: 11px;
-}
-
-.access-story .access-brand > div:last-child > span {
-  color: rgba(255, 255, 255, 0.76);
 }
 
 .access-story-copy {
@@ -7818,67 +7712,435 @@ html[data-theme="light"] .conflict-badge {
   }
 }
 
-/* Producto 0.9 · flujo, temas y entregables */
+/* Tactovia 0.10 · sistema de marca */
 
-html[data-palette="arena"] {
-  --accent: #ff6842;
-  --accent-strong: #ff7a59;
-  --accent-soft: rgba(255, 104, 66, 0.13);
-  --orange: #ff6842;
-  --teal: #37cfbe;
-  --teal-soft: rgba(55, 207, 190, 0.12);
-  --focus-ring: rgba(255, 104, 66, 0.28);
+:root,
+html[data-theme="dark"],
+html[data-palette="tactovia"] {
+  --brand-game-ink: #0b1218;
+  --brand-strategic-teal: #08756d;
+  --brand-signal-lime: #bdeb62;
+  --brand-analysis-white: #f4f7f5;
+  --brand-slate: #64717c;
+  --bg: #0b1218;
+  --canvas: #0b1218;
+  --panel: #111b22;
+  --panel-2: #172229;
+  --panel-3: #1d2a32;
+  --surface: #111b22;
+  --surface-raised: #172229;
+  --surface-soft: rgba(244, 247, 245, 0.045);
+  --surface-hover: rgba(244, 247, 245, 0.075);
+  --control-bg: #101920;
+  --text: #f4f7f5;
+  --text-soft: #dce4e1;
+  --muted: #98a4aa;
+  --line: rgba(244, 247, 245, 0.11);
+  --line-strong: rgba(244, 247, 245, 0.2);
+  --glass: rgba(11, 18, 24, 0.94);
+  --glass-strong: #0b1218;
+  --accent: #08756d;
+  --accent-strong: #0a8a80;
+  --accent-soft: rgba(8, 117, 109, 0.16);
+  --orange: #08756d;
+  --teal: #08756d;
+  --teal-soft: rgba(8, 117, 109, 0.14);
+  --signal: #bdeb62;
+  --focus-ring: rgba(189, 235, 98, 0.42);
+  --inverted: #f4f7f5;
+  --shadow-sm: 0 12px 34px rgba(0, 0, 0, 0.2);
+  --shadow-md: 0 28px 72px rgba(0, 0, 0, 0.3);
 }
 
-html[data-palette="ocean"] {
-  --accent: #3b82f6;
-  --accent-strong: #60a5fa;
-  --accent-soft: rgba(59, 130, 246, 0.14);
-  --orange: #3b82f6;
-  --teal: #22d3ee;
-  --teal-soft: rgba(34, 211, 238, 0.12);
-  --focus-ring: rgba(59, 130, 246, 0.28);
+html[data-theme="light"] {
+  --bg: #f4f7f5;
+  --canvas: #f4f7f5;
+  --panel: #ffffff;
+  --panel-2: #edf3f0;
+  --panel-3: #e5ede9;
+  --surface: #ffffff;
+  --surface-raised: #ffffff;
+  --surface-soft: rgba(11, 18, 24, 0.035);
+  --surface-hover: rgba(8, 117, 109, 0.065);
+  --control-bg: #f4f7f5;
+  --text: #0b1218;
+  --text-soft: #29353d;
+  --muted: #64717c;
+  --line: rgba(11, 18, 24, 0.105);
+  --line-strong: rgba(11, 18, 24, 0.18);
+  --glass: rgba(244, 247, 245, 0.94);
+  --glass-strong: #f4f7f5;
+  --accent: #08756d;
+  --accent-strong: #065f59;
+  --accent-soft: rgba(8, 117, 109, 0.1);
+  --orange: #08756d;
+  --teal: #08756d;
+  --teal-soft: rgba(8, 117, 109, 0.09);
+  --signal: #bdeb62;
+  --focus-ring: rgba(8, 117, 109, 0.24);
+  --inverted: #ffffff;
+  --shadow-sm: 0 12px 32px rgba(35, 55, 52, 0.07);
+  --shadow-md: 0 30px 80px rgba(35, 55, 52, 0.11);
 }
 
-html[data-palette="forest"] {
-  --accent: #16a34a;
-  --accent-strong: #22c55e;
-  --accent-soft: rgba(22, 163, 74, 0.14);
-  --orange: #16a34a;
-  --teal: #d6a329;
-  --teal-soft: rgba(214, 163, 41, 0.12);
-  --focus-ring: rgba(22, 163, 74, 0.28);
+body {
+  font-family:
+    Inter, "SF Pro Text", ui-sans-serif, system-ui, -apple-system,
+    BlinkMacSystemFont, "Segoe UI", sans-serif;
 }
 
-html[data-palette="violet"] {
-  --accent: #8b5cf6;
-  --accent-strong: #a78bfa;
-  --accent-soft: rgba(139, 92, 246, 0.14);
-  --orange: #8b5cf6;
-  --teal: #ec4899;
-  --teal-soft: rgba(236, 72, 153, 0.12);
-  --focus-ring: rgba(139, 92, 246, 0.28);
+h1,
+h2,
+h3,
+.eyebrow,
+.button,
+.view-tabs button {
+  font-family:
+    "SF Pro Display", Inter, ui-sans-serif, system-ui, -apple-system,
+    BlinkMacSystemFont, "Segoe UI", sans-serif;
 }
 
-html[data-theme="light"][data-palette="ocean"] {
-  --accent: #2563eb;
-  --accent-strong: #3b82f6;
-  --teal: #0891b2;
+::selection {
+  color: var(--brand-game-ink);
+  background: var(--brand-signal-lime);
 }
 
-html[data-theme="light"][data-palette="forest"] {
-  --accent: #15803d;
-  --accent-strong: #16a34a;
-  --teal: #9a7214;
+button:focus-visible,
+input:focus-visible,
+select:focus-visible,
+textarea:focus-visible,
+[tabindex]:focus-visible {
+  outline-color: var(--brand-signal-lime);
+  box-shadow: 0 0 0 1px var(--brand-game-ink);
 }
 
-html[data-theme="light"][data-palette="violet"] {
-  --accent: #7c3aed;
-  --accent-strong: #8b5cf6;
-  --teal: #be185d;
+.app-shell,
+.access-screen {
+  background: var(--canvas);
 }
 
-.brand-mark,
+.tactovia-logo {
+  display: block;
+  max-width: 100%;
+  object-fit: contain;
+}
+
+.tactovia-logo-adaptive {
+  position: relative;
+  display: block;
+}
+
+.tactovia-logo-adaptive img {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  object-position: left center;
+}
+
+.tactovia-logo-adaptive .logo-for-dark {
+  display: none;
+}
+
+html[data-theme="dark"] .tactovia-logo-adaptive .logo-for-light {
+  display: none;
+}
+
+html[data-theme="dark"] .tactovia-logo-adaptive .logo-for-dark {
+  display: block;
+}
+
+.topbar {
+  border-color: var(--line);
+  background: var(--glass-strong);
+  backdrop-filter: none;
+  -webkit-backdrop-filter: none;
+}
+
+.brand {
+  display: grid;
+  grid-template-columns: minmax(128px, 166px);
+  align-content: center;
+  gap: 2px;
+}
+
+.topbar-brand-logo {
+  width: 166px;
+  height: 30px;
+}
+
+.brand > small {
+  padding-left: 32px;
+  color: var(--muted);
+  font-size: 9px;
+  letter-spacing: 0.13em;
+  text-transform: uppercase;
+}
+
+.button.primary {
+  color: var(--brand-analysis-white);
+  background: var(--brand-strategic-teal);
+  box-shadow: none;
+}
+
+.button.primary:hover {
+  color: var(--brand-analysis-white);
+  background: var(--accent-strong);
+}
+
+.button.secondary,
+.demo-access-button {
+  border-color: color-mix(in srgb, var(--brand-strategic-teal) 55%, var(--line));
+  color: var(--text);
+  background: var(--accent-soft);
+}
+
+.view-tabs button.active {
+  border-color: var(--brand-signal-lime);
+  color: var(--text);
+}
+
+.autosave-status i,
+.database-status.ready i {
+  background: var(--brand-signal-lime);
+  box-shadow: 0 0 8px rgba(189, 235, 98, 0.55);
+}
+
+.tool-button.play,
+.playback-button-row .tool-button.play {
+  color: var(--brand-game-ink);
+  background: var(--brand-signal-lime);
+}
+
+.video-scrubber,
+.audio-control input,
+input[type="range"] {
+  accent-color: var(--brand-signal-lime);
+}
+
+.tag-button.recording,
+.session-choice.featured,
+.sport-card:not(.disabled):hover,
+.theme-choice-card.active,
+.palette-choice-card.active {
+  border-color: var(--brand-signal-lime);
+}
+
+.access-layout {
+  border-color: var(--line);
+  background: var(--surface);
+}
+
+.access-story {
+  color: var(--brand-analysis-white);
+  background: var(--brand-game-ink);
+}
+
+.access-story::after {
+  border-color: rgba(8, 117, 109, 0.42);
+}
+
+.access-court-art {
+  color: var(--brand-strategic-teal);
+  opacity: 0.62;
+}
+
+.access-story-copy .eyebrow {
+  color: var(--brand-signal-lime);
+}
+
+.access-story-copy h1 {
+  max-width: 760px;
+  color: var(--brand-analysis-white);
+  font-size: clamp(46px, 5.6vw, 78px);
+  letter-spacing: -0.055em;
+}
+
+.access-story-copy p {
+  color: rgba(244, 247, 245, 0.78);
+}
+
+.access-feature-row span {
+  border-color: rgba(244, 247, 245, 0.2);
+  color: var(--brand-analysis-white);
+  background: rgba(244, 247, 245, 0.045);
+}
+
+.access-brand {
+  position: relative;
+  z-index: 2;
+  display: grid;
+  justify-items: start;
+  gap: 9px;
+  width: fit-content;
+}
+
+.access-brand-logo {
+  width: 190px;
+  height: 65px;
+  object-position: left center;
+}
+
+.access-brand > span {
+  color: var(--brand-slate);
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.075em;
+  text-transform: uppercase;
+}
+
+.access-brand.inverse > span {
+  color: rgba(244, 247, 245, 0.62);
+}
+
+.access-step,
+.known-account > span,
+.profile-avatar {
+  color: var(--brand-analysis-white);
+  background: var(--brand-strategic-teal);
+}
+
+.brand-palette-grid {
+  grid-template-columns: minmax(0, 560px);
+}
+
+.brand-palette-grid .palette-choice-card {
+  cursor: default;
+}
+
+.brand-palette-grid .palette-swatches i:nth-child(3) {
+  box-shadow: inset 0 0 0 1px rgba(11, 18, 24, 0.12);
+}
+
+.brand-palette-grid .palette-choice-card > em {
+  width: auto;
+  color: var(--brand-strategic-teal);
+  font-size: 11px;
+  font-style: normal;
+  font-weight: 800;
+  text-transform: uppercase;
+}
+
+.brand-about-card {
+  display: grid;
+  grid-template-columns: minmax(190px, 280px) minmax(260px, 1fr) 160px;
+  align-items: center;
+  gap: 28px;
+  overflow: hidden;
+  padding: 0;
+}
+
+.brand-about-logo {
+  display: grid;
+  min-height: 180px;
+  place-items: center;
+  padding: 32px;
+  background: var(--brand-game-ink);
+}
+
+.brand-about-logo .tactovia-logo {
+  width: 230px;
+}
+
+.brand-about-copy {
+  padding: 28px 0;
+}
+
+.brand-about-copy h2,
+.brand-about-copy p {
+  margin: 6px 0;
+}
+
+.brand-about-copy p {
+  max-width: 660px;
+  color: var(--muted);
+}
+
+.brand-about-copy > strong {
+  display: inline-block;
+  margin-top: 12px;
+  color: var(--brand-strategic-teal);
+}
+
+html[data-theme="dark"] .brand-about-copy .eyebrow {
+  color: var(--muted);
+}
+
+html[data-theme="dark"] .brand-about-copy > strong {
+  color: var(--brand-signal-lime);
+}
+
+.brand-about-version {
+  display: grid;
+  gap: 4px;
+  padding: 24px 28px 24px 0;
+}
+
+.brand-about-version span,
+.brand-about-version small {
+  color: var(--muted);
+}
+
+.brand-about-version strong {
+  font-size: 24px;
+}
+
+.brand-splash {
+  position: fixed;
+  z-index: 10000;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  padding: 30px;
+  pointer-events: none;
+  background: var(--brand-game-ink);
+  animation: tactovia-splash-out 360ms ease 1.48s forwards;
+}
+
+.brand-splash img {
+  width: min(620px, 86vw);
+  max-height: 240px;
+}
+
+@keyframes tactovia-splash-out {
+  to {
+    visibility: hidden;
+    opacity: 0;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .brand-splash {
+    animation-duration: 120ms;
+    animation-delay: 500ms;
+  }
+}
+
+@media (max-width: 980px) {
+  .topbar-brand-logo {
+    width: 142px;
+  }
+
+  .brand {
+    grid-template-columns: 142px;
+  }
+
+  .brand-about-card {
+    grid-template-columns: 1fr;
+  }
+
+  .brand-about-logo {
+    min-height: 130px;
+  }
+
+  .brand-about-copy,
+  .brand-about-version {
+    padding: 0 28px 24px;
+  }
+}
+
+/* Flujos de acceso, sesión y entregables */
+
 .button.primary,
 .access-step,
 .sport-card > span,
@@ -9497,5 +9759,32 @@ html[data-theme="light"][data-palette="violet"] {
   .player-detail-modal > footer {
     align-items: stretch;
     flex-direction: column;
+  }
+}
+
+/* Tactovia · precedencia final sobre estilos históricos */
+
+html[data-palette="tactovia"] .palette-card-grid.brand-palette-grid {
+  grid-template-columns: minmax(0, 560px);
+}
+
+html[data-palette="tactovia"] .report-center-hero,
+html[data-palette="tactovia"] .database-hero,
+html[data-palette="tactovia"] .report-hero,
+html[data-palette="tactovia"] .player-directory-intro {
+  background: var(--surface);
+}
+
+html[data-palette="tactovia"] .report-section-tabs button.active {
+  border-color: var(--brand-signal-lime);
+}
+
+@media (max-width: 980px) {
+  .topbar .brand {
+    grid-template-columns: 142px;
+  }
+
+  .topbar-brand-logo {
+    width: 142px;
   }
 }

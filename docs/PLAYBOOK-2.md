@@ -1,7 +1,7 @@
 # Guía del Playbook 2.0
 
 El Playbook permite diseñar, animar, explicar y exportar jugadas sin salir de
-ScoutAnalyzer. Todo se guarda dentro del análisis local `.scout.json`.
+Tactovia. Todo se guarda dentro del análisis local `.scout.json`.
 
 ## Crear una jugada
 
@@ -91,5 +91,5 @@ Formatos:
 - **WebM**: vídeo animado de la jugada completa.
 - **Copiar resumen**: texto preparado para compartir por mensajería o correo.
 
-Los enlaces públicos requerirán la futura sincronización de ScoutAnalyzer. En
+Los enlaces públicos requerirán la futura sincronización de Tactovia. En
 esta versión, todos los datos siguen siendo locales.

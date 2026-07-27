@@ -5,9 +5,11 @@ import {
   passwordDigest,
   saveLocalAccount
 } from "../lib/account.js";
+import { BrandAbout } from "./Brand.jsx";
 import { SettingsPanel } from "./SettingsPanel.jsx";
 
 export function ProfilePanel({
+  appVersion = "",
   account,
   onAccountChange,
   onLogout,
@@ -98,6 +100,7 @@ export function ProfilePanel({
         paletteMode={paletteMode}
         onPaletteModeChange={onPaletteModeChange}
       />
+      <BrandAbout version={appVersion} />
     </section>
   );
 }

@@ -415,7 +415,7 @@ export function StatsPanel({ project }) {
           </div>
         )}
         <footer className="bi-report-footer">
-          <span>ScoutAnalyzer · Modelo local</span>
+          <span>Tactovia · Modelo local</span>
           <span>Última actualización: {new Intl.DateTimeFormat("es-ES", { dateStyle: "medium", timeStyle: "short" }).format(new Date(project.updatedAt || Date.now()))}</span>
         </footer>
       </div>

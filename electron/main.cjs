@@ -17,9 +17,16 @@ const {
 const { createDatabaseService } = require("./database.cjs");
 const {
   findMacAppBundle,
-  findPreviousMacApplications
+  findPreviousMacApplications,
+  legacyUserDataDirectory
 } = require("./installations.cjs");
 const { createMediaResponse } = require("./media.cjs");
+
+// The public product is now Tactovia, but the legacy userData directory remains
+// authoritative so existing profiles, preferences, autosaves and databases are
+// discovered without requiring a risky copy or move.
+app.setPath("userData", legacyUserDataDirectory(app.getPath("appData")));
+app.setName("Tactovia");
 
 protocol.registerSchemesAsPrivileged([
   {
@@ -94,8 +101,15 @@ function createMainWindow() {
     height: 940,
     minWidth: 1120,
     minHeight: 720,
-    backgroundColor: "#09111d",
-    title: "ScoutAnalyzer",
+    backgroundColor: "#0B1218",
+    title: "Tactovia",
+    icon: path.join(
+      __dirname,
+      "..",
+      "build",
+      "icons",
+      "tactovia-app-icon-512.png"
+    ),
     webPreferences: {
       preload: path.join(__dirname, "preload.cjs"),
       contextIsolation: true,
@@ -138,7 +152,7 @@ async function cleanPreviousMacInstallations() {
     await dialog.showMessageBox(mainWindow, {
       type: "info",
       title: "Actualización completada",
-      message: "ScoutAnalyzer se ha actualizado correctamente.",
+      message: "Tactovia se ha actualizado correctamente.",
       detail: `Las copias anteriores se han movido a la Papelera: ${removed.join(", ")}.`,
       buttons: ["Aceptar"]
     });
@@ -240,19 +254,19 @@ function reportHtml(report) {
         <style>
           @page { size: A4; margin: 16mm; }
           * { box-sizing: border-box; }
-          body { margin: 0; color: #172033; font: 12px Arial, sans-serif; }
-          header { border-bottom: 3px solid #ea5b2a; margin-bottom: 22px; padding-bottom: 12px; }
+          body { margin: 0; color: #0B1218; font: 12px Arial, sans-serif; }
+          header { border-bottom: 3px solid #08756D; margin-bottom: 22px; padding-bottom: 12px; }
           h1 { margin: 0 0 5px; font-size: 26px; }
           h2 { font-size: 16px; margin-top: 24px; }
-          p { color: #586174; }
+          p { color: #64717C; }
           .summary { display: flex; gap: 12px; margin: 18px 0; }
           .card { border: 1px solid #d9deea; border-radius: 8px; padding: 12px; min-width: 125px; }
-          .card strong { display: block; font-size: 21px; color: #0c7b72; }
+          .card strong { display: block; font-size: 21px; color: #08756D; }
           table { border-collapse: collapse; width: 100%; margin-top: 10px; }
           th { background: #edf1f6; text-align: left; }
           th, td { border-bottom: 1px solid #dfe3eb; padding: 7px; vertical-align: top; }
           .dot { display: inline-block; width: 8px; height: 8px; border-radius: 50%; margin-right: 7px; }
-          footer { color: #7b8495; font-size: 10px; margin-top: 24px; }
+          footer { color: #64717C; font-size: 10px; margin-top: 24px; }
         </style>
       </head>
       <body>
@@ -275,7 +289,7 @@ function reportHtml(report) {
           <thead><tr><th>Tiempo</th><th>Etiqueta</th><th>Equipo</th><th>Jugador</th><th>Zona</th><th>Notas</th></tr></thead>
           <tbody>${events || '<tr><td colspan="6">Todavía no hay eventos.</td></tr>'}</tbody>
         </table>
-        <footer>Generado localmente con ScoutAnalyzer.</footer>
+        <footer>Generado localmente con Tactovia · Plataforma de análisis deportivo.</footer>
       </body>
     </html>`;
 }
@@ -389,13 +403,13 @@ function playbookHtml(play) {
         <style>
           @page { size: A4 landscape; margin: 12mm; }
           * { box-sizing: border-box; }
-          body { margin: 0; color: #172033; font: 12px Arial, sans-serif; }
-          header { border-left: 7px solid ${escapeHtml(play.teamColor || "#ea5b2a")}; padding: 4px 0 4px 14px; margin-bottom: 16px; }
+          body { margin: 0; color: #0B1218; font: 12px Arial, sans-serif; }
+          header { border-left: 7px solid ${escapeHtml(play.teamColor || "#08756D")}; padding: 4px 0 4px 14px; margin-bottom: 16px; }
           h1 { margin: 0 0 4px; font-size: 26px; }
           header p { margin: 2px 0; color: #647083; }
           h2 { margin: 0 0 10px; font-size: 17px; }
           .text-card { break-inside: avoid; margin: 0 0 12px; padding: 12px; border: 1px solid #d7dce5; border-radius: 8px; }
-          .text-card strong { display: block; margin-bottom: 6px; color: ${escapeHtml(play.teamColor || "#0f766e")}; font-size: 10px; text-transform: uppercase; }
+          .text-card strong { display: block; margin-bottom: 6px; color: ${escapeHtml(play.teamColor || "#08756D")}; font-size: 10px; text-transform: uppercase; }
           .text-card p { margin: 5px 0; white-space: pre-wrap; }
           .text-card .heading { font-size: 16px; font-weight: 700; }
           .phases { display: grid; gap: 12px; align-items: start; }
@@ -433,19 +447,19 @@ function styleWorkbookHeader(row) {
     cell.fill = {
       type: "pattern",
       pattern: "solid",
-      fgColor: { argb: "FF0F766E" }
+      fgColor: { argb: "FF08756D" }
     };
     cell.alignment = { vertical: "middle" };
   });
 }
 
 function styleTitle(cell) {
-  cell.font = { bold: true, size: 20, color: { argb: "FF172033" } };
+  cell.font = { bold: true, size: 20, color: { argb: "FF0B1218" } };
 }
 
 async function createAnalysisWorkbook(project) {
   const workbook = new ExcelJS.Workbook();
-  workbook.creator = "ScoutAnalyzer";
+  workbook.creator = "Tactovia";
   workbook.created = new Date();
   workbook.modified = new Date();
 
@@ -667,6 +681,13 @@ async function createAnalysisWorkbook(project) {
 }
 
 app.whenReady().then(() => {
+  app.setAppUserModelId("com.scoutanalyzer.desktop");
+  app.setAboutPanelOptions({
+    applicationName: "Tactovia",
+    applicationVersion: app.getVersion(),
+    version: app.getVersion(),
+    credits: "Plataforma de análisis deportivo · Ve el juego. Decide mejor."
+  });
   registerMediaProtocol();
   scoutingDatabase = createDatabaseService(
     path.join(app.getPath("userData"), "scoutanalyzer.db")
@@ -745,8 +766,8 @@ app.whenReady().then(() => {
     const stamp = new Date().toISOString().slice(0, 10);
     const result = await dialog.showSaveDialog(mainWindow, {
       title: "Crear copia de seguridad",
-      defaultPath: `ScoutAnalyzer-copia-${stamp}.db`,
-      filters: [{ name: "Base de datos ScoutAnalyzer", extensions: ["db"] }]
+      defaultPath: `Tactovia-copia-${stamp}.db`,
+      filters: [{ name: "Base de datos Tactovia", extensions: ["db"] }]
     });
     if (result.canceled || !result.filePath) return { canceled: true };
     try {
@@ -829,7 +850,7 @@ app.whenReady().then(() => {
     const result = await dialog.showOpenDialog(mainWindow, {
       title: "Abrir análisis",
       properties: ["openFile"],
-      filters: [{ name: "Análisis ScoutAnalyzer", extensions: ["scout.json"] }]
+      filters: [{ name: "Análisis Tactovia", extensions: ["scout.json"] }]
     });
     if (result.canceled || !result.filePaths[0]) return { canceled: true };
 
@@ -856,7 +877,7 @@ app.whenReady().then(() => {
       const result = await dialog.showSaveDialog(mainWindow, {
         title: "Guardar análisis",
         defaultPath: defaultName,
-        filters: [{ name: "Análisis ScoutAnalyzer", extensions: ["scout.json"] }]
+        filters: [{ name: "Análisis Tactovia", extensions: ["scout.json"] }]
       });
       if (result.canceled || !result.filePath) return { canceled: true };
       filePath = result.filePath;

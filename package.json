@@ -1,9 +1,9 @@
 {
   "name": "scout-analyzer",
-  "version": "0.9.0",
+  "version": "0.10.0",
   "private": true,
-  "author": "ScoutAnalyzer",
-  "description": "Analizador de vídeo y etiquetado para scouting de baloncesto",
+  "author": "Tactovia",
+  "description": "Tactovia · Plataforma de análisis deportivo",
   "packageManager": "pnpm@11.9.0",
   "main": "electron/main.cjs",
   "type": "module",
@@ -21,11 +21,12 @@
   },
   "build": {
     "appId": "com.scoutanalyzer.desktop",
-    "productName": "ScoutAnalyzer",
+    "productName": "Tactovia",
     "asar": true,
     "files": [
       "dist/**/*",
       "electron/**/*",
+      "build/icons/tactovia-app-icon-512.png",
       "package.json"
     ],
     "directories": {
@@ -33,6 +34,7 @@
     },
     "mac": {
       "category": "public.app-category.sports",
+      "icon": "build/icons/tactovia-macos.icns",
       "extraResources": [
         {
           "from": "vendor/ffmpeg/darwin-${arch}",
@@ -44,6 +46,7 @@
       ]
     },
     "win": {
+      "icon": "build/icons/tactovia-windows.ico",
       "extraResources": [
         {
           "from": "vendor/ffmpeg/win32-x64",
@@ -59,7 +62,9 @@
       "oneClick": false,
       "allowToChangeInstallationDirectory": false,
       "createDesktopShortcut": "always",
-      "createStartMenuShortcut": true
+      "createStartMenuShortcut": true,
+      "shortcutName": "Tactovia",
+      "uninstallDisplayName": "Tactovia"
     },
     "artifactName": "${productName}-${version}-${os}-${arch}.${ext}"
   },

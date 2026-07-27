@@ -1,4 +1,4 @@
-# Base de datos de ScoutAnalyzer 0.6
+# Base de datos de Tactovia
 
 ## Decisión de producto
 
@@ -28,8 +28,9 @@ Las políticas se encuentran en:
 ## Datos locales
 
 La aplicación crea automáticamente `scoutanalyzer.db` dentro de la carpeta
-privada de datos de ScoutAnalyzer en macOS o Windows. Al arrancar por primera
-vez:
+privada histórica `scout-analyzer` en macOS o Windows. Ambos nombres técnicos
+se conservan tras el cambio de marca a Tactovia para que las instalaciones
+existentes encuentren sus datos. Al arrancar por primera vez:
 
 - migra los equipos, jugadores, partido y eventos del análisis actual;
 - crea la competición piloto FBRM 2026/27;
@@ -46,7 +47,7 @@ Desde Competiciones y equipos → Importar:
 2. Completar primero Equipos.
 3. Completar Jugadores usando `codigo_equipo`.
 4. Completar `CambiosPlantilla` para altas, bajas, cambios de dorsal o posición.
-5. Importar el libro en ScoutAnalyzer.
+5. Importar el libro en Tactovia.
 
 Los códigos deben ser únicos y mantenerse estables entre importaciones. El
 importador actualiza los registros existentes sin borrar sus análisis.

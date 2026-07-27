@@ -5,7 +5,7 @@ Versión de catálogo: 2026-27.5
 
 ## Alcance
 
-El catálogo inicial de ScoutAnalyzer contiene los 16 equipos incluidos en el
+El catálogo inicial de Tactovia contiene los 16 equipos incluidos en el
 calendario oficial de la Primera División Masculina GESA 2026/27, sus ciudades,
 pabellones, patrocinadores cuando forman parte de la denominación federativa,
 códigos estables y los ocho partidos de la primera jornada.

@@ -48,7 +48,7 @@ try {
       themeMode: "system",
       resolvedTheme: "dark",
       onThemeModeChange() {},
-      paletteMode: "arena",
+      paletteMode: "tactovia",
       onPaletteModeChange() {}
     }),
     React.createElement(Playbook, {
@@ -125,6 +125,7 @@ try {
       onOpen() {}
     }),
     React.createElement(ProfilePanel, {
+      appVersion: "0.10.0",
       account: {
         id: "local",
         name: "Analista",
@@ -140,7 +141,7 @@ try {
       themeMode: "system",
       resolvedTheme: "dark",
       onThemeModeChange() {},
-      paletteMode: "arena",
+      paletteMode: "tactovia",
       onPaletteModeChange() {}
     }),
     React.createElement(ReportCenter, {

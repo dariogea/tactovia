@@ -3,9 +3,9 @@ const path = require("node:path");
 
 function deliverableNames(version) {
   return new Set([
-    `ScoutAnalyzer-${version}-mac-arm64.dmg`,
-    `ScoutAnalyzer-${version}-win-x64.exe`,
-    `ScoutAnalyzer-${version}-win-x64.zip`
+    `Tactovia-${version}-mac-arm64.dmg`,
+    `Tactovia-${version}-win-x64.exe`,
+    `Tactovia-${version}-win-x64.zip`
   ]);
 }
 

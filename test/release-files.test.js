@@ -14,11 +14,11 @@ const {
 
 test("conserva únicamente los tres instaladores útiles de la versión actual", () => {
   assert.deepEqual(
-    [...deliverableNames("0.4.1")].sort(),
+    [...deliverableNames("0.10.0")].sort(),
     [
-      "ScoutAnalyzer-0.4.1-mac-arm64.dmg",
-      "ScoutAnalyzer-0.4.1-win-x64.exe",
-      "ScoutAnalyzer-0.4.1-win-x64.zip"
+      "Tactovia-0.10.0-mac-arm64.dmg",
+      "Tactovia-0.10.0-win-x64.exe",
+      "Tactovia-0.10.0-win-x64.zip"
     ].sort()
   );
 });
@@ -28,18 +28,18 @@ test("elimina versiones anteriores, blockmaps y carpetas intermedias", () => {
   const release = path.join(parent, "release");
   fs.mkdirSync(path.join(release, "win-unpacked"), { recursive: true });
   [
-    "ScoutAnalyzer-0.4.0-mac-arm64.dmg",
-    "ScoutAnalyzer-0.4.1-mac-arm64.dmg",
-    "ScoutAnalyzer-0.4.1-mac-arm64.dmg.blockmap",
+    "Tactovia-0.9.0-mac-arm64.dmg",
+    "Tactovia-0.10.0-mac-arm64.dmg",
+    "Tactovia-0.10.0-mac-arm64.dmg.blockmap",
     "builder-debug.yml"
   ].forEach((name) => fs.writeFileSync(path.join(release, name), "test"));
 
   try {
-    const removed = pruneReleaseDirectory(release, "0.4.1");
-    assert.ok(removed.includes("ScoutAnalyzer-0.4.0-mac-arm64.dmg"));
+    const removed = pruneReleaseDirectory(release, "0.10.0");
+    assert.ok(removed.includes("Tactovia-0.9.0-mac-arm64.dmg"));
     assert.ok(removed.includes("win-unpacked"));
     assert.deepEqual(fs.readdirSync(release), [
-      "ScoutAnalyzer-0.4.1-mac-arm64.dmg"
+      "Tactovia-0.10.0-mac-arm64.dmg"
     ]);
   } finally {
     fs.rmSync(parent, { recursive: true, force: true });
@@ -48,7 +48,7 @@ test("elimina versiones anteriores, blockmaps y carpetas intermedias", () => {
 
 test("rechaza limpiar cualquier carpeta que no se llame release", () => {
   assert.throws(
-    () => assertReleaseDirectory("/private/tmp/ScoutAnalyzer"),
+    () => assertReleaseDirectory("/private/tmp/Tactovia"),
     /carpeta release/
   );
 });

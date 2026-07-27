@@ -1,6 +1,14 @@
 export const themeStorageKey = "scout-analyzer-theme-v1";
 export const paletteStorageKey = "scout-analyzer-palette-v1";
 
+export const brandColors = {
+  gameInk: "#0B1218",
+  strategicTeal: "#08756D",
+  signalLime: "#BDEB62",
+  analysisWhite: "#F4F7F5",
+  slate: "#64717C"
+};
+
 export const themeOptions = [
   { id: "system", label: "Automático", shortLabel: "Auto", icon: "◐" },
   { id: "light", label: "Claro", shortLabel: "Claro", icon: "☼" },
@@ -9,28 +17,15 @@ export const themeOptions = [
 
 export const paletteOptions = [
   {
-    id: "arena",
-    label: "Arena",
-    description: "Naranja competitivo y verde técnico",
-    colors: ["#ff6842", "#37cfbe", "#f4b942"]
-  },
-  {
-    id: "ocean",
-    label: "Océano",
-    description: "Azul profundo y cian para análisis",
-    colors: ["#3b82f6", "#22d3ee", "#8b5cf6"]
-  },
-  {
-    id: "forest",
-    label: "Bosque",
-    description: "Verde deportivo y dorado cálido",
-    colors: ["#16a34a", "#d6a329", "#2dd4bf"]
-  },
-  {
-    id: "violet",
-    label: "Violeta",
-    description: "Morado editorial y rosa de contraste",
-    colors: ["#8b5cf6", "#ec4899", "#38bdf8"]
+    id: "tactovia",
+    label: "Tactovia",
+    description: "Claridad estratégica con señal lima reservada para la acción",
+    colors: [
+      brandColors.gameInk,
+      brandColors.strategicTeal,
+      brandColors.signalLime,
+      brandColors.analysisWhite
+    ]
   }
 ];
 
@@ -39,7 +34,7 @@ export function normalizeThemeMode(value) {
 }
 
 export function normalizePaletteMode(value) {
-  return paletteOptions.some((option) => option.id === value) ? value : "arena";
+  return "tactovia";
 }
 
 export function resolveThemeMode(mode, prefersDark) {

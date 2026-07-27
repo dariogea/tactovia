@@ -1,4 +1,4 @@
-# Guía de atajos de ScoutAnalyzer
+# Guía de atajos de Tactovia
 
 Los atajos de reproducción se pueden cambiar desde **Ajustes → Atajos de
 reproducción**. Haz clic sobre una combinación y pulsa el nuevo atajo. Las

@@ -5,6 +5,7 @@ import {
   passwordDigest,
   saveLocalAccount
 } from "../lib/account.js";
+import { BrandLogo } from "./Brand.jsx";
 
 const sports = [
   {
@@ -30,14 +31,15 @@ const sports = [
   }
 ];
 
-function AccessBrand() {
+function AccessBrand({ inverse = false }) {
   return (
-    <div className="access-brand">
-      <div className="brand-mark"><span /></div>
-      <div>
-        <strong>ScoutAnalyzer</strong>
-        <span>Inteligencia deportiva, a tu manera</span>
-      </div>
+    <div className={`access-brand ${inverse ? "inverse" : ""}`}>
+      <BrandLogo
+        layout="stacked"
+        surface={inverse ? "dark" : "light"}
+        className="access-brand-logo"
+      />
+      <span>Plataforma de análisis deportivo</span>
     </div>
   );
 }
@@ -99,10 +101,10 @@ function AccountStage({ account, onAuthenticated, onAccountChange, onDemo }) {
   return (
     <div className="access-layout">
       <section className="access-story">
-        <AccessBrand />
+        <AccessBrand inverse />
         <div className="access-story-copy">
-          <span className="eyebrow">Tu espacio de análisis</span>
-          <h1>Del vídeo a una decisión útil.</h1>
+          <span className="eyebrow">Del vídeo a la decisión</span>
+          <h1>Ve el juego.<br />Decide mejor.</h1>
           <p>
             Etiqueta cada posesión, conecta jugadores y equipos y convierte el
             partido en una biblioteca de conocimiento.
@@ -159,7 +161,7 @@ function AccountStage({ account, onAuthenticated, onAccountChange, onDemo }) {
           </label>
           {error && <p className="form-error">{error}</p>}
           <button className="button primary access-submit" disabled={busy}>
-            {busy ? "Comprobando…" : creating ? "Crear perfil y continuar" : "Entrar a ScoutAnalyzer"}
+            {busy ? "Comprobando…" : creating ? "Crear perfil y continuar" : "Entrar a Tactovia"}
           </button>
         </form>
         <div className="demo-access-divider"><span>o prueba la aplicación</span></div>

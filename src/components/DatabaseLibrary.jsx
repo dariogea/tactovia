@@ -623,7 +623,7 @@ export function DatabaseLibrary({
               <div>
                 <h3>Completa e importa</h3>
                 <p>
-                  ScoutAnalyzer valida los códigos, actualiza fichas existentes y
+                  Tactovia valida los códigos, actualiza fichas existentes y
                   avisa de cualquier dato que necesite revisión.
                 </p>
                 <button className="button primary" onClick={onImport}>

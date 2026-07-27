@@ -150,11 +150,14 @@ export function SettingsPanel({
         </div>
         <div className="palette-heading">
           <div>
-            <strong>Paleta de color</strong>
-            <span>Cambia el carácter visual sin alterar el modo claro u oscuro.</span>
+            <strong>Paleta de marca</strong>
+            <span>
+              La interfaz mantiene la identidad Tactovia en ambos modos. El
+              lima se reserva para selección, reproducción y atención.
+            </span>
           </div>
         </div>
-        <div className="palette-card-grid">
+        <div className="palette-card-grid brand-palette-grid">
           {paletteOptions.map((option) => (
             <button
               type="button"
@@ -171,7 +174,7 @@ export function SettingsPanel({
                 <strong>{option.label}</strong>
                 <small>{option.description}</small>
               </span>
-              <em>{paletteMode === option.id ? "✓" : ""}</em>
+              <em>{paletteMode === option.id ? "Identidad activa" : ""}</em>
             </button>
           ))}
         </div>

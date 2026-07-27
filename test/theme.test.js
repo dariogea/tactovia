@@ -22,9 +22,10 @@ test("el tema automático sigue la preferencia del sistema", () => {
 });
 
 test("normaliza las paletas visuales disponibles", () => {
-  assert.equal(normalizePaletteMode("arena"), "arena");
-  assert.equal(normalizePaletteMode("ocean"), "ocean");
-  assert.equal(normalizePaletteMode("forest"), "forest");
-  assert.equal(normalizePaletteMode("violet"), "violet");
-  assert.equal(normalizePaletteMode("unknown"), "arena");
+  assert.equal(normalizePaletteMode("tactovia"), "tactovia");
+  assert.equal(normalizePaletteMode("arena"), "tactovia");
+  assert.equal(normalizePaletteMode("ocean"), "tactovia");
+  assert.equal(normalizePaletteMode("forest"), "tactovia");
+  assert.equal(normalizePaletteMode("violet"), "tactovia");
+  assert.equal(normalizePaletteMode("unknown"), "tactovia");
 });

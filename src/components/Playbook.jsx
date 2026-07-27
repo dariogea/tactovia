@@ -1796,7 +1796,7 @@ function OutputMode({
           Copiar resumen para compartir
         </button>
         <p>
-          Los enlaces públicos llegarán cuando ScoutAnalyzer incorpore cuentas y
+          Los enlaces públicos llegarán cuando Tactovia incorpore cuentas y
           sincronización. Por ahora todo permanece en local.
         </p>
       </aside>

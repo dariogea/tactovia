@@ -22,6 +22,10 @@ function findMacAppBundle(executablePath) {
   return "";
 }
 
+function legacyUserDataDirectory(appDataPath) {
+  return path.join(path.resolve(appDataPath), "scout-analyzer");
+}
+
 function readMacBundleInfo(bundlePath) {
   const plistPath = path.join(bundlePath, "Contents", "Info.plist");
   if (!fs.existsSync(plistPath)) return null;
@@ -80,5 +84,6 @@ module.exports = {
   compareVersions,
   findMacAppBundle,
   findPreviousMacApplications,
+  legacyUserDataDirectory,
   readMacBundleInfo
 };

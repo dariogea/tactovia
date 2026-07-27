@@ -369,7 +369,7 @@ function styleHeader(row) {
 
 async function createCatalogTemplate(filePath) {
   const workbook = new ExcelJS.Workbook();
-  workbook.creator = "ScoutAnalyzer";
+  workbook.creator = "Tactovia";
   workbook.created = new Date();
 
   const readme = workbook.addWorksheet("LEEME", {
@@ -377,12 +377,12 @@ async function createCatalogTemplate(filePath) {
   });
   readme.columns = [{ width: 30 }, { width: 92 }];
   readme.addRows([
-    ["Plantilla ScoutAnalyzer", "Importación de competición, equipos y plantillas"],
+    ["Plantilla Tactovia", "Importación de competición, equipos y plantillas"],
     ["Cómo utilizarla", "Completa Competicion, Equipos y Jugadores. Usa CambiosPlantilla para altas, bajas y cambios de dorsal o posición. No cambies los nombres de las columnas."],
     ["Códigos", "Usa un código único y estable para cada competición, equipo y jugador. Puede ser el identificador de la Federación o uno creado por ti."],
     ["Fechas", "Formato recomendado: AAAA-MM-DD. La hora se escribe como HH:MM."],
     ["Privacidad", "No incluyas correos, teléfonos ni información personal que no sea necesaria para el análisis deportivo."],
-    ["Logos y fotos", "Se incorporarán desde las fichas de ScoutAnalyzer; esta plantilla no copia imágenes de terceros."]
+    ["Logos y fotos", "Se incorporarán desde las fichas de Tactovia; esta plantilla no copia imágenes de terceros."]
   ]);
   readme.getCell("A1").font = { bold: true, size: 18, color: { argb: "FF172033" } };
   readme.getCell("B1").font = { bold: true, size: 14, color: { argb: "FF0F766E" } };

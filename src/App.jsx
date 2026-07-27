@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { AccessFlow } from "./components/AccessFlow.jsx";
+import { BrandLogo, BrandSplash } from "./components/Brand.jsx";
 import { EventEditor } from "./components/EventEditor.jsx";
 import { ExportClipsModal } from "./components/ExportClipsModal.jsx";
 import { MatchSetup } from "./components/MatchSetup.jsx";
@@ -81,7 +82,7 @@ function readPaletteMode() {
   try {
     return normalizePaletteMode(localStorage.getItem(paletteStorageKey));
   } catch {
-    return "arena";
+    return "tactovia";
   }
 }
 
@@ -241,6 +242,7 @@ function App() {
   const [paletteMode, setPaletteMode] = useState(readPaletteMode);
   const [prefersDark, setPrefersDark] = useState(systemPrefersDark);
   const [profileMenuOpen, setProfileMenuOpen] = useState(false);
+  const [showBrandSplash, setShowBrandSplash] = useState(true);
   const videoRef = useRef(null);
   const pendingSeekRef = useRef(null);
   const scrubbingRef = useRef(false);
@@ -319,6 +321,17 @@ function App() {
       return { ...next, updatedAt: new Date().toISOString() };
     });
   }
+
+  useEffect(() => {
+    const reducedMotion = window.matchMedia?.(
+      "(prefers-reduced-motion: reduce)"
+    )?.matches;
+    const timer = window.setTimeout(
+      () => setShowBrandSplash(false),
+      reducedMotion ? 650 : 1850
+    );
+    return () => window.clearTimeout(timer);
+  }, []);
 
   useEffect(() => {
     localStorage.setItem(autosaveKey, JSON.stringify(project));
@@ -964,7 +977,7 @@ function App() {
     const demoAccount = {
       id: "demo-session",
       name: "Analista demo",
-      email: "demo@scoutanalyzer.local",
+      email: "demo@tactovia.local",
       club: "Espacio de demostración",
       role: "Demo",
       avatar: "",
@@ -1164,7 +1177,7 @@ function App() {
       home && away ? `${home.name} vs ${away.name}` : "",
       `${project.events.length} acciones · ${formatTime(project.video?.duration || 0)} analizados`,
       leadingStats,
-      `Generado con ScoutAnalyzer ${appVersion}`
+      `Generado con Tactovia ${appVersion}`
     ].filter(Boolean).join("\n");
     try {
       await navigator.clipboard.writeText(summary);
@@ -1252,36 +1265,42 @@ function App() {
 
   if (!authenticated || !selectedSport || !workspaceReady) {
     return (
-      <AccessFlow
-        account={account}
-        authenticated={authenticated}
-        sport={selectedSport}
-        project={project}
-        canContinue={hasMeaningfulAnalysis(project)}
-        onAccountChange={setAccount}
-        onAuthenticated={(nextAccount) => {
-          setAccount(nextAccount);
-          setAuthenticated(true);
-        }}
-        onDemo={startDemoSession}
-        onSelectSport={setSelectedSport}
-        onNew={startNewSession}
-        onContinue={() => setWorkspaceReady(true)}
-        onOpen={openSessionFromGate}
-      />
+      <>
+        {showBrandSplash && <BrandSplash />}
+        <AccessFlow
+          account={account}
+          authenticated={authenticated}
+          sport={selectedSport}
+          project={project}
+          canContinue={hasMeaningfulAnalysis(project)}
+          onAccountChange={setAccount}
+          onAuthenticated={(nextAccount) => {
+            setAccount(nextAccount);
+            setAuthenticated(true);
+          }}
+          onDemo={startDemoSession}
+          onSelectSport={setSelectedSport}
+          onNew={startNewSession}
+          onContinue={() => setWorkspaceReady(true)}
+          onOpen={openSessionFromGate}
+        />
+      </>
     );
   }
 
   return (
-    <div className="app-shell">
-      <header className="topbar">
-        <div className="brand">
-          <div className="brand-mark"><span /></div>
-          <div>
-            <strong>ScoutAnalyzer</strong>
+    <>
+      {showBrandSplash && <BrandSplash />}
+      <div className="app-shell">
+        <header className="topbar">
+          <div className="brand">
+            <BrandLogo
+              layout="horizontal"
+              surface="adaptive"
+              className="topbar-brand-logo"
+            />
             <small>Versión {appVersion}</small>
           </div>
-        </div>
         <input
           className="project-title"
           value={project.projectName}
@@ -1739,19 +1758,20 @@ function App() {
 
         {activeView === "profile" && (
           <ProfilePanel
+            appVersion={appVersion}
             account={account}
             onAccountChange={setAccount}
             onLogout={logout}
             preferences={preferences}
             onPreferencesChange={setPreferences}
-              tags={project.template.tags}
-              themeMode={themeMode}
-              resolvedTheme={resolvedTheme}
-              onThemeModeChange={setThemeMode}
-              paletteMode={paletteMode}
-              onPaletteModeChange={setPaletteMode}
-            />
-          )}
+            tags={project.template.tags}
+            themeMode={themeMode}
+            resolvedTheme={resolvedTheme}
+            onThemeModeChange={setThemeMode}
+            paletteMode={paletteMode}
+            onPaletteModeChange={setPaletteMode}
+          />
+        )}
 
         {activeView === "report" && (
           <ReportCenter
@@ -1853,7 +1873,8 @@ function App() {
           <strong>{busy}</strong>
         </div>
       )}
-    </div>
+      </div>
+    </>
   );
 }
 

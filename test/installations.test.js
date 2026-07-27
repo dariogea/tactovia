@@ -9,7 +9,8 @@ const require = createRequire(import.meta.url);
 const {
   compareVersions,
   findMacAppBundle,
-  findPreviousMacApplications
+  findPreviousMacApplications,
+  legacyUserDataDirectory
 } = require("../electron/installations.cjs");
 
 test("compara versiones numéricas sin confundir 0.10 con 0.9", () => {
@@ -21,16 +22,23 @@ test("compara versiones numéricas sin confundir 0.10 con 0.9", () => {
 test("localiza el paquete .app que contiene el ejecutable", () => {
   assert.equal(
     findMacAppBundle(
-      "/Applications/ScoutAnalyzer.app/Contents/MacOS/ScoutAnalyzer"
+      "/Applications/Tactovia.app/Contents/MacOS/Tactovia"
     ),
-    "/Applications/ScoutAnalyzer.app"
+    "/Applications/Tactovia.app"
   );
   assert.equal(findMacAppBundle("/usr/local/bin/scout"), "");
 });
 
+test("Tactovia conserva la carpeta de datos de ScoutAnalyzer", () => {
+  assert.equal(
+    legacyUserDataDirectory("/Users/demo/Library/Application Support"),
+    "/Users/demo/Library/Application Support/scout-analyzer"
+  );
+});
+
 test("solo marca copias del mismo producto con versión igual o anterior", () => {
   const root = fs.mkdtempSync(path.join(os.tmpdir(), "scout-apps-"));
-  const current = path.join(root, "ScoutAnalyzer.app");
+  const current = path.join(root, "Tactovia.app");
   const old = path.join(root, "ScoutAnalyzer antigua.app");
   const duplicate = path.join(root, "ScoutAnalyzer copia.app");
   const future = path.join(root, "ScoutAnalyzer futura.app");

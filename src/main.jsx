@@ -21,7 +21,7 @@ try {
   document.documentElement.style.colorScheme = resolvedTheme;
 } catch {
   document.documentElement.dataset.theme = "dark";
-  document.documentElement.dataset.palette = "arena";
+  document.documentElement.dataset.palette = "tactovia";
 }
 
 ReactDOM.createRoot(document.getElementById("root")).render(
