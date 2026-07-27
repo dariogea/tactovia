@@ -88,17 +88,21 @@ function scheduledAt(dateValue, timeValue) {
 }
 
 function parseCatalogWorkbook(workbook) {
+  const competitionRows = worksheetRows(workbook.getWorksheet("Competicion"));
   const teamRows = worksheetRows(
-    workbook.getWorksheet("Equipos") || workbook.worksheets[1]
+    workbook.getWorksheet("Equipos") || workbook.worksheets[0]
   );
-  const playerRows = worksheetRows(
-    workbook.getWorksheet("Jugadores") || workbook.worksheets[2]
+  const playerRows = worksheetRows(workbook.getWorksheet("Jugadores"));
+  const rosterChangeRows = worksheetRows(
+    workbook.getWorksheet("CambiosPlantilla")
   );
-  const matchRows = worksheetRows(
-    workbook.getWorksheet("Partidos") || workbook.worksheets[3]
-  );
+  const matchRows = worksheetRows(workbook.getWorksheet("Partidos"));
   const warnings = [];
   const teamByCode = new Map();
+  const playerByCode = new Map();
+  const importCompetitionName =
+    text(competitionRows[0]?.nombre) || "Primera División Masculina GESA";
+  const importSeasonLabel = text(competitionRows[0]?.temporada) || "2026/27";
   const seenTeamIds = new Set();
   const seenPlayerIds = new Set();
   const seenMatchIds = new Set();
@@ -128,8 +132,8 @@ function parseCatalogWorkbook(workbook) {
       clubName: text(row.club),
       city: text(row.ciudad),
       arena: text(row.pabellon),
-      category: "Primera División Masculina GESA",
-      season: "2026/27",
+      category: importCompetitionName,
+      season: importSeasonLabel,
       country: "España",
       primaryColor: color(row.color_principal, "#2DD4BF"),
       secondaryColor: color(row.color_secundario, "#0F766E"),
@@ -180,6 +184,13 @@ function parseCatalogWorkbook(workbook) {
       status: text(row.estado) || "Activo",
       photo: ""
     });
+    if (externalId) {
+      playerByCode.set(externalId.toLowerCase(), {
+        id,
+        teamId: team.id,
+        externalId
+      });
+    }
   });
 
   const matches = matchRows.flatMap((row, index) => {
@@ -236,11 +247,98 @@ function parseCatalogWorkbook(workbook) {
     }];
   });
 
+  const competitionRow = competitionRows[0] || null;
+  const competitionExternalId = text(
+    competitionRow?.codigo || competitionRow?.codigo_competicion
+  );
+  const competitionName = text(competitionRow?.nombre);
+  const seasonLabel = importSeasonLabel;
+  const competitionId = competitionRow
+    ? deterministicId(
+        "competition",
+        competitionExternalId || competitionName || "competition-import"
+      )
+    : null;
+  const seasonId = competitionRow
+    ? deterministicId("season", seasonLabel)
+    : null;
+  const competitionSeasonId = competitionRow
+    ? deterministicId("competition-season", `${competitionId}:${seasonId}`)
+    : PILOT_COMPETITION_SEASON_ID;
+  const competition = competitionRow
+    ? {
+        id: competitionId,
+        externalId: competitionExternalId,
+        name: competitionName || "Competición importada",
+        shortName: text(competitionRow.abreviatura).slice(0, 14),
+        governingBody: text(competitionRow.federacion),
+        country: text(competitionRow.pais) || "España",
+        region: text(competitionRow.region),
+        level: text(competitionRow.nivel),
+        gender: text(competitionRow.genero),
+        season: {
+          id: seasonId,
+          label: seasonLabel,
+          startsOn: excelDate(competitionRow.fecha_inicio) || null,
+          endsOn: excelDate(competitionRow.fecha_fin) || null,
+          isCurrent:
+            !["no", "0", "false"].includes(
+              text(competitionRow.temporada_actual).toLowerCase()
+            )
+        },
+        competitionSeason: {
+          id: competitionSeasonId,
+          name: `${competitionName || "Competición importada"} ${seasonLabel}`,
+          format: text(competitionRow.formato),
+          status:
+            ["planned", "active", "finished", "archived"].includes(
+              text(competitionRow.estado).toLowerCase()
+            )
+              ? text(competitionRow.estado).toLowerCase()
+              : "active"
+        }
+      }
+    : null;
+
+  const rosterChanges = rosterChangeRows.flatMap((row, index) => {
+    const teamCode = text(row.codigo_equipo || row.equipo).toLowerCase();
+    const playerCode = text(row.codigo_jugador || row.jugador).toLowerCase();
+    const team = teamByCode.get(teamCode);
+    const player = playerByCode.get(playerCode);
+    const action = text(row.accion).toLowerCase().replaceAll(" ", "_");
+    if (!team || !player) {
+      warnings.push(
+        `CambiosPlantilla: revisa el equipo o jugador de la fila ${index + 2}.`
+      );
+      return [];
+    }
+    if (
+      !["alta", "baja", "cambio_dorsal", "cambio_posicion", "actualizar"].includes(
+        action
+      )
+    ) {
+      warnings.push(
+        `CambiosPlantilla: la acción "${text(row.accion)}" de la fila ${index + 2} no es válida.`
+      );
+      return [];
+    }
+    return [{
+      teamId: team.id,
+      playerId: player.id,
+      action,
+      number: text(row.nuevo_dorsal || row.dorsal),
+      position: text(row.nueva_posicion || row.posicion),
+      status: text(row.estado)
+    }];
+  });
+
   return {
-    competitionSeasonId: PILOT_COMPETITION_SEASON_ID,
+    competition,
+    competitionSeasonId,
     source: "admin-import",
     teams,
     matches,
+    rosterChanges,
     warnings
   };
 }
@@ -279,9 +377,9 @@ async function createCatalogTemplate(filePath) {
   });
   readme.columns = [{ width: 30 }, { width: 92 }];
   readme.addRows([
-    ["Plantilla ScoutAnalyzer", "Primera División Masculina GESA FBRM · Temporada 2026/27"],
-    ["Cómo utilizarla", "Completa primero Equipos, después Jugadores y finalmente Partidos. No cambies los nombres de las columnas."],
-    ["Códigos", "Usa un código único y estable para cada equipo, jugador y partido. Puede ser el identificador proporcionado por la Federación o uno creado por ti."],
+    ["Plantilla ScoutAnalyzer", "Importación de competición, equipos y plantillas"],
+    ["Cómo utilizarla", "Completa Competicion, Equipos y Jugadores. Usa CambiosPlantilla para altas, bajas y cambios de dorsal o posición. No cambies los nombres de las columnas."],
+    ["Códigos", "Usa un código único y estable para cada competición, equipo y jugador. Puede ser el identificador de la Federación o uno creado por ti."],
     ["Fechas", "Formato recomendado: AAAA-MM-DD. La hora se escribe como HH:MM."],
     ["Privacidad", "No incluyas correos, teléfonos ni información personal que no sea necesaria para el análisis deportivo."],
     ["Logos y fotos", "Se incorporarán desde las fichas de ScoutAnalyzer; esta plantilla no copia imágenes de terceros."]
@@ -291,6 +389,44 @@ async function createCatalogTemplate(filePath) {
   readme.eachRow((row) => {
     row.alignment = { vertical: "top", wrapText: true };
   });
+
+  const competition = workbook.addWorksheet("Competicion", {
+    views: [{ state: "frozen", ySplit: 1, showGridLines: false }]
+  });
+  competition.columns = [
+    { header: "codigo", width: 22 },
+    { header: "nombre", width: 38 },
+    { header: "abreviatura", width: 16 },
+    { header: "federacion", width: 20 },
+    { header: "temporada", width: 15 },
+    { header: "fecha_inicio", width: 16 },
+    { header: "fecha_fin", width: 16 },
+    { header: "pais", width: 16 },
+    { header: "region", width: 24 },
+    { header: "nivel", width: 22 },
+    { header: "genero", width: 16 },
+    { header: "formato", width: 24 },
+    { header: "estado", width: 14 },
+    { header: "temporada_actual", width: 19 }
+  ];
+  styleHeader(competition.getRow(1));
+  competition.addRow([
+    "FBRM-1DM",
+    "Primera División Masculina GESA",
+    "1DM GESA",
+    "FBRM",
+    "2026/27",
+    "2026-07-01",
+    "2027-06-30",
+    "España",
+    "Región de Murcia",
+    "Regional sénior",
+    "Masculina",
+    "Liga regular",
+    "active",
+    "sí"
+  ]);
+  competition.autoFilter = { from: "A1", to: "N1" };
 
   const teams = workbook.addWorksheet("Equipos", {
     views: [{ state: "frozen", ySplit: 1, showGridLines: false }]
@@ -346,33 +482,27 @@ async function createCatalogTemplate(filePath) {
   ]);
   players.autoFilter = { from: "A1", to: "H1" };
 
-  const matches = workbook.addWorksheet("Partidos", {
+  const rosterChanges = workbook.addWorksheet("CambiosPlantilla", {
     views: [{ state: "frozen", ySplit: 1, showGridLines: false }]
   });
-  matches.columns = [
-    { header: "codigo_partido", width: 20 },
-    { header: "jornada", width: 15 },
-    { header: "fecha", width: 15 },
-    { header: "hora", width: 12 },
-    { header: "codigo_local", width: 18 },
-    { header: "codigo_visitante", width: 20 },
-    { header: "pabellon", width: 30 },
-    { header: "puntos_local", width: 16 },
-    { header: "puntos_visitante", width: 19 }
+  rosterChanges.columns = [
+    { header: "codigo_equipo", width: 20 },
+    { header: "codigo_jugador", width: 22 },
+    { header: "accion", width: 20 },
+    { header: "nuevo_dorsal", width: 18 },
+    { header: "nueva_posicion", width: 20 },
+    { header: "estado", width: 16 }
   ];
-  styleHeader(matches.getRow(1));
-  matches.addRow([
-    "PARTIDO-01",
-    "Jornada 1",
-    "2026-09-20",
-    "18:00",
+  styleHeader(rosterChanges.getRow(1));
+  rosterChanges.addRow([
     "EQUIPO-01",
-    "EQUIPO-02",
+    "JUGADOR-01",
+    "cambio_dorsal",
+    "12",
     "",
-    "",
-    ""
+    "Activo"
   ]);
-  matches.autoFilter = { from: "A1", to: "I1" };
+  rosterChanges.autoFilter = { from: "A1", to: "F1" };
 
   await workbook.xlsx.writeFile(filePath);
   return filePath;

@@ -40,12 +40,12 @@ copia no contiene los vídeos.
 
 ## Importación administrativa
 
-Desde Biblioteca → Administración:
+Desde Competiciones y equipos → Importar:
 
 1. Guardar la plantilla Excel.
 2. Completar primero Equipos.
 3. Completar Jugadores usando `codigo_equipo`.
-4. Completar Partidos usando `codigo_local` y `codigo_visitante`.
+4. Completar `CambiosPlantilla` para altas, bajas, cambios de dorsal o posición.
 5. Importar el libro en ScoutAnalyzer.
 
 Los códigos deben ser únicos y mantenerse estables entre importaciones. El

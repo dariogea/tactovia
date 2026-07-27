@@ -71,6 +71,20 @@ function HorizontalBars({ rows }) {
   );
 }
 
+function CompletenessBars({ rows }) {
+  return (
+    <div className="bi-completeness-bars">
+      {rows.map((row) => (
+        <div key={row.id}>
+          <header><span>{row.label}</span><strong>{row.value}%</strong></header>
+          <div><i style={{ width: `${row.value}%` }} /></div>
+          <small>{row.detail}</small>
+        </div>
+      ))}
+    </div>
+  );
+}
+
 function FilterRail({
   project,
   scope,
@@ -176,6 +190,57 @@ export function StatsPanel({ project }) {
     (total, event) => total + Math.max(0, event.end - event.start),
     0
   );
+  const dataPercentage = (count, total = filteredEvents.length) =>
+    total > 0 ? Math.round((count / total) * 100) : 0;
+  const completenessRows = [
+    {
+      id: "team",
+      label: "Equipo identificado",
+      value: dataPercentage(filteredEvents.filter((event) => event.teamId).length),
+      detail: `${filteredEvents.filter((event) => event.teamId).length} acciones vinculadas`
+    },
+    {
+      id: "player",
+      label: "Jugador identificado",
+      value: dataPercentage(filteredEvents.filter((event) => event.playerId).length),
+      detail: `${filteredEvents.filter((event) => event.playerId).length} acciones con jugador`
+    },
+    {
+      id: "zone",
+      label: "Tiros con zona",
+      value: dataPercentage(
+        filteredEvents.filter((event) => event.shotZoneId).length,
+        shots
+      ),
+      detail: `${filteredEvents.filter((event) => event.shotZoneId).length} de ${shots} tiros`
+    },
+    {
+      id: "notes",
+      label: "Acciones con nota",
+      value: dataPercentage(filteredEvents.filter((event) => event.notes?.trim()).length),
+      detail: "Contexto cualitativo añadido por el analista"
+    }
+  ];
+  const safeDuration = Math.max(
+    project.video?.duration || Math.max(...filteredEvents.map((event) => event.end || 0), 0),
+    1
+  );
+  const periodRows = ["1.er cuarto", "2.º cuarto", "3.er cuarto", "4.º cuarto"].map(
+    (label, index) => {
+      const start = (safeDuration / 4) * index;
+      const end = (safeDuration / 4) * (index + 1);
+      const events = filteredEvents.filter((event) => {
+        const anchor = event.anchor ?? event.start;
+        return anchor >= start && (index === 3 ? anchor <= end : anchor < end);
+      });
+      return {
+        label,
+        count: events.length,
+        players: new Set(events.map((event) => event.playerId).filter(Boolean)).size,
+        shots: zoneStats(events).reduce((total, zone) => total + zone.attempts, 0)
+      };
+    }
+  );
 
   const teamRows = project.teams
     .map((team) => {
@@ -230,6 +295,7 @@ export function StatsPanel({ project }) {
           <div className="bi-page-tabs">
             <button className={page === "overview" ? "active" : ""} onClick={() => setPage("overview")}>Resumen</button>
             <button className={page === "shooting" ? "active" : ""} onClick={() => setPage("shooting")}>Tiro y zonas</button>
+            <button className={page === "quality" ? "active" : ""} onClick={() => setPage("quality")}>Calidad del dato</button>
           </div>
         </header>
 
@@ -281,7 +347,7 @@ export function StatsPanel({ project }) {
               </article>
             </div>
           </>
-        ) : (
+        ) : page === "shooting" ? (
           <div className="bi-shooting-page">
             <article className="bi-visual shot-map-visual">
               <header><div><span>Mapa espacial</span><h2>Volumen y acierto por zona</h2></div><em>{shots} tiros localizados</em></header>
@@ -299,6 +365,52 @@ export function StatsPanel({ project }) {
                   </div>
                 ))}
               </div>
+            </article>
+          </div>
+        ) : (
+          <div className="bi-quality-page">
+            <article className="bi-visual">
+              <header>
+                <div><span>Control de calidad</span><h2>Completitud del etiquetado</h2></div>
+                <em>{filteredEvents.length} registros</em>
+              </header>
+              <CompletenessBars rows={completenessRows} />
+            </article>
+            <article className="bi-visual">
+              <header>
+                <div><span>Ritmo</span><h2>Actividad por periodo</h2></div>
+                <em>División estimada</em>
+              </header>
+              <div className="bi-period-table">
+                <div className="header"><span>Periodo</span><span>Acciones</span><span>Jugadores</span><span>Tiros</span></div>
+                {periodRows.map((period) => (
+                  <div key={period.label}>
+                    <strong>{period.label}</strong>
+                    <span>{period.count}</span>
+                    <span>{period.players}</span>
+                    <span>{period.shots}</span>
+                  </div>
+                ))}
+              </div>
+            </article>
+            <article className="bi-visual bi-insight-card">
+              <header><div><span>Lectura automática</span><h2>Estado del análisis</h2></div></header>
+              <strong>
+                {filteredEvents.length === 0
+                  ? "Añade acciones para generar una lectura."
+                  : completenessRows[1].value >= 80
+                    ? "La identificación de jugadores es sólida."
+                    : "Conviene identificar más jugadores antes de cerrar el informe."}
+              </strong>
+              <p>
+                {shots === 0
+                  ? "Todavía no hay tiros localizados."
+                  : `${shots} tiros localizados con un ${shotPercentage}% de acierto registrado.`}
+              </p>
+              <span>
+                Partido {project.match ? "vinculado" : "sin vincular"} ·{" "}
+                {stats.length} tipos de acción utilizados
+              </span>
             </article>
           </div>
         )}

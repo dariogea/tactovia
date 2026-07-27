@@ -1,4 +1,4 @@
-# ScoutAnalyzer 0.8.0
+# ScoutAnalyzer 0.9.0
 
 Aplicación de escritorio para analizar vídeo local y etiquetar acciones de
 baloncesto. La primera versión funciona sin conexión y mantiene tanto el vídeo
@@ -7,11 +7,12 @@ como los análisis en el ordenador.
 ## Funciones incluidas
 
 - Reproducción de vídeos MP4, MOV, M4V, WebM y OGV.
-- Acceso mediante perfil local, contraseña y sesión separada, sin enviar
-  credenciales fuera del ordenador.
+- Acceso mediante perfil local y contraseña, o entrada directa en modo demo sin
+  registro, sin enviar credenciales fuera del ordenador.
 - Selección inicial del deporte y flujo para crear, continuar o abrir una
   sesión de análisis en cada arranque.
-- Sistema visual renovado con modo automático, claro y oscuro.
+- Sistema visual renovado con modo automático, claro y oscuro y cuatro paletas:
+  Arena, Océano, Bosque y Violeta.
 - Preferencia de apariencia persistente y adaptación en tiempo real al tema de
   Windows o macOS.
 - Navegación flotante, superficies translúcidas, controles compactos y
@@ -25,8 +26,8 @@ como los análisis en el ordenador.
   siempre identificados visualmente como `DEMO` y sin datos personales reales.
 - Siete escudos obtenidos de fuentes oficiales y nueve identidades provisionales
   claramente diferenciadas hasta disponer de los archivos autorizados.
-- Importación administrativa mediante una plantilla Excel de equipos,
-  jugadores y partidos.
+- Importación guiada mediante una plantilla Excel de competiciones, equipos,
+  jugadores y cambios de plantilla.
 - Identidad única de jugador separada de sus plantillas por temporada.
 - Copia de seguridad de la biblioteca desde la propia aplicación.
 - Estructura PostgreSQL/Supabase con catálogo compartido, roles y análisis
@@ -38,22 +39,26 @@ como los análisis en el ordenador.
 - Plantilla completamente configurable: nombre, color, comportamiento, atajo y
   segundos anteriores/posteriores.
 - Contexto por acción: equipo, jugador, zona de pista y nota rápida.
-- Etiquetas predeterminadas separadas para canasta de 2P y canasta de 3P.
+- Etiquetas predeterminadas separadas para canasta y tiro fallado de 2P y 3P,
+  con colores semánticos.
 - Mapa interactivo con diez zonas de tiro; la zona y su valor quedan guardados
   en el evento, SQLite, CSV, Excel y PDF.
 - Línea temporal navegable, edición y selección de eventos.
 - Ventanas informativas de etiqueta, equipo y jugador desde la tabla de eventos.
 - Panel estadístico interactivo tipo Power BI con filtros globales, indicadores,
-  evolución, rankings y mapa de tiro.
+  evolución, rankings, mapa de tiro y control de calidad del etiquetado.
 - Paneles de vídeo y etiquetado redimensionables mediante arrastre.
 - Reproductor verificado con saltos reales, lectura por rangos, tres controles
   visibles por defecto y atajos configurables hasta ×16.
+- Control de sonido con botón de silencio, barra de volumen y porcentaje, más
+  un resumen en directo bajo el reproductor.
 - Tabla de eventos ordenable por cualquiera de sus columnas.
 - Exportación de datos a CSV.
 - Exportación a XLSX con hojas de resumen, eventos, equipos y jugadores.
 - Exportación de uno o varios clips MP4.
 - Organización de clips por etiqueta, equipo o jugador.
-- Informe PDF con resumen y registro de acciones.
+- Centro de informes dividido en informe técnico, datos y clips, con preparación
+  guiada de cada entrega.
 - Resumen ejecutivo copiable para compartir con el cuerpo técnico.
 - Playbook 2.0 con interfaz simplificada, modo concentrado, biblioteca por
   carpetas y equipos, plantillas tácticas,
@@ -72,14 +77,14 @@ como los análisis en el ordenador.
 
 El instalador generado para Apple Silicon está en:
 
-`release/ScoutAnalyzer-0.8.0-mac-arm64.dmg`
+`release/ScoutAnalyzer-0.9.0-mac-arm64.dmg`
 
 1. Abre el DMG.
 2. Arrastra ScoutAnalyzer a Aplicaciones.
 3. Al no estar firmado todavía con una cuenta de desarrollador de Apple, macOS
    puede mostrar un aviso. Pulsa Control y haz clic sobre la aplicación, elige
    **Abrir** y confirma.
-4. Comprueba que en la esquina superior izquierda aparece **Versión 0.8.0**.
+4. Comprueba que en la esquina superior izquierda aparece **Versión 0.9.0**.
 
 Al iniciar una actualización instalada en Aplicaciones, las copias anteriores
 identificadas como ScoutAnalyzer se mueven a la Papelera. El DMG debe seguir
@@ -89,11 +94,11 @@ instalándose con el nombre `ScoutAnalyzer.app`.
 
 El instalador generado para Windows x64 está en:
 
-`release/ScoutAnalyzer-0.8.0-win-x64.exe`
+`release/ScoutAnalyzer-0.9.0-win-x64.exe`
 
 También existe una versión portable:
 
-`release/ScoutAnalyzer-0.8.0-win-x64.zip`
+`release/ScoutAnalyzer-0.9.0-win-x64.zip`
 
 En la versión portable hay que descomprimir primero todo el archivo y después
 abrir `ScoutAnalyzer.exe`. Como el programa todavía no dispone de certificado
@@ -101,7 +106,7 @@ de firma, Windows SmartScreen puede mostrar un aviso de editor desconocido.
 
 ## Primer análisis
 
-1. Crea o abre tu perfil local e inicia sesión.
+1. Crea o abre tu perfil local e inicia sesión, o entra directamente en la demo.
 2. Selecciona **Baloncesto** y elige nueva sesión, continuar o abrir archivo.
 3. Pulsa **Seleccionar vídeo**.
 4. Selecciona los dos equipos del partido.
@@ -120,15 +125,16 @@ de firma, Windows SmartScreen puede mostrar un aviso de editor desconocido.
 La pestaña **Competiciones y equipos** reúne el histórico deportivo y la
 edición de equipos y jugadores:
 
-1. Explora cada competición y, dentro de ella, sus equipos.
-2. Revisa partidos y jugadores desde la misma pestaña.
-3. En **Administración**, guarda la plantilla Excel cuando quieras sustituir
-   las fichas `DEMO` por plantillas oficiales.
-4. Completa equipos, jugadores y partidos conservando sus códigos.
+1. Despliega una competición, después un equipo y finalmente su plantilla.
+2. Abre cualquier jugador para consultar su ficha completa.
+3. En **Importar**, guarda la plantilla Excel cuando quieras sustituir las
+   fichas `DEMO` por plantillas oficiales.
+4. Completa competición, equipos, jugadores y cambios de plantilla conservando
+   sus códigos.
 5. Importa el libro y revisa los posibles avisos.
-6. En **Partidos**, elige **Usar en etiquetado** para cargar los dos equipos y
-   sus plantillas en el análisis.
-7. Crea periódicamente una copia de seguridad desde Administración.
+6. **Partidos analizados** muestra únicamente encuentros que ya contienen un
+   análisis; los previstos no aparecen en el histórico.
+7. Crea periódicamente una copia de seguridad desde **Importar**.
 
 Los análisis existentes se incorporan automáticamente a la nueva base local al
 abrir esta versión. El archivo de vídeo no se copia ni se sube.
@@ -177,6 +183,9 @@ elegir:
 
 La elección se guarda localmente. Los vídeos, la pista y los documentos del
 Playbook conservan sus fondos específicos para no alterar el contenido.
+
+La paleta de color puede cambiarse por separado desde **Perfil y ajustes** sin
+alterar el modo claro u oscuro.
 
 Atajos generales:
 

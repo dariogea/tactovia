@@ -1,7 +1,7 @@
 import { useMemo, useState } from "react";
 import { defaultPreferences } from "../lib/defaults.js";
 import { playbackControls, shortcutActions, eventToShortcut } from "../lib/playback.js";
-import { themeOptions } from "../lib/theme.js";
+import { paletteOptions, themeOptions } from "../lib/theme.js";
 
 const workspacePresets = {
   compact: { tagPanelWidth: 360, videoHeight: 430 },
@@ -53,7 +53,9 @@ export function SettingsPanel({
   tags,
   themeMode,
   resolvedTheme,
-  onThemeModeChange
+  onThemeModeChange,
+  paletteMode,
+  onPaletteModeChange
 }) {
   const shortcutConflicts = useMemo(() => {
     const owners = new Map();
@@ -146,6 +148,33 @@ export function SettingsPanel({
             </button>
           ))}
         </div>
+        <div className="palette-heading">
+          <div>
+            <strong>Paleta de color</strong>
+            <span>Cambia el carácter visual sin alterar el modo claro u oscuro.</span>
+          </div>
+        </div>
+        <div className="palette-card-grid">
+          {paletteOptions.map((option) => (
+            <button
+              type="button"
+              key={option.id}
+              className={`palette-choice-card ${paletteMode === option.id ? "active" : ""}`}
+              onClick={() => onPaletteModeChange(option.id)}
+            >
+              <span className="palette-swatches">
+                {option.colors.map((color) => (
+                  <i key={color} style={{ background: color }} />
+                ))}
+              </span>
+              <span>
+                <strong>{option.label}</strong>
+                <small>{option.description}</small>
+              </span>
+              <em>{paletteMode === option.id ? "✓" : ""}</em>
+            </button>
+          ))}
+        </div>
       </article>
 
       <article className="settings-section">
@@ -209,6 +238,35 @@ export function SettingsPanel({
                 {columns}
               </button>
             ))}
+          </div>
+        </div>
+        <div className="settings-choice-row">
+          <div>
+            <strong>Mapa de zonas</strong>
+            <span>Activa la pista compacta y decide si muestra los nombres.</span>
+          </div>
+          <div className="settings-inline-toggles">
+            <label className="switch-control">
+              <input
+                type="checkbox"
+                checked={preferences.layout.shotCourtVisible !== false}
+                onChange={(event) =>
+                  updateLayout({ shotCourtVisible: event.target.checked })
+                }
+              />
+              <span>Pista</span>
+            </label>
+            <label className="switch-control">
+              <input
+                type="checkbox"
+                checked={preferences.layout.shotCourtLabels !== false}
+                disabled={preferences.layout.shotCourtVisible === false}
+                onChange={(event) =>
+                  updateLayout({ shotCourtLabels: event.target.checked })
+                }
+              />
+              <span>Nombres</span>
+            </label>
           </div>
         </div>
       </article>

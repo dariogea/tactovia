@@ -1,6 +1,10 @@
 import test from "node:test";
 import assert from "node:assert/strict";
-import { normalizeThemeMode, resolveThemeMode } from "../src/lib/theme.js";
+import {
+  normalizePaletteMode,
+  normalizeThemeMode,
+  resolveThemeMode
+} from "../src/lib/theme.js";
 
 test("normaliza preferencias de tema desconocidas", () => {
   assert.equal(normalizeThemeMode("light"), "light");
@@ -15,4 +19,12 @@ test("el tema automático sigue la preferencia del sistema", () => {
   assert.equal(resolveThemeMode("system", false), "light");
   assert.equal(resolveThemeMode("light", true), "light");
   assert.equal(resolveThemeMode("dark", false), "dark");
+});
+
+test("normaliza las paletas visuales disponibles", () => {
+  assert.equal(normalizePaletteMode("arena"), "arena");
+  assert.equal(normalizePaletteMode("ocean"), "ocean");
+  assert.equal(normalizePaletteMode("forest"), "forest");
+  assert.equal(normalizePaletteMode("violet"), "violet");
+  assert.equal(normalizePaletteMode("unknown"), "arena");
 });

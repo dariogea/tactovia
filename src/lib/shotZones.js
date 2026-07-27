@@ -116,6 +116,15 @@ export function isShotTag(tagOrEvent) {
   );
 }
 
+export function shotTagPoints(tagOrEvent) {
+  if (!isShotTag(tagOrEvent)) return 0;
+  const id = String(tagOrEvent?.tagId || tagOrEvent?.id || "").toLowerCase();
+  const name = String(tagOrEvent?.tagName || tagOrEvent?.name || "").toLowerCase();
+  if (id.endsWith("-3") || name.includes("3p") || name.includes("3 p")) return 3;
+  if (id.endsWith("-2") || name.includes("2p") || name.includes("2 p")) return 2;
+  return 0;
+}
+
 export function zoneStats(events) {
   return shotZones.map((zone) => {
     const attempts = events.filter(

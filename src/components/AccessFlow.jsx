@@ -42,7 +42,7 @@ function AccessBrand() {
   );
 }
 
-function AccountStage({ account, onAuthenticated, onAccountChange }) {
+function AccountStage({ account, onAuthenticated, onAccountChange, onDemo }) {
   const creating = !account;
   const [name, setName] = useState("");
   const [email, setEmail] = useState(account?.email || "");
@@ -162,6 +162,11 @@ function AccountStage({ account, onAuthenticated, onAccountChange }) {
             {busy ? "Comprobando…" : creating ? "Crear perfil y continuar" : "Entrar a ScoutAnalyzer"}
           </button>
         </form>
+        <div className="demo-access-divider"><span>o prueba la aplicación</span></div>
+        <button type="button" className="button demo-access-button" onClick={onDemo}>
+          <span>▶</span>
+          Entrar directamente en la demo
+        </button>
         <small className="access-privacy-note">
           La cuenta es local en esta fase. No se envían credenciales, vídeos ni
           análisis a Internet.
@@ -267,6 +272,7 @@ export function AccessFlow({
   onAccountChange,
   onAuthenticated,
   onSelectSport,
+  onDemo,
   onNew,
   onContinue,
   onOpen
@@ -278,6 +284,7 @@ export function AccessFlow({
           account={account}
           onAccountChange={onAccountChange}
           onAuthenticated={onAuthenticated}
+          onDemo={onDemo}
         />
       </main>
     );

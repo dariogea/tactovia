@@ -1,7 +1,7 @@
 const fs = require("node:fs");
 const path = require("node:path");
 
-const FBRM_CATALOG_VERSION = "2026-27.4";
+const FBRM_CATALOG_VERSION = "2026-27.5";
 const FBRM_COMPETITION_SEASON_ID = "competition-season-fbrm-1dm-2026-27";
 const FBRM_CALENDAR_URL =
   "https://www.fbrm.org/resultados-club-624/asoc-club-jairis";

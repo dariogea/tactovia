@@ -1003,9 +1003,91 @@ function createDatabaseService(filePath, options = {}) {
   }
 
   function importCatalog(catalog) {
-    const competitionSeasonId =
+    let competitionSeasonId =
       catalog.competitionSeasonId || PILOT_COMPETITION_SEASON_ID;
     return transaction(() => {
+      if (catalog.competition) {
+        const now = nowIso();
+        const competition = catalog.competition;
+        const season = competition.season || {};
+        const competitionSeason = competition.competitionSeason || {};
+        const existingSeason = season.label
+          ? database.prepare("SELECT id FROM seasons WHERE label = ?").get(season.label)
+          : null;
+        const seasonDatabaseId = existingSeason?.id || season.id;
+        database.prepare(`
+          INSERT INTO competitions (
+            id, name, short_name, governing_body, country, region, level, gender,
+            source, external_id, created_at, updated_at
+          )
+          VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+          ON CONFLICT(id) DO UPDATE SET
+            name = excluded.name,
+            short_name = excluded.short_name,
+            governing_body = excluded.governing_body,
+            country = excluded.country,
+            region = excluded.region,
+            level = excluded.level,
+            gender = excluded.gender,
+            external_id = excluded.external_id,
+            updated_at = excluded.updated_at
+        `).run(
+          competition.id,
+          competition.name || "Competición importada",
+          competition.shortName || "",
+          competition.governingBody || "",
+          competition.country || "",
+          competition.region || "",
+          competition.level || "",
+          competition.gender || "",
+          catalog.source || "admin-import",
+          competition.externalId || null,
+          now,
+          now
+        );
+        database.prepare(`
+          INSERT INTO seasons (
+            id, label, starts_on, ends_on, is_current, created_at, updated_at
+          )
+          VALUES (?, ?, ?, ?, ?, ?, ?)
+          ON CONFLICT(id) DO UPDATE SET
+            label = excluded.label,
+            starts_on = excluded.starts_on,
+            ends_on = excluded.ends_on,
+            is_current = excluded.is_current,
+            updated_at = excluded.updated_at
+        `).run(
+          seasonDatabaseId,
+          season.label || "Temporada importada",
+          season.startsOn || null,
+          season.endsOn || null,
+          season.isCurrent === false ? 0 : 1,
+          now,
+          now
+        );
+        database.prepare(`
+          INSERT INTO competition_seasons (
+            id, competition_id, season_id, name, format, status, created_at, updated_at
+          )
+          VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+          ON CONFLICT(id) DO UPDATE SET
+            name = excluded.name,
+            format = excluded.format,
+            status = excluded.status,
+            updated_at = excluded.updated_at
+        `).run(
+          competitionSeason.id || competitionSeasonId,
+          competition.id,
+          seasonDatabaseId,
+          competitionSeason.name ||
+            `${competition.name} ${season.label || ""}`.trim(),
+          competitionSeason.format || "",
+          competitionSeason.status || "active",
+          now,
+          now
+        );
+        competitionSeasonId = competitionSeason.id || competitionSeasonId;
+      }
       const teamIds = new Set();
       for (const team of catalog.teams || []) {
         saveTeam(team, {
@@ -1078,6 +1160,36 @@ function createDatabaseService(filePath, options = {}) {
         );
       }
 
+      let appliedRosterChanges = 0;
+      for (const change of catalog.rosterChanges || []) {
+        const current = database.prepare(`
+          SELECT id, jersey_number, position, status
+          FROM roster_memberships
+          WHERE competition_season_id = ? AND team_id = ? AND player_id = ?
+        `).get(competitionSeasonId, change.teamId, change.playerId);
+        if (!current) continue;
+        const status =
+          change.action === "baja"
+            ? change.status || "Baja"
+            : change.action === "alta"
+              ? change.status || "Activo"
+              : change.status || current.status || "Activo";
+        const number =
+          change.action === "cambio_dorsal" || change.action === "actualizar"
+            ? change.number || current.jersey_number
+            : current.jersey_number;
+        const position =
+          change.action === "cambio_posicion" || change.action === "actualizar"
+            ? change.position || current.position
+            : current.position;
+        database.prepare(`
+          UPDATE roster_memberships
+          SET jersey_number = ?, position = ?, status = ?, updated_at = ?
+          WHERE id = ?
+        `).run(number || "", position || "", status, nowIso(), current.id);
+        appliedRosterChanges += 1;
+      }
+
       return {
         ok: true,
         competitionSeasonId,
@@ -1086,7 +1198,8 @@ function createDatabaseService(filePath, options = {}) {
           (total, team) => total + (team.players || []).length,
           0
         ),
-        matches: (catalog.matches || []).length
+        matches: (catalog.matches || []).length,
+        rosterChanges: appliedRosterChanges
       };
     });
   }

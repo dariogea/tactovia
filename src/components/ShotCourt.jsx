@@ -16,7 +16,12 @@ function CourtLines() {
   );
 }
 
-export function ShotCourtSelector({ value, onChange, compact = false }) {
+export function ShotCourtSelector({
+  value,
+  onChange,
+  compact = false,
+  showLabels = true
+}) {
   const selected = shotZones.find((zone) => zone.id === value);
   return (
     <section className={`shot-court-selector ${compact ? "compact" : ""}`}>
@@ -48,14 +53,28 @@ export function ShotCourtSelector({ value, onChange, compact = false }) {
               width: `${zone.width}%`,
               height: `${zone.height}%`
             }}
-            onClick={() => onChange(zone.id)}
+            onClick={(event) => {
+              if (event.detail > 1 && value === zone.id) onChange("");
+              else onChange(zone.id);
+            }}
+            onDoubleClick={(event) => {
+              event.preventDefault();
+              onChange("");
+            }}
             title={`${zone.name} · ${zone.points} puntos`}
-            aria-label={`Seleccionar ${zone.name}`}
+            aria-label={
+              value === zone.id
+                ? `${zone.name} seleccionada. Doble clic para deshacer`
+                : `Seleccionar ${zone.name}`
+            }
           >
-            <span>{zone.shortName}</span>
+            {showLabels && <span>{zone.shortName}</span>}
           </button>
         ))}
       </div>
+      <small className="shot-court-help">
+        Un clic selecciona · doble clic sobre la zona activa deshace la selección
+      </small>
     </section>
   );
 }

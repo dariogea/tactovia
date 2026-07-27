@@ -213,6 +213,75 @@ test("importa un catálogo manteniendo identificadores estables", () => {
   }
 });
 
+test("crea una competición importada y actualiza su plantilla", () => {
+  const directory = fs.mkdtempSync(path.join(os.tmpdir(), "scout-db-"));
+  const service = createDatabaseService(path.join(directory, "scoutanalyzer.db"), {
+    seedOfficialCatalog: false
+  });
+
+  try {
+    const imported = service.importCatalog({
+      competitionSeasonId: "competition-season-custom",
+      source: "admin-import",
+      competition: {
+        id: "competition-custom",
+        externalId: "CUSTOM",
+        name: "Competición personalizada",
+        shortName: "CUSTOM",
+        governingBody: "Federación",
+        season: {
+          id: "season-custom",
+          label: "2027/28",
+          startsOn: "2027-07-01",
+          endsOn: "2028-06-30",
+          isCurrent: true
+        },
+        competitionSeason: {
+          id: "competition-season-custom",
+          name: "Competición personalizada 2027/28",
+          status: "active"
+        }
+      },
+      teams: [{
+        id: "team-custom",
+        externalId: "TC",
+        name: "Equipo personalizado",
+        players: [{
+          id: "player-custom",
+          externalId: "PC",
+          name: "Jugador personalizado",
+          number: "7",
+          position: "Base"
+        }]
+      }],
+      matches: [],
+      rosterChanges: [{
+        teamId: "team-custom",
+        playerId: "player-custom",
+        action: "cambio_dorsal",
+        number: "12",
+        position: "",
+        status: ""
+      }]
+    });
+
+    const snapshot = service.snapshot();
+    const competition = snapshot.competitions.find(
+      (item) => item.id === "competition-season-custom"
+    );
+    const roster = snapshot.rosters.find(
+      (item) => item.playerId === "player-custom"
+    );
+    assert.equal(imported.rosterChanges, 1);
+    assert.equal(competition.name, "Competición personalizada");
+    assert.equal(competition.seasonLabel, "2027/28");
+    assert.equal(roster.number, "12");
+  } finally {
+    service.close();
+    fs.rmSync(directory, { recursive: true, force: true });
+  }
+});
+
 test("separa la identidad del jugador de sus plantillas históricas", () => {
   const directory = fs.mkdtempSync(path.join(os.tmpdir(), "scout-db-"));
   const service = createDatabaseService(path.join(directory, "scoutanalyzer.db"), {

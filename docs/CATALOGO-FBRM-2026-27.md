@@ -1,7 +1,7 @@
 # Catálogo Primera División Masculina GESA FBRM 2026/27
 
 Última verificación: 27 de julio de 2026
-Versión de catálogo: 2026-27.3
+Versión de catálogo: 2026-27.5
 
 ## Alcance
 
@@ -36,7 +36,7 @@ La FBRM todavía no publica las plantillas oficiales 2026/27 de estos equipos.
 Para probar el flujo completo del MVP se crean doce jugadores ficticios por
 equipo:
 
-- nombres `Jugador demo #4` a `Jugador demo #15`;
+- nombres ficticios generados, distintos para cada equipo;
 - dorsales, posiciones y alturas simuladas;
 - estado visible `DEMO`;
 - fuente técnica `demo-generated`;

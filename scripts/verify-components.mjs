@@ -20,6 +20,7 @@ try {
     { ScoutingLibrary },
     { AccessFlow },
     { ProfilePanel },
+    { ReportCenter },
     defaults
   ] =
     await Promise.all([
@@ -32,6 +33,7 @@ try {
       vite.ssrLoadModule("/src/components/ScoutingLibrary.jsx"),
       vite.ssrLoadModule("/src/components/AccessFlow.jsx"),
       vite.ssrLoadModule("/src/components/ProfilePanel.jsx"),
+      vite.ssrLoadModule("/src/components/ReportCenter.jsx"),
       vite.ssrLoadModule("/src/lib/defaults.js")
     ]);
 
@@ -45,7 +47,9 @@ try {
       onChange() {},
       themeMode: "system",
       resolvedTheme: "dark",
-      onThemeModeChange() {}
+      onThemeModeChange() {},
+      paletteMode: "arena",
+      onPaletteModeChange() {}
     }),
     React.createElement(Playbook, {
       playbook: project.playbook,
@@ -115,6 +119,7 @@ try {
       onAccountChange() {},
       onAuthenticated() {},
       onSelectSport() {},
+      onDemo() {},
       onNew() {},
       onContinue() {},
       onOpen() {}
@@ -134,7 +139,21 @@ try {
       tags: project.template.tags,
       themeMode: "system",
       resolvedTheme: "dark",
-      onThemeModeChange() {}
+      onThemeModeChange() {},
+      paletteMode: "arena",
+      onPaletteModeChange() {}
+    }),
+    React.createElement(ReportCenter, {
+      project,
+      stats: [],
+      selectedEventIds: new Set(),
+      dataExportFormat: "xlsx",
+      onDataExportFormat() {},
+      onExportData() {},
+      onToggleSelectAll() {},
+      onConfigureClips() {},
+      onExportReport() {},
+      onCopySummary() {}
     })
   ];
 

@@ -1,8 +1,12 @@
 import { useMemo, useState } from "react";
 import { tagPalette } from "../lib/defaults.js";
 
-export function TagEditor({ tags, onClose, onSave }) {
+export function TagEditor({ tags, courtOptions, onClose, onSave }) {
   const [draft, setDraft] = useState(tags.map((tag) => ({ ...tag })));
+  const [courtDraft, setCourtDraft] = useState({
+    visible: courtOptions?.visible !== false,
+    showLabels: courtOptions?.showLabels !== false
+  });
   const [error, setError] = useState("");
 
   const duplicateShortcuts = useMemo(() => {
@@ -55,7 +59,8 @@ export function TagEditor({ tags, onClose, onSave }) {
         name: tag.name.trim(),
         before: Math.max(0, Number(tag.before) || 0),
         after: Math.max(0, Number(tag.after) || 0)
-      }))
+      })),
+      courtDraft
     );
   }
 
@@ -76,6 +81,44 @@ export function TagEditor({ tags, onClose, onSave }) {
           Los márgenes añaden tiempo antes y después de cada acción. En los intervalos
           se aplican al inicio y al final.
         </p>
+
+        <article className="court-editor-card">
+          <div>
+            <span className="eyebrow">Mapa de tiro</span>
+            <strong>Pista y zonas de etiquetado</strong>
+            <small>
+              Puedes ocultarla cuando no estés analizando tiros. Un doble clic
+              sobre la zona activa deshace la selección.
+            </small>
+          </div>
+          <label className="switch-control">
+            <input
+              type="checkbox"
+              checked={courtDraft.visible}
+              onChange={(event) =>
+                setCourtDraft((current) => ({
+                  ...current,
+                  visible: event.target.checked
+                }))
+              }
+            />
+            <span>Mostrar pista</span>
+          </label>
+          <label className="switch-control">
+            <input
+              type="checkbox"
+              checked={courtDraft.showLabels}
+              disabled={!courtDraft.visible}
+              onChange={(event) =>
+                setCourtDraft((current) => ({
+                  ...current,
+                  showLabels: event.target.checked
+                }))
+              }
+            />
+            <span>Mostrar nombres de las zonas</span>
+          </label>
+        </article>
 
         <div className="tag-editor-list">
           {draft.map((tag) => (

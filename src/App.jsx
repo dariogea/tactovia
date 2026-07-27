@@ -5,6 +5,7 @@ import { ExportClipsModal } from "./components/ExportClipsModal.jsx";
 import { MatchSetup } from "./components/MatchSetup.jsx";
 import { Playbook } from "./components/Playbook.jsx";
 import { ProfilePanel } from "./components/ProfilePanel.jsx";
+import { ReportCenter } from "./components/ReportCenter.jsx";
 import { ScoutingLibrary } from "./components/ScoutingLibrary.jsx";
 import { ShotCourtSelector } from "./components/ShotCourt.jsx";
 import { StatsPanel } from "./components/StatsPanel.jsx";
@@ -36,11 +37,13 @@ import {
   playbackControls
 } from "./lib/playback.js";
 import {
+  normalizePaletteMode,
   normalizeThemeMode,
+  paletteStorageKey,
   resolveThemeMode,
   themeStorageKey
 } from "./lib/theme.js";
-import { isShotTag, shotZoneById } from "./lib/shotZones.js";
+import { isShotTag, shotTagPoints, shotZoneById } from "./lib/shotZones.js";
 
 const desktop = window.scoutDesktop;
 const appVersion = __APP_VERSION__;
@@ -49,17 +52,21 @@ const preferencesKey = "scout-analyzer-preferences-v3";
 const teamsLibraryKey = "scout-analyzer-teams-v1";
 
 function migrateBasketballTags(tags = []) {
-  const hasTwo = tags.some((tag) => tag.id === "tag-shot-made-2");
-  const hasThree = tags.some((tag) => tag.id === "tag-shot-made-3");
-  const withoutLegacy = tags.filter((tag) => tag.id !== "tag-shot-made");
-  const shotDefaults = defaultTags.filter(
-    (tag) => tag.id === "tag-shot-made-2" || tag.id === "tag-shot-made-3"
+  const requiredShotIds = new Set([
+    "tag-shot-made-2",
+    "tag-shot-missed-2",
+    "tag-shot-made-3",
+    "tag-shot-missed-3"
+  ]);
+  const withoutLegacy = tags.filter(
+    (tag) => tag.id !== "tag-shot-made" && tag.id !== "tag-shot-missed"
   );
-  return [
-    ...(hasTwo ? [] : [shotDefaults[0]]),
-    ...(hasThree ? [] : [shotDefaults[1]]),
-    ...withoutLegacy
-  ].filter(Boolean);
+  const byId = new Map(withoutLegacy.map((tag) => [tag.id, tag]));
+  const shotTags = defaultTags
+    .filter((tag) => requiredShotIds.has(tag.id))
+    .map((tag) => byId.get(tag.id) || tag);
+  const remaining = withoutLegacy.filter((tag) => !requiredShotIds.has(tag.id));
+  return [...shotTags, ...remaining];
 }
 
 function readThemeMode() {
@@ -67,6 +74,14 @@ function readThemeMode() {
     return normalizeThemeMode(localStorage.getItem(themeStorageKey));
   } catch {
     return "system";
+  }
+}
+
+function readPaletteMode() {
+  try {
+    return normalizePaletteMode(localStorage.getItem(paletteStorageKey));
+  } catch {
+    return "arena";
   }
 }
 
@@ -88,7 +103,7 @@ function migrateProject(project) {
       : null;
   return {
     ...project,
-    version: 7,
+    version: 8,
     teams,
     match: validMatch,
     template: {
@@ -98,6 +113,24 @@ function migrateProject(project) {
     playbook: migratePlaybook(project.playbook),
     events: (project.events || []).map((event) => {
       const { outcome, ...rest } = event;
+      const zonePoints =
+        shotZoneById(event.shotZoneId)?.points || Number(event.shotPoints) || 2;
+      const migratedTagId =
+        event.tagId === "tag-shot-made"
+          ? zonePoints === 3
+            ? "tag-shot-made-3"
+            : "tag-shot-made-2"
+          : event.tagId === "tag-shot-missed"
+            ? zonePoints === 3
+              ? "tag-shot-missed-3"
+              : "tag-shot-missed-2"
+            : event.tagId;
+      const migratedTagName =
+        event.tagId === "tag-shot-made" || event.tagName === "Canasta"
+          ? `Canasta de ${zonePoints}P`
+          : event.tagId === "tag-shot-missed" || event.tagName === "Tiro fallado"
+            ? `Tiro fallado de ${zonePoints}P`
+            : event.tagName;
       return {
         ...rest,
         teamId:
@@ -105,12 +138,8 @@ function migrateProject(project) {
           (event.team === "Rival" ? "team-rival" : event.team ? "team-own" : ""),
         playerId: event.playerId || "",
         notes: event.notes || outcome || "",
-        tagId:
-          event.tagId === "tag-shot-made" ? "tag-shot-made-2" : event.tagId,
-        tagName:
-          event.tagId === "tag-shot-made" || event.tagName === "Canasta"
-            ? "Canasta de 2P"
-            : event.tagName,
+        tagId: migratedTagId,
+        tagName: migratedTagName,
         shotZoneId: event.shotZoneId || "",
         shotZoneName: event.shotZoneName || "",
         shotPoints: Number(event.shotPoints) || 0
@@ -152,7 +181,7 @@ function readAutosave() {
   try {
     const stored = JSON.parse(localStorage.getItem(autosaveKey));
     if (
-      [1, 2, 3, 4, 5, 6, 7].includes(stored?.version) &&
+      [1, 2, 3, 4, 5, 6, 7, 8].includes(stored?.version) &&
       Array.isArray(stored.events) &&
       Array.isArray(stored.template?.tags)
     ) {
@@ -191,6 +220,8 @@ function App() {
   const [currentTime, setCurrentTime] = useState(0);
   const [playbackRate, setPlaybackRate] = useState(1);
   const [isPlaying, setIsPlaying] = useState(false);
+  const [volume, setVolume] = useState(1);
+  const [muted, setMuted] = useState(false);
   const [preferences, setPreferences] = useState(readPreferences);
   const [context, setContext] = useState({ ...emptyContext });
   const [activeIntervals, setActiveIntervals] = useState({});
@@ -207,6 +238,7 @@ function App() {
   const [databaseError, setDatabaseError] = useState("");
   const [databaseImportReport, setDatabaseImportReport] = useState(null);
   const [themeMode, setThemeMode] = useState(readThemeMode);
+  const [paletteMode, setPaletteMode] = useState(readPaletteMode);
   const [prefersDark, setPrefersDark] = useState(systemPrefersDark);
   const [profileMenuOpen, setProfileMenuOpen] = useState(false);
   const videoRef = useRef(null);
@@ -260,6 +292,20 @@ function App() {
     () => statisticsFor(project.template.tags, project.events),
     [project.template.tags, project.events]
   );
+  const liveTaggingSummary = useMemo(() => {
+    const total = project.events.length;
+    const latest = total ? project.events[total - 1] : null;
+    const identified = project.events.filter(
+      (event) => event.playerId || event.player
+    ).length;
+    const elapsedMinutes = Math.max(currentTime / 60, 1 / 60);
+    return {
+      latest,
+      leading: stats[0] || null,
+      rate: total ? (total / elapsedMinutes).toFixed(1).replace(".", ",") : "0,0",
+      identifiedPercentage: total ? Math.round((identified / total) * 100) : 0
+    };
+  }, [currentTime, project.events, stats]);
 
   function notify(message) {
     setNotice(message);
@@ -296,12 +342,21 @@ function App() {
   }, [resolvedTheme, themeMode]);
 
   useEffect(() => {
+    document.documentElement.dataset.palette = paletteMode;
+    localStorage.setItem(paletteStorageKey, paletteMode);
+  }, [paletteMode]);
+
+  useEffect(() => {
     const media = window.matchMedia?.("(prefers-color-scheme: dark)");
     if (!media) return undefined;
     const handleChange = (event) => setPrefersDark(event.matches);
     media.addEventListener?.("change", handleChange);
     return () => media.removeEventListener?.("change", handleChange);
   }, []);
+
+  useEffect(() => {
+    if (workspaceReady) window.scrollTo({ top: 0, left: 0 });
+  }, [workspaceReady]);
 
   useEffect(() => {
     if (!desktop?.initializeDatabase) return undefined;
@@ -433,6 +488,8 @@ function App() {
 
   function finishPreparingVideo(video) {
     video.playbackRate = playbackRate;
+    video.volume = volume;
+    video.muted = muted;
     const pending = pendingSeekRef.current;
     if (pending !== null) {
       window.setTimeout(() => seekTo(pending), 0);
@@ -484,13 +541,27 @@ function App() {
       speed8: () => setVideoRate(8),
       speed16: () => setVideoRate(16),
       mute: () => {
-        if (video) video.muted = !video.muted;
+        const next = !muted;
+        setMuted(next);
+        if (video) video.muted = next;
       },
       volumeDown: () => {
-        if (video) video.volume = clamp(video.volume - 0.1, 0, 1);
+        const next = clamp(volume - 0.1, 0, 1);
+        setVolume(next);
+        setMuted(false);
+        if (video) {
+          video.volume = next;
+          video.muted = false;
+        }
       },
       volumeUp: () => {
-        if (video) video.volume = clamp(video.volume + 0.1, 0, 1);
+        const next = clamp(volume + 0.1, 0, 1);
+        setVolume(next);
+        setMuted(false);
+        if (video) {
+          video.volume = next;
+          video.muted = false;
+        }
       },
       previousEvent: () => seekTo(previousEvent?.start ?? 0),
       nextEvent: () => seekTo(nextEvent?.start ?? project.video?.duration ?? 0),
@@ -519,7 +590,7 @@ function App() {
       speed8: "×8",
       speed16: "×16",
       speedHalf: "×0,5",
-      mute: "Sonido",
+      mute: muted ? "Activar sonido" : "Silenciar",
       volumeDown: "Vol −",
       volumeUp: "Vol +",
       previousEvent: "Evento ←",
@@ -550,6 +621,18 @@ function App() {
     }
     if (isShotTag(tag) && !context.shotZoneId) {
       notify("Selecciona primero la zona de la pista para registrar el tiro.");
+      return;
+    }
+    const selectedZone = shotZoneById(context.shotZoneId);
+    const expectedPoints = shotTagPoints(tag);
+    if (
+      expectedPoints &&
+      selectedZone?.points &&
+      expectedPoints !== selectedZone.points
+    ) {
+      notify(
+        `Esta etiqueta es de ${expectedPoints} puntos. Selecciona una zona de ${expectedPoints}P.`
+      );
       return;
     }
     const time = video.currentTime;
@@ -737,7 +820,7 @@ function App() {
         notify(
           warningCount > 0
             ? `Importación completada con ${warningCount} avisos para revisar.`
-            : `${result.imported.teams} equipos, ${result.imported.players} jugadores y ${result.imported.matches} partidos importados.`
+            : `${result.imported.teams} equipos, ${result.imported.players} jugadores y ${result.imported.rosterChanges || 0} cambios de plantilla importados.`
         );
       }
     } finally {
@@ -875,6 +958,31 @@ function App() {
   async function openSessionFromGate() {
     const opened = await openProject();
     if (opened) setWorkspaceReady(true);
+  }
+
+  function startDemoSession() {
+    const demoAccount = {
+      id: "demo-session",
+      name: "Analista demo",
+      email: "demo@scoutanalyzer.local",
+      club: "Espacio de demostración",
+      role: "Demo",
+      avatar: "",
+      isDemo: true
+    };
+    setAccount(demoAccount);
+    setAuthenticated(true);
+    setSelectedSport("basketball");
+    setProject(createBlankProject(readTeamLibrary()));
+    setProjectFilePath("");
+    setVideoUrl("");
+    setCurrentTime(0);
+    setIsPlaying(false);
+    setActiveIntervals({});
+    setSelectedEventIds(new Set());
+    setContext({ ...emptyContext });
+    setActiveView("tagging");
+    setWorkspaceReady(true);
   }
 
   function logout() {
@@ -1155,6 +1263,7 @@ function App() {
           setAccount(nextAccount);
           setAuthenticated(true);
         }}
+        onDemo={startDemoSession}
         onSelectSport={setSelectedSport}
         onNew={startNewSession}
         onContinue={() => setWorkspaceReady(true)}
@@ -1368,8 +1477,82 @@ function App() {
                         Velocidad {playbackRate}×
                       </span>
                     )}
+                    <div className="audio-control">
+                      <button
+                        className={muted || volume === 0 ? "muted" : ""}
+                        onClick={() => executePlaybackAction("mute")}
+                        aria-label={muted ? "Activar sonido" : "Silenciar sonido"}
+                        title={muted ? "Activar sonido" : "Silenciar sonido"}
+                      >
+                        <span aria-hidden="true">
+                          {muted || volume === 0 ? "🔇" : volume < 0.5 ? "🔉" : "🔊"}
+                        </span>
+                      </button>
+                      <input
+                        type="range"
+                        min="0"
+                        max="1"
+                        step="0.01"
+                        value={muted ? 0 : volume}
+                        onChange={(event) => {
+                          const next = Number(event.currentTarget.value);
+                          setVolume(next);
+                          setMuted(next === 0);
+                          if (videoRef.current) {
+                            videoRef.current.volume = next;
+                            videoRef.current.muted = next === 0;
+                          }
+                        }}
+                        aria-label="Volumen del vídeo"
+                      />
+                      <span>{Math.round((muted ? 0 : volume) * 100)}%</span>
+                    </div>
                   </div>
                 </div>
+                <section className="live-tagging-strip" aria-label="Resumen del etiquetado">
+                  <div>
+                    <span>Acciones</span>
+                    <strong>{project.events.length}</strong>
+                    <small>registradas</small>
+                  </div>
+                  <div>
+                    <span>Ritmo</span>
+                    <strong>{liveTaggingSummary.rate}</strong>
+                    <small>acciones/min</small>
+                  </div>
+                  <div>
+                    <span>Más usada</span>
+                    <strong>{liveTaggingSummary.leading?.name || "—"}</strong>
+                    <small>
+                      {liveTaggingSummary.leading
+                        ? `${liveTaggingSummary.leading.count} registros`
+                        : "sin datos"}
+                    </small>
+                  </div>
+                  <div>
+                    <span>Jugador identificado</span>
+                    <strong>{liveTaggingSummary.identifiedPercentage}%</strong>
+                    <small>de las acciones</small>
+                  </div>
+                  <button
+                    className="live-last-event"
+                    disabled={!liveTaggingSummary.latest}
+                    onClick={() =>
+                      liveTaggingSummary.latest &&
+                      seekTo(liveTaggingSummary.latest.start)
+                    }
+                  >
+                    <span>Última acción</span>
+                    <strong>
+                      {liveTaggingSummary.latest?.tagName || "Todavía sin acciones"}
+                    </strong>
+                    <small>
+                      {liveTaggingSummary.latest
+                        ? `${formatTime(liveTaggingSummary.latest.start, true)} · volver al momento`
+                        : "Empieza a etiquetar para verla aquí"}
+                    </small>
+                  </button>
+                </section>
               </section>
 
               <div
@@ -1437,13 +1620,16 @@ function App() {
                   </label>
                 </div>
 
-                <ShotCourtSelector
-                  value={context.shotZoneId}
-                  onChange={(shotZoneId) =>
-                    setContext((current) => ({ ...current, shotZoneId }))
-                  }
-                  compact
-                />
+                {preferences.layout.shotCourtVisible !== false && (
+                  <ShotCourtSelector
+                    value={context.shotZoneId}
+                    onChange={(shotZoneId) =>
+                      setContext((current) => ({ ...current, shotZoneId }))
+                    }
+                    showLabels={preferences.layout.shotCourtLabels !== false}
+                    compact
+                  />
+                )}
 
                 <div
                   className="tag-grid"
@@ -1558,97 +1744,28 @@ function App() {
             onLogout={logout}
             preferences={preferences}
             onPreferencesChange={setPreferences}
-            tags={project.template.tags}
-            themeMode={themeMode}
-            resolvedTheme={resolvedTheme}
-            onThemeModeChange={setThemeMode}
-          />
-        )}
+              tags={project.template.tags}
+              themeMode={themeMode}
+              resolvedTheme={resolvedTheme}
+              onThemeModeChange={setThemeMode}
+              paletteMode={paletteMode}
+              onPaletteModeChange={setPaletteMode}
+            />
+          )}
 
         {activeView === "report" && (
-          <section className="report-view">
-            <div className="report-hero compact-report-hero">
-              <div>
-                <span className="eyebrow">Entrega</span>
-                <h1>Exportar análisis</h1>
-              </div>
-              <div className="report-number">
-                <strong>{project.events.length}</strong>
-                <span>acciones disponibles</span>
-              </div>
-            </div>
-
-            <div className="export-grid">
-              <article className="export-card">
-                <div className="export-icon">DATA</div>
-                <h2>Datos del análisis</h2>
-                <p>Exporta los mismos datos en una tabla CSV o en un libro Excel con varias hojas.</p>
-                <label className="field export-format-field">
-                  <span>Formato</span>
-                  <select value={dataExportFormat} onChange={(event) => setDataExportFormat(event.target.value)}>
-                    <option value="xlsx">Excel (.xlsx)</option>
-                    <option value="csv">CSV (.csv)</option>
-                  </select>
-                </label>
-                <button className="button secondary" onClick={exportData}>
-                  Exportar {dataExportFormat.toUpperCase()}
-                </button>
-              </article>
-              <article className="export-card featured">
-                <div className="export-icon">▶</div>
-                <h2>Clips de vídeo</h2>
-                <p>
-                  Elige acciones concretas, orden y carpetas por etiqueta, equipo o jugador.
-                </p>
-                <div className="selection-row">
-                  <button className="mini-button" onClick={toggleSelectAll}>
-                    {selectedEventIds.size === project.events.length && project.events.length > 0
-                      ? "Quitar selección"
-                      : "Seleccionar todas"}
-                  </button>
-                  <span>{selectedEventIds.size} seleccionadas</span>
-                </div>
-                <button className="button primary" onClick={() => setShowExportClips(true)}>
-                  Configurar exportación
-                </button>
-              </article>
-              <article className="export-card">
-                <div className="export-icon">PDF</div>
-                <h2>Informe completo</h2>
-                <p>Resumen general, recuentos por etiqueta y registro cronológico de acciones.</p>
-                <button className="button secondary" onClick={exportReport}>Crear informe PDF</button>
-              </article>
-              <article className="export-card">
-                <div className="export-icon">TXT</div>
-                <h2>Resumen para compartir</h2>
-                <p>Copia una síntesis ejecutiva del partido para el cuerpo técnico.</p>
-                <button className="button ghost" onClick={copyExecutiveSummary}>Copiar resumen</button>
-              </article>
-            </div>
-
-            <article className="report-preview">
-              <div className="section-heading">
-                <div>
-                  <span className="eyebrow">Vista previa</span>
-                  <h2>{project.projectName}</h2>
-                </div>
-                <span>{project.video?.name || "Sin vídeo seleccionado"}</span>
-              </div>
-              <div className="report-stats">
-                {stats.length === 0 ? (
-                  <div className="empty-inline">Todavía no hay datos que resumir.</div>
-                ) : (
-                  stats.map((item) => (
-                    <div key={item.id}>
-                      <i style={{ background: item.color }} />
-                      <span>{item.name}</span>
-                      <strong>{item.count}</strong>
-                    </div>
-                  ))
-                )}
-              </div>
-            </article>
-          </section>
+          <ReportCenter
+            project={project}
+            stats={stats}
+            selectedEventIds={selectedEventIds}
+            dataExportFormat={dataExportFormat}
+            onDataExportFormat={setDataExportFormat}
+            onExportData={exportData}
+            onToggleSelectAll={toggleSelectAll}
+            onConfigureClips={() => setShowExportClips(true)}
+            onExportReport={exportReport}
+            onCopySummary={copyExecutiveSummary}
+          />
         )}
       </main>
 
@@ -1675,11 +1792,23 @@ function App() {
       {showTagEditor && (
         <TagEditor
           tags={project.template.tags}
+          courtOptions={{
+            visible: preferences.layout.shotCourtVisible,
+            showLabels: preferences.layout.shotCourtLabels
+          }}
           onClose={() => setShowTagEditor(false)}
-          onSave={(tags) => {
+          onSave={(tags, courtOptions) => {
             updateProject((current) => ({
               ...current,
               template: { ...current.template, tags }
+            }));
+            setPreferences((current) => ({
+              ...current,
+              layout: {
+                ...current.layout,
+                shotCourtVisible: courtOptions.visible,
+                shotCourtLabels: courtOptions.showLabels
+              }
             }));
             setActiveIntervals({});
             setShowTagEditor(false);
