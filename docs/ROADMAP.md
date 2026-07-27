@@ -52,14 +52,25 @@
 - Media pista vertical con parqué y marcajes profesionales. ✓
 - Migración automática de objetos y acciones desde la pista horizontal. ✓
 
-## Versión 0.6 — Colaboración
+## Versión 0.6 — Base histórica y preparación de colaboración
+
+- Biblioteca local relacional de competiciones, temporadas y partidos. ✓
+- Histórico relacionado de equipos, jugadores, análisis y acciones. ✓
+- Importación administrativa Excel/CSV y copias de seguridad. ✓
+- Competición piloto FBRM Primera División Masculina 2026/27. ✓
+- Modelo de catálogo compartido y análisis privados por defecto. ✓
+- Esquema de cuentas, espacios, roles y permisos para la nube. ✓
+- Activación de cuentas y sincronización real entre ordenadores.
+- Panel para resolver conflictos y cambios pendientes.
+
+## Versión 0.7 — Colaboración activa
 
 - Cuenta personal y espacios de equipo.
 - Sincronización opcional de análisis.
 - Comentarios de entrenadores y jugadores.
 - Roles, permisos y enlaces compartidos.
 
-## Versión 0.7 — Asistencia mediante IA
+## Versión 0.8 — Asistencia mediante IA
 
 - Lectura opcional del marcador.
 - Sugerencias de cortes y detección de cambios de posesión.

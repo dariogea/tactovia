@@ -203,7 +203,7 @@ export {
 export function createBlankProject(teams = defaultTeams) {
   const now = new Date().toISOString();
   return {
-    version: 5,
+    version: 6,
     id: crypto.randomUUID(),
     projectName: "Nuevo análisis",
     createdAt: now,

@@ -11,6 +11,11 @@ const fs = require("node:fs");
 const path = require("node:path");
 const ExcelJS = require("exceljs");
 const {
+  createCatalogTemplate,
+  readCatalogWorkbook
+} = require("./catalog.cjs");
+const { createDatabaseService } = require("./database.cjs");
+const {
   findMacAppBundle,
   findPreviousMacApplications
 } = require("./installations.cjs");
@@ -37,6 +42,7 @@ const allowedVideoExtensions = new Set([
 ]);
 const authorizedMedia = new Set();
 let mainWindow;
+let scoutingDatabase;
 
 function isSupportedVideo(filePath) {
   return (
@@ -657,6 +663,94 @@ async function createAnalysisWorkbook(project) {
 
 app.whenReady().then(() => {
   registerMediaProtocol();
+  scoutingDatabase = createDatabaseService(
+    path.join(app.getPath("userData"), "scoutanalyzer.db")
+  );
+
+  ipcMain.handle("database:initialize", async (_event, payload = {}) => {
+    try {
+      if (payload.legacyProject?.id) {
+        scoutingDatabase.syncProject(payload.legacyProject);
+      }
+      return {
+        ok: true,
+        fileName: path.basename(scoutingDatabase.filePath),
+        snapshot: scoutingDatabase.snapshot()
+      };
+    } catch (error) {
+      return { ok: false, error: error.message };
+    }
+  });
+
+  ipcMain.handle("database:sync-project", async (_event, project) => {
+    try {
+      return scoutingDatabase.syncProject(project);
+    } catch (error) {
+      return { ok: false, error: error.message };
+    }
+  });
+
+  ipcMain.handle("database:snapshot", async () => {
+    try {
+      return { ok: true, snapshot: scoutingDatabase.snapshot() };
+    } catch (error) {
+      return { ok: false, error: error.message };
+    }
+  });
+
+  ipcMain.handle("database:create-import-template", async () => {
+    const result = await dialog.showSaveDialog(mainWindow, {
+      title: "Guardar plantilla de importación",
+      defaultPath: "Plantilla-FBRM-Primera-Division-2026-27.xlsx",
+      filters: [{ name: "Libro Excel", extensions: ["xlsx"] }]
+    });
+    if (result.canceled || !result.filePath) return { canceled: true };
+    try {
+      await createCatalogTemplate(result.filePath);
+      return { canceled: false, filePath: result.filePath };
+    } catch (error) {
+      return { canceled: false, error: error.message };
+    }
+  });
+
+  ipcMain.handle("database:import-catalog", async () => {
+    const result = await dialog.showOpenDialog(mainWindow, {
+      title: "Importar competición",
+      properties: ["openFile"],
+      filters: [
+        { name: "Excel o CSV", extensions: ["xlsx", "csv"] }
+      ]
+    });
+    if (result.canceled || !result.filePaths[0]) return { canceled: true };
+    try {
+      const catalog = await readCatalogWorkbook(result.filePaths[0]);
+      const imported = scoutingDatabase.importCatalog(catalog);
+      return {
+        canceled: false,
+        imported,
+        warnings: catalog.warnings,
+        snapshot: scoutingDatabase.snapshot()
+      };
+    } catch (error) {
+      return { canceled: false, error: error.message };
+    }
+  });
+
+  ipcMain.handle("database:backup", async () => {
+    const stamp = new Date().toISOString().slice(0, 10);
+    const result = await dialog.showSaveDialog(mainWindow, {
+      title: "Crear copia de seguridad",
+      defaultPath: `ScoutAnalyzer-copia-${stamp}.db`,
+      filters: [{ name: "Base de datos ScoutAnalyzer", extensions: ["db"] }]
+    });
+    if (result.canceled || !result.filePath) return { canceled: true };
+    try {
+      await scoutingDatabase.backupTo(result.filePath);
+      return { canceled: false, filePath: result.filePath };
+    } catch (error) {
+      return { canceled: false, error: error.message };
+    }
+  });
 
   ipcMain.handle("video:select", async () => {
     const result = await dialog.showOpenDialog(mainWindow, {
@@ -963,4 +1057,9 @@ app.whenReady().then(() => {
 
 app.on("window-all-closed", () => {
   if (process.platform !== "darwin") app.quit();
+});
+
+app.on("before-quit", () => {
+  scoutingDatabase?.close();
+  scoutingDatabase = null;
 });
