@@ -1,7 +1,7 @@
 # Contexto permanente de ScoutAnalyzer
 
 Última actualización: 27 de julio de 2026
-Versión estable: 0.6.1
+Versión estable: 0.7.0
 
 ## Objetivo
 
@@ -13,6 +13,10 @@ informes y diseñar jugadas en un Playbook.
 
 - Aplicación local para macOS Apple Silicon y Windows x64.
 - Electron, React y Vite.
+- Sistema visual 0.7 con navegación flotante, superficies translúcidas,
+  controles compactos y jerarquía unificada.
+- Temas automático, claro y oscuro; la preferencia se conserva localmente y el
+  modo automático responde a Windows o macOS en tiempo real.
 - Biblioteca histórica SQLite con competición, temporada, equipos, plantillas,
   jugadores, partidos, análisis y acciones relacionadas.
 - Catálogo precargado de Primera División Masculina GESA FBRM 2026/27 con 16
@@ -58,27 +62,30 @@ informes y diseñar jugadas en un Playbook.
 
 ## Verificación estable
 
-- 35 pruebas automáticas superadas.
+- 37 pruebas automáticas superadas.
 - Prueba de base de datos dentro de Electron superada:
   `DATABASE_OK version=1 teams=2 players=1 matches=1 events=1 privacy=private`.
 - Renderizado aislado de los seis paneles principales superado.
 - Prueba multimedia real superada:
   `VIDEO_SEEK_OK duration=12.00 seek=7.25 playback=8.46 rate=2x ranges=1`.
-- Compilación de producción 0.6.1 superada.
+- Compilación de producción 0.7.0 superada.
+- Revisión visual de Etiquetado, Estadísticas, Biblioteca, Equipos y jugadores,
+  Playbook, Informe y Ajustes en temas claro y oscuro superada.
 - Revisión visual del catálogo en Partidos, Equipos, Jugadores y Administración
   superada con 16 equipos, 192 jugadores, ocho partidos y cero análisis
   artificiales.
-- DMG 0.6.1 generado, con suma interna válida y paquete confirmado como 0.6.1.
-- Aplicación 0.6.1 instalada y abierta desde `/Applications/ScoutAnalyzer.app`.
+- DMG 0.7.0 generado, con suma interna válida y paquete confirmado como 0.7.0.
+- Aplicación 0.7.0 instalada y abierta desde `/Applications/ScoutAnalyzer.app`.
 - La biblioteca real mantiene el esquema 1 e incorpora el catálogo sin borrar
   equipos, análisis ni acciones del usuario.
-- EXE y ZIP de Windows 0.6.1 generados y comprobados estructuralmente como x64;
+- EXE y ZIP de Windows 0.7.0 generados y comprobados estructuralmente como x64;
   siguen pendientes de prueba física en Windows.
-- La carpeta `release` 0.6.1 contiene únicamente DMG, EXE y ZIP.
+- La carpeta `release` 0.7.0 contiene únicamente DMG, EXE y ZIP.
 
 ## Referencias
 
-- Historial detallado: `TRASPASO-SCOUTANALYZER-0.6.1.md`.
+- Historial detallado: `TRASPASO-SCOUTANALYZER-0.7.0.md`.
+- Sistema visual: `docs/SISTEMA-VISUAL-0.7.md`.
 - Arquitectura de datos: `docs/BASE-DATOS-0.6.md`.
 - Catálogo y procedencia: `docs/CATALOGO-FBRM-2026-27.md`.
 - Feedback comprobado: `docs/FEEDBACK-0.4.md`.

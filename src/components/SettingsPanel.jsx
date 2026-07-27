@@ -1,6 +1,7 @@
 import { useMemo, useState } from "react";
 import { defaultPreferences } from "../lib/defaults.js";
 import { playbackControls, shortcutActions, eventToShortcut } from "../lib/playback.js";
+import { themeOptions } from "../lib/theme.js";
 
 const workspacePresets = {
   compact: { tagPanelWidth: 360, videoHeight: 430 },
@@ -46,7 +47,14 @@ function ShortcutButton({ value, onChange }) {
   );
 }
 
-export function SettingsPanel({ preferences, onChange, tags }) {
+export function SettingsPanel({
+  preferences,
+  onChange,
+  tags,
+  themeMode,
+  resolvedTheme,
+  onThemeModeChange
+}) {
   const shortcutConflicts = useMemo(() => {
     const owners = new Map();
     Object.entries(preferences.shortcuts).forEach(([id, shortcut]) => {
@@ -94,6 +102,52 @@ export function SettingsPanel({ preferences, onChange, tags }) {
 
   return (
     <section className="settings-view">
+      <article className="settings-section appearance-settings">
+        <div className="section-heading">
+          <div>
+            <span className="eyebrow">Apariencia</span>
+            <h2>Un espacio cómodo a cualquier hora</h2>
+          </div>
+          <span className="theme-current-state">
+            Mostrando tema {resolvedTheme === "dark" ? "oscuro" : "claro"}
+          </span>
+        </div>
+        <p className="settings-intro">
+          El modo automático sigue el aspecto de Windows o macOS y cambia en
+          tiempo real. La elección queda guardada en este ordenador.
+        </p>
+        <div className="theme-card-grid">
+          {themeOptions.map((option) => (
+            <button
+              type="button"
+              key={option.id}
+              className={`theme-choice-card ${themeMode === option.id ? "active" : ""}`}
+              onClick={() => onThemeModeChange(option.id)}
+            >
+              <span className={`theme-miniature ${option.id}`}>
+                <i />
+                <b />
+                <em />
+                <u />
+              </span>
+              <span>
+                <strong>{option.label}</strong>
+                <small>
+                  {option.id === "system"
+                    ? "Se adapta al sistema"
+                    : option.id === "light"
+                      ? "Luminoso y limpio"
+                      : "Contraste para sesiones largas"}
+                </small>
+              </span>
+              <i className="theme-choice-check" aria-hidden="true">
+                {themeMode === option.id ? "✓" : ""}
+              </i>
+            </button>
+          ))}
+        </div>
+      </article>
+
       <article className="settings-section">
         <div className="section-heading">
           <div>

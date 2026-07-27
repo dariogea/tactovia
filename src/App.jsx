@@ -8,6 +8,7 @@ import { RosterManager } from "./components/RosterManager.jsx";
 import { SettingsPanel } from "./components/SettingsPanel.jsx";
 import { StatsPanel } from "./components/StatsPanel.jsx";
 import { TagEditor } from "./components/TagEditor.jsx";
+import { ThemeSelector } from "./components/ThemeSelector.jsx";
 import { Timeline } from "./components/Timeline.jsx";
 import {
   clamp,
@@ -31,12 +32,29 @@ import {
   nextPlaybackSpeed,
   playbackControls
 } from "./lib/playback.js";
+import {
+  normalizeThemeMode,
+  resolveThemeMode,
+  themeStorageKey
+} from "./lib/theme.js";
 
 const desktop = window.scoutDesktop;
 const appVersion = __APP_VERSION__;
 const autosaveKey = "scout-analyzer-autosave-v1";
 const preferencesKey = "scout-analyzer-preferences-v3";
 const teamsLibraryKey = "scout-analyzer-teams-v1";
+
+function readThemeMode() {
+  try {
+    return normalizeThemeMode(localStorage.getItem(themeStorageKey));
+  } catch {
+    return "system";
+  }
+}
+
+function systemPrefersDark() {
+  return window.matchMedia?.("(prefers-color-scheme: dark)")?.matches ?? true;
+}
 
 function migrateProject(project) {
   const teams =
@@ -153,6 +171,8 @@ function App() {
   const [databaseLoading, setDatabaseLoading] = useState(false);
   const [databaseError, setDatabaseError] = useState("");
   const [databaseImportReport, setDatabaseImportReport] = useState(null);
+  const [themeMode, setThemeMode] = useState(readThemeMode);
+  const [prefersDark, setPrefersDark] = useState(systemPrefersDark);
   const videoRef = useRef(null);
   const pendingSeekRef = useRef(null);
   const scrubbingRef = useRef(false);
@@ -224,6 +244,23 @@ function App() {
   useEffect(() => {
     localStorage.setItem(preferencesKey, JSON.stringify(preferences));
   }, [preferences]);
+
+  const resolvedTheme = resolveThemeMode(themeMode, prefersDark);
+
+  useEffect(() => {
+    document.documentElement.dataset.theme = resolvedTheme;
+    document.documentElement.dataset.themePreference = themeMode;
+    document.documentElement.style.colorScheme = resolvedTheme;
+    localStorage.setItem(themeStorageKey, themeMode);
+  }, [resolvedTheme, themeMode]);
+
+  useEffect(() => {
+    const media = window.matchMedia?.("(prefers-color-scheme: dark)");
+    if (!media) return undefined;
+    const handleChange = (event) => setPrefersDark(event.matches);
+    media.addEventListener?.("change", handleChange);
+    return () => media.removeEventListener?.("change", handleChange);
+  }, []);
 
   useEffect(() => {
     if (!desktop?.initializeDatabase) return undefined;
@@ -1034,6 +1071,7 @@ function App() {
           aria-label="Nombre del análisis"
         />
         <div className="top-actions">
+          <ThemeSelector value={themeMode} onChange={setThemeMode} compact />
           <button className="button ghost" onClick={newProject}>Nuevo</button>
           <button className="button ghost" onClick={openProject}>Abrir</button>
           <button className="button primary" onClick={saveProject}>Guardar</button>
@@ -1393,6 +1431,9 @@ function App() {
             preferences={preferences}
             onChange={setPreferences}
             tags={project.template.tags}
+            themeMode={themeMode}
+            resolvedTheme={resolvedTheme}
+            onThemeModeChange={setThemeMode}
           />
         )}
 

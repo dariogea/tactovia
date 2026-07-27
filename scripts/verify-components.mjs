@@ -36,7 +36,10 @@ try {
     React.createElement(SettingsPanel, {
       preferences: defaults.defaultPreferences,
       tags: project.template.tags,
-      onChange() {}
+      onChange() {},
+      themeMode: "system",
+      resolvedTheme: "dark",
+      onThemeModeChange() {}
     }),
     React.createElement(Playbook, {
       playbook: project.playbook,

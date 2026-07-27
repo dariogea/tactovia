@@ -1,4 +1,4 @@
-# ScoutAnalyzer 0.6.1
+# ScoutAnalyzer 0.7.0
 
 Aplicación de escritorio para analizar vídeo local y etiquetar acciones de
 baloncesto. La primera versión funciona sin conexión y mantiene tanto el vídeo
@@ -7,6 +7,11 @@ como los análisis en el ordenador.
 ## Funciones incluidas
 
 - Reproducción de vídeos MP4, MOV, M4V, WebM y OGV.
+- Sistema visual renovado con modo automático, claro y oscuro.
+- Preferencia de apariencia persistente y adaptación en tiempo real al tema de
+  Windows o macOS.
+- Navegación flotante, superficies translúcidas, controles compactos y
+  jerarquía visual unificada en todas las pestañas.
 - Biblioteca histórica local en SQLite para competiciones, temporadas, equipos,
   plantillas, partidos, análisis y acciones.
 - Catálogo inicial de Primera División Masculina GESA FBRM 2026/27 con sus 16
@@ -56,14 +61,14 @@ como los análisis en el ordenador.
 
 El instalador generado para Apple Silicon está en:
 
-`release/ScoutAnalyzer-0.6.1-mac-arm64.dmg`
+`release/ScoutAnalyzer-0.7.0-mac-arm64.dmg`
 
 1. Abre el DMG.
 2. Arrastra ScoutAnalyzer a Aplicaciones.
 3. Al no estar firmado todavía con una cuenta de desarrollador de Apple, macOS
    puede mostrar un aviso. Pulsa Control y haz clic sobre la aplicación, elige
    **Abrir** y confirma.
-4. Comprueba que en la esquina superior izquierda aparece **Versión 0.6.1**.
+4. Comprueba que en la esquina superior izquierda aparece **Versión 0.7.0**.
 
 Al iniciar una actualización instalada en Aplicaciones, las copias anteriores
 identificadas como ScoutAnalyzer se mueven a la Papelera. El DMG debe seguir
@@ -73,11 +78,11 @@ instalándose con el nombre `ScoutAnalyzer.app`.
 
 El instalador generado para Windows x64 está en:
 
-`release/ScoutAnalyzer-0.6.1-win-x64.exe`
+`release/ScoutAnalyzer-0.7.0-win-x64.exe`
 
 También existe una versión portable:
 
-`release/ScoutAnalyzer-0.6.1-win-x64.zip`
+`release/ScoutAnalyzer-0.7.0-win-x64.zip`
 
 En la versión portable hay que descomprimir primero todo el archivo y después
 abrir `ScoutAnalyzer.exe`. Como el programa todavía no dispone de certificado
@@ -145,6 +150,19 @@ triple y semicírculo de medio campo. Las jugadas creadas sobre la pista
 horizontal anterior se recolocan automáticamente al abrirlas.
 
 La guía detallada está en `docs/PLAYBOOK-2.md`.
+
+## Apariencia
+
+El selector de la cabecera y la sección **Ajustes > Apariencia** permiten
+elegir:
+
+- **Automático**: sigue el modo claro u oscuro del sistema y responde a sus
+  cambios.
+- **Claro**: fondo luminoso, tarjetas blancas y controles de alto contraste.
+- **Oscuro**: superficies grafito pensadas para sesiones largas de análisis.
+
+La elección se guarda localmente. Los vídeos, la pista y los documentos del
+Playbook conservan sus fondos específicos para no alterar el contenido.
 
 Atajos generales:
 
