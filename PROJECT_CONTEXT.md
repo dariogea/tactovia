@@ -1,7 +1,7 @@
 # Contexto permanente de ScoutAnalyzer
 
 Última actualización: 27 de julio de 2026
-Versión estable: 0.5.1
+Versión estable: 0.6.0
 
 ## Objetivo
 
@@ -13,6 +13,17 @@ informes y diseñar jugadas en un Playbook.
 
 - Aplicación local para macOS Apple Silicon y Windows x64.
 - Electron, React y Vite.
+- Biblioteca histórica SQLite con competición, temporada, equipos, plantillas,
+  jugadores, partidos, análisis y acciones relacionadas.
+- Piloto preparado para Primera División Masculina GESA FBRM 2026/27.
+- Importador Excel/CSV con códigos estables y copia de seguridad local.
+- Validación de códigos duplicados para impedir que una importación mezcle
+  identidades o sobrescriba equipos, jugadores y partidos.
+- Identidad del jugador independiente de sus plantillas por temporada.
+- Modelo híbrido preparado: catálogo deportivo compartido y análisis privados
+  por usuario o club.
+- Esquema Supabase/PostgreSQL con cuentas, espacios, roles y seguridad por fila;
+  la conexión real permanece pendiente hasta crear el proyecto cloud.
 - Equipos y jugadores con fichas rápidas y detalladas, logos y fotografías.
 - Partido obligatorio al cargar un vídeo.
 - Etiquetas personalizables de instante e intervalo.
@@ -41,20 +52,29 @@ informes y diseñar jugadas en un Playbook.
 
 ## Verificación estable
 
-- 24 pruebas automáticas superadas.
+- 32 pruebas automáticas superadas.
+- Prueba de base de datos dentro de Electron superada:
+  `DATABASE_OK version=1 teams=2 players=1 matches=1 events=1 privacy=private`.
+- Renderizado aislado de los seis paneles principales superado.
 - Prueba multimedia real superada:
   `VIDEO_SEEK_OK duration=12.00 seek=7.25 playback=8.46 rate=2x ranges=1`.
-- Compilación de producción 0.5.1 superada.
+- Compilación de producción 0.6.0 superada.
 - Revisión visual completa del Playbook 2.0 superada sin errores de consola.
-- DMG 0.5.1 validado, abierto y aplicación macOS instalada.
-- Paquetes de Windows 0.5.1 construidos y comprobados estructuralmente, pero
-  pendientes de prueba física en Windows.
+- DMG 0.6.0 generado, con suma interna válida y paquete confirmado como 0.6.0.
+- Aplicación 0.6.0 instalada y abierta desde `/Applications/ScoutAnalyzer.app`.
+- La biblioteca real se creó con esquema 1, una competición piloto y el análisis
+  local migrado; la copia 0.5.1 se movió a la Papelera.
+- EXE y ZIP de Windows 0.6.0 generados y comprobados estructuralmente como x64;
+  siguen pendientes de prueba física en Windows.
 - La carpeta `release` se redujo de 2,6 GB acumulados a unos 444 MB con tres
   archivos distribuibles.
+- La carpeta `release` 0.6.0 contiene únicamente DMG, EXE y ZIP, unos 426 MiB
+  en total.
 
 ## Referencias
 
-- Historial detallado: `TRASPASO-SCOUTANALYZER-0.5.1.md`.
+- Historial detallado: `TRASPASO-SCOUTANALYZER-0.6.0.md`.
+- Arquitectura de datos: `docs/BASE-DATOS-0.6.md`.
 - Feedback comprobado: `docs/FEEDBACK-0.4.md`.
 - Atajos: `docs/ATAJOS.md`.
 - Guía del Playbook: `docs/PLAYBOOK-2.md`.
@@ -73,10 +93,10 @@ Los vídeos, análisis `.scout.json`, datos locales, `node_modules`, `dist` y
 
 ## Próximas prioridades
 
-1. Probar físicamente el instalador, vídeo y exportaciones en Windows.
-2. Probar la exportación WebM en un segundo Mac y en Windows.
-3. Añadir icono propio e identidad visual.
-4. Importar y exportar plantillas de etiquetas.
-5. Crear filtros combinados y listas de reproducción.
-6. Exportar selecciones como un único vídeo de highlights.
-7. Comparar varios partidos.
+1. Crear el proyecto Supabase del producto y activar autenticación.
+2. Conseguir autorización o un canal oficial de datos FBRM.
+3. Validar las políticas cloud con usuario, club y administrador.
+4. Probar físicamente el instalador, vídeo y exportaciones en Windows.
+5. Importar la plantilla real de Primera División Masculina GESA 2026/27.
+6. Crear filtros históricos combinados por jugador, equipo y acción.
+7. Exportar selecciones como un único vídeo de highlights.

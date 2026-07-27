@@ -1,4 +1,4 @@
-# ScoutAnalyzer 0.5.1
+# ScoutAnalyzer 0.6.0
 
 Aplicación de escritorio para analizar vídeo local y etiquetar acciones de
 baloncesto. La primera versión funciona sin conexión y mantiene tanto el vídeo
@@ -7,6 +7,16 @@ como los análisis en el ordenador.
 ## Funciones incluidas
 
 - Reproducción de vídeos MP4, MOV, M4V, WebM y OGV.
+- Biblioteca histórica local en SQLite para competiciones, temporadas, equipos,
+  plantillas, partidos, análisis y acciones.
+- Competición piloto preparada para Primera División Masculina GESA FBRM
+  2026/27.
+- Importación administrativa mediante una plantilla Excel de equipos,
+  jugadores y partidos.
+- Identidad única de jugador separada de sus plantillas por temporada.
+- Copia de seguridad de la biblioteca desde la propia aplicación.
+- Estructura PostgreSQL/Supabase con catálogo compartido, roles y análisis
+  privados por defecto, preparada para la fase online.
 - Etiquetas de instante y de intervalo.
 - Base de datos persistente de equipos y jugadores con logo o fotografía.
 - Fichas rápidas y detalladas de clubes y jugadores.
@@ -41,14 +51,14 @@ como los análisis en el ordenador.
 
 El instalador generado para Apple Silicon está en:
 
-`release/ScoutAnalyzer-0.5.1-mac-arm64.dmg`
+`release/ScoutAnalyzer-0.6.0-mac-arm64.dmg`
 
 1. Abre el DMG.
 2. Arrastra ScoutAnalyzer a Aplicaciones.
 3. Al no estar firmado todavía con una cuenta de desarrollador de Apple, macOS
    puede mostrar un aviso. Pulsa Control y haz clic sobre la aplicación, elige
    **Abrir** y confirma.
-4. Comprueba que en la esquina superior izquierda aparece **Versión 0.5.1**.
+4. Comprueba que en la esquina superior izquierda aparece **Versión 0.6.0**.
 
 Al iniciar una actualización instalada en Aplicaciones, las copias anteriores
 identificadas como ScoutAnalyzer se mueven a la Papelera. El DMG debe seguir
@@ -58,11 +68,11 @@ instalándose con el nombre `ScoutAnalyzer.app`.
 
 El instalador generado para Windows x64 está en:
 
-`release/ScoutAnalyzer-0.5.1-win-x64.exe`
+`release/ScoutAnalyzer-0.6.0-win-x64.exe`
 
 También existe una versión portable:
 
-`release/ScoutAnalyzer-0.5.1-win-x64.zip`
+`release/ScoutAnalyzer-0.6.0-win-x64.zip`
 
 En la versión portable hay que descomprimir primero todo el archivo y después
 abrir `ScoutAnalyzer.exe`. Como el programa todavía no dispone de certificado
@@ -81,6 +91,25 @@ de firma, Windows SmartScreen puede mostrar un aviso de editor desconocido.
 6. Revisa o corrige los eventos desde la tabla inferior.
 7. Guarda el análisis para crear un archivo `.scout.json`.
 8. Usa **Informe y exportación** para generar datos, clips o PDF.
+
+## Biblioteca de scouting
+
+La pestaña **Biblioteca** reúne el histórico deportivo de la aplicación:
+
+1. En **Administración**, guarda la plantilla Excel.
+2. Completa equipos, jugadores y partidos conservando sus códigos.
+3. Importa el libro y revisa los posibles avisos.
+4. En **Partidos**, elige **Usar en etiquetado** para cargar los dos equipos y
+   sus plantillas en el análisis.
+5. Crea periódicamente una copia de seguridad desde Administración.
+
+Los análisis existentes se incorporan automáticamente a la nueva base local al
+abrir esta versión. El archivo de vídeo no se copia ni se sube.
+
+La estructura futura de cuentas y permisos ya está definida, pero la
+sincronización entre ordenadores todavía no se activa hasta crear y configurar
+el servicio de nube. La guía técnica y de permisos está en
+`docs/BASE-DATOS-0.6.md`.
 
 ## Playbook 2.0
 
@@ -137,6 +166,7 @@ Comandos:
 pnpm install
 pnpm dev
 pnpm test
+pnpm test:database
 pnpm test:video
 pnpm build
 pnpm dist
@@ -154,9 +184,10 @@ portable de Windows.
 
 ## Alcance de esta versión
 
-Esta es una versión local. No incluye todavía cuentas, colaboración en
-la nube, vídeo en directo, plantillas compartidas ni reconocimiento automático
-mediante IA. El instalador de Windows ha sido
+Esta versión incorpora la base histórica local y prepara el modelo compartido.
+No incluye todavía cuentas activas, sincronización entre ordenadores, vídeo en
+directo, plantillas compartidas ni reconocimiento automático mediante IA. El
+instalador de Windows ha sido
 empaquetado y verificado estructuralmente desde macOS; su prueba de ejecución
 debe hacerse en un ordenador Windows x64.
 

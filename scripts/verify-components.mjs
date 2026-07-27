@@ -10,13 +10,22 @@ const vite = await createServer({
 });
 
 try {
-  const [{ StatsPanel }, { RosterManager }, { SettingsPanel }, { Playbook }, { MatchSetup }, defaults] =
+  const [
+    { StatsPanel },
+    { RosterManager },
+    { SettingsPanel },
+    { Playbook },
+    { MatchSetup },
+    { DatabaseLibrary },
+    defaults
+  ] =
     await Promise.all([
       vite.ssrLoadModule("/src/components/StatsPanel.jsx"),
       vite.ssrLoadModule("/src/components/RosterManager.jsx"),
       vite.ssrLoadModule("/src/components/SettingsPanel.jsx"),
       vite.ssrLoadModule("/src/components/Playbook.jsx"),
       vite.ssrLoadModule("/src/components/MatchSetup.jsx"),
+      vite.ssrLoadModule("/src/components/DatabaseLibrary.jsx"),
       vite.ssrLoadModule("/src/lib/defaults.js")
     ]);
 
@@ -41,6 +50,32 @@ try {
       onTeamsChange() {},
       onConfirm() {},
       onManageTeams() {}
+    }),
+    React.createElement(DatabaseLibrary, {
+      snapshot: {
+        cloud: { configured: false },
+        totals: {
+          teams: 2,
+          players: 1,
+          matches: 1,
+          analyses: 1,
+          events: 1,
+          pendingSync: 1
+        },
+        competitions: [],
+        teams: [],
+        players: [],
+        rosters: [],
+        matches: []
+      },
+      loading: false,
+      error: "",
+      importReport: null,
+      onRefresh() {},
+      onImport() {},
+      onCreateTemplate() {},
+      onBackup() {},
+      onUseMatch() {}
     })
   ];
 
@@ -51,4 +86,3 @@ try {
 } finally {
   await vite.close();
 }
-

@@ -1,6 +1,16 @@
 const { contextBridge, ipcRenderer } = require("electron");
 
 contextBridge.exposeInMainWorld("scoutDesktop", {
+  initializeDatabase: (payload) =>
+    ipcRenderer.invoke("database:initialize", payload),
+  syncProjectToDatabase: (project) =>
+    ipcRenderer.invoke("database:sync-project", project),
+  getDatabaseSnapshot: () => ipcRenderer.invoke("database:snapshot"),
+  createDatabaseImportTemplate: () =>
+    ipcRenderer.invoke("database:create-import-template"),
+  importDatabaseCatalog: () =>
+    ipcRenderer.invoke("database:import-catalog"),
+  backupDatabase: () => ipcRenderer.invoke("database:backup"),
   selectVideo: () => ipcRenderer.invoke("video:select"),
   selectPlaybookAttachment: () =>
     ipcRenderer.invoke("playbook:select-attachment"),

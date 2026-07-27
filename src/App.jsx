@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from "react";
+import { DatabaseLibrary } from "./components/DatabaseLibrary.jsx";
 import { EventEditor } from "./components/EventEditor.jsx";
 import { ExportClipsModal } from "./components/ExportClipsModal.jsx";
 import { MatchSetup } from "./components/MatchSetup.jsx";
@@ -51,7 +52,7 @@ function migrateProject(project) {
       : null;
   return {
     ...project,
-    version: 5,
+    version: 6,
     teams,
     match: validMatch,
     playbook: migratePlaybook(project.playbook),
@@ -92,7 +93,7 @@ function readAutosave() {
   try {
     const stored = JSON.parse(localStorage.getItem(autosaveKey));
     if (
-      [1, 2, 3, 4, 5].includes(stored?.version) &&
+      [1, 2, 3, 4, 5, 6].includes(stored?.version) &&
       Array.isArray(stored.events) &&
       Array.isArray(stored.template?.tags)
     ) {
@@ -138,10 +139,16 @@ function App() {
   const [notice, setNotice] = useState("");
   const [busy, setBusy] = useState("");
   const [dataExportFormat, setDataExportFormat] = useState("xlsx");
+  const [databaseSnapshot, setDatabaseSnapshot] = useState(null);
+  const [databaseLoading, setDatabaseLoading] = useState(false);
+  const [databaseError, setDatabaseError] = useState("");
+  const [databaseImportReport, setDatabaseImportReport] = useState(null);
   const videoRef = useRef(null);
   const pendingSeekRef = useRef(null);
   const scrubbingRef = useRef(false);
   const noticeTimer = useRef(null);
+  const databaseReadyRef = useRef(false);
+  const databaseSyncTimerRef = useRef(null);
 
   const matchTeams = useMemo(
     () =>
@@ -207,6 +214,58 @@ function App() {
   useEffect(() => {
     localStorage.setItem(preferencesKey, JSON.stringify(preferences));
   }, [preferences]);
+
+  useEffect(() => {
+    if (!desktop?.initializeDatabase) return undefined;
+    let active = true;
+    setDatabaseLoading(true);
+    desktop
+      .initializeDatabase({ legacyProject: project })
+      .then((result) => {
+        if (!active) return;
+        if (result.ok) {
+          databaseReadyRef.current = true;
+          setDatabaseSnapshot(result.snapshot);
+          setDatabaseError("");
+        } else {
+          setDatabaseError(
+            result.error || "No se pudo iniciar la biblioteca de scouting."
+          );
+        }
+      })
+      .finally(() => {
+        if (active) setDatabaseLoading(false);
+      });
+    return () => {
+      active = false;
+    };
+    // La migración de datos anteriores solo se ejecuta al arrancar.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  useEffect(() => {
+    if (!databaseReadyRef.current || !desktop?.syncProjectToDatabase) {
+      return undefined;
+    }
+    window.clearTimeout(databaseSyncTimerRef.current);
+    databaseSyncTimerRef.current = window.setTimeout(async () => {
+      const result = await desktop.syncProjectToDatabase(project);
+      if (!result.ok) {
+        setDatabaseError(
+          result.error || "No se pudo actualizar el histórico local."
+        );
+        return;
+      }
+      if (activeView === "database") {
+        const refreshed = await desktop.getDatabaseSnapshot();
+        if (refreshed.ok) {
+          setDatabaseSnapshot(refreshed.snapshot);
+          setDatabaseError("");
+        }
+      }
+    }, 650);
+    return () => window.clearTimeout(databaseSyncTimerRef.current);
+  }, [activeView, project]);
 
   useEffect(() => {
     if (
@@ -535,6 +594,153 @@ function App() {
     notify("Análisis guardado.");
   }
 
+  async function refreshDatabase() {
+    if (!desktop?.getDatabaseSnapshot) return;
+    setDatabaseLoading(true);
+    try {
+      const result = await desktop.getDatabaseSnapshot();
+      if (result.ok) {
+        setDatabaseSnapshot(result.snapshot);
+        setDatabaseError("");
+      } else {
+        setDatabaseError(result.error || "No se pudo actualizar la biblioteca.");
+      }
+    } finally {
+      setDatabaseLoading(false);
+    }
+  }
+
+  async function createDatabaseImportTemplate() {
+    if (!desktop?.createDatabaseImportTemplate) return;
+    const result = await desktop.createDatabaseImportTemplate();
+    if (result.error) {
+      notify(result.error);
+    } else if (!result.canceled) {
+      notify("Plantilla Excel preparada.");
+      desktop.revealFile(result.filePath);
+    }
+  }
+
+  async function importDatabaseCatalog() {
+    if (!desktop?.importDatabaseCatalog) return;
+    setDatabaseLoading(true);
+    try {
+      const result = await desktop.importDatabaseCatalog();
+      if (result.error) {
+        notify(result.error);
+      } else if (!result.canceled) {
+        setDatabaseSnapshot(result.snapshot);
+        const warningCount = result.warnings?.length || 0;
+        setDatabaseImportReport({
+          imported: result.imported,
+          warnings: result.warnings || []
+        });
+        notify(
+          warningCount > 0
+            ? `Importación completada con ${warningCount} avisos para revisar.`
+            : `${result.imported.teams} equipos, ${result.imported.players} jugadores y ${result.imported.matches} partidos importados.`
+        );
+      }
+    } finally {
+      setDatabaseLoading(false);
+    }
+  }
+
+  async function backupDatabase() {
+    if (!desktop?.backupDatabase) return;
+    const result = await desktop.backupDatabase();
+    if (result.error) {
+      notify(result.error);
+    } else if (!result.canceled) {
+      notify("Copia de seguridad creada.");
+      desktop.revealFile(result.filePath);
+    }
+  }
+
+  function useDatabaseMatch(match) {
+    if (
+      project.events.length > 0 &&
+      !window.confirm(
+        "Este análisis ya contiene acciones. ¿Quieres vincularlo a otro partido?"
+      )
+    ) {
+      return;
+    }
+    const teamFromDatabase = (teamId) => {
+      const team = databaseSnapshot?.teams?.find((item) => item.id === teamId);
+      if (!team) return null;
+      const allRosters = databaseSnapshot?.rosters || [];
+      const seasonRosters = allRosters.filter(
+        (roster) =>
+          roster.teamId === teamId &&
+          roster.competitionSeasonId === match.competitionSeasonId
+      );
+      const relevantRosters =
+        seasonRosters.length > 0
+          ? seasonRosters
+          : allRosters.filter((roster) => roster.teamId === teamId);
+      const players = relevantRosters
+        .map((roster) => {
+          const player = (databaseSnapshot?.players || []).find(
+            (item) => item.id === roster.playerId
+          );
+          if (!player) return null;
+          return {
+            ...player,
+            rosterId: roster.id,
+            competitionSeasonId: roster.competitionSeasonId,
+            teamId,
+            number: roster.number || "",
+            position: roster.position || player.position || "",
+            status: roster.status || player.status || "",
+            photo: player.photo || ""
+          };
+        })
+        .filter(Boolean);
+      return enrichTeam({ ...team, players });
+    };
+    const selectedTeams = [
+      teamFromDatabase(match.homeTeamId),
+      teamFromDatabase(match.awayTeamId)
+    ].filter(Boolean);
+    if (selectedTeams.length !== 2) {
+      notify("Faltan las fichas de uno de los equipos del partido.");
+      return;
+    }
+    updateProject((current) => {
+      const selectedIds = new Set(selectedTeams.map((team) => team.id));
+      const teams = [
+        ...current.teams.filter((team) => !selectedIds.has(team.id)),
+        ...selectedTeams
+      ];
+      return {
+        ...current,
+        teams,
+        match: {
+          id: match.id,
+          competitionSeasonId: match.competitionSeasonId,
+          roundName: match.roundName,
+          scheduledAt: match.scheduledAt,
+          venue: match.venue,
+          homeTeamId: match.homeTeamId,
+          awayTeamId: match.awayTeamId,
+          homeScore: match.homeScore,
+          awayScore: match.awayScore,
+          status: match.status,
+          source: match.source,
+          externalId: match.externalId
+        }
+      };
+    });
+    setContext((current) => ({
+      ...current,
+      teamId: match.homeTeamId,
+      playerId: ""
+    }));
+    setActiveView("tagging");
+    notify("Partido preparado para etiquetar.");
+  }
+
   function newProject() {
     if (
       project.events.length > 0 &&
@@ -832,6 +1038,15 @@ function App() {
           Estadísticas
         </button>
         <button
+          className={activeView === "database" ? "active" : ""}
+          onClick={() => {
+            setActiveView("database");
+            refreshDatabase();
+          }}
+        >
+          Biblioteca
+        </button>
+        <button
           className={activeView === "roster" ? "active" : ""}
           onClick={() => setActiveView("roster")}
         >
@@ -1108,6 +1323,20 @@ function App() {
         )}
 
         {activeView === "stats" && <StatsPanel project={project} />}
+
+        {activeView === "database" && (
+          <DatabaseLibrary
+            snapshot={databaseSnapshot}
+            loading={databaseLoading}
+            error={databaseError}
+            importReport={databaseImportReport}
+            onRefresh={refreshDatabase}
+            onImport={importDatabaseCatalog}
+            onCreateTemplate={createDatabaseImportTemplate}
+            onBackup={backupDatabase}
+            onUseMatch={useDatabaseMatch}
+          />
+        )}
 
         {activeView === "roster" && (
           <RosterManager
