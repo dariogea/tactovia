@@ -66,7 +66,6 @@ try {
     }),
     React.createElement(DatabaseLibrary, {
       snapshot: {
-        cloud: { configured: false },
         totals: {
           teams: 2,
           players: 1,
@@ -79,36 +78,41 @@ try {
         teams: [],
         players: [],
         rosters: [],
-        matches: []
+        matches: [],
+        gameRecords: []
       },
+      teams: project.teams,
+      competitions: project.competitions,
+      freeAgents: project.freeAgents,
       loading: false,
       error: "",
-      importReport: null,
       onRefresh() {},
-      onImport() {},
-      onCreateTemplate() {},
       onBackup() {},
-      onUseMatch() {},
-      onManageTeams() {}
+      onManageTeams() {},
+      onDeleteRecord() {},
+      onExportHistory() {}
     }),
     React.createElement(ScoutingLibrary, {
       snapshot: {
-        cloud: { configured: false },
         totals: { teams: 2, players: 1, matches: 0, analyses: 0, events: 0 },
         competitions: [],
         competitionTeams: [],
         teams: [],
         players: [],
         rosters: [],
-        matches: []
+        matches: [],
+        gameRecords: []
       },
       teams: project.teams,
+      competitions: project.competitions,
+      freeAgents: project.freeAgents,
       onTeamsChange() {},
+      onCompetitionsChange() {},
+      onFreeAgentsChange() {},
       onRefresh() {},
-      onImport() {},
-      onCreateTemplate() {},
       onBackup() {},
-      onUseMatch() {}
+      onDeleteRecord() {},
+      onExportHistory() {}
     }),
     React.createElement(AccessFlow, {
       account: null,
@@ -125,7 +129,7 @@ try {
       onOpen() {}
     }),
     React.createElement(ProfilePanel, {
-      appVersion: "0.10.0",
+      appVersion: "0.11.0",
       account: {
         id: "local",
         name: "Analista",

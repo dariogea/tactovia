@@ -19,10 +19,10 @@ import {
 } from "./playbook/CourtRenderer.js";
 
 const modeTabs = [
-  { id: "draw", label: "Dibujar", help: "Jugadores, acciones y objetos" },
-  { id: "animate", label: "Animar", help: "Movimiento y tiempos" },
-  { id: "notes", label: "Notas", help: "Explicación y vídeos" },
-  { id: "output", label: "Presentación", help: "Vista final y exportación" }
+  { id: "draw", label: "Diseñar", help: "Coloca jugadores y recorridos" },
+  { id: "animate", label: "Secuencia", help: "Revisa movimientos y tiempos" },
+  { id: "notes", label: "Explicar", help: "Objetivo y notas del entrenador" },
+  { id: "output", label: "Compartir", help: "Vista final y exportación" }
 ];
 
 const objectTools = [
@@ -145,7 +145,7 @@ function TemplatePicker({ folderId, onClose, onCreate }) {
       >
         <div className="modal-heading">
           <div>
-            <span className="eyebrow">Playbook 2.0</span>
+            <span className="eyebrow">Nueva jugada</span>
             <h2>Nueva jugada</h2>
           </div>
           <button className="icon-button" onClick={onClose} aria-label="Cerrar">
@@ -236,7 +236,7 @@ function PlayLibrary({
     <aside className="play-library playbook-v2-library">
       <div className="section-heading">
         <div>
-          <span className="eyebrow">Playbook 2.0</span>
+          <span className="eyebrow">Biblioteca táctica</span>
           <h2>Biblioteca</h2>
         </div>
         <button className="mini-button primary-mini" onClick={() => onAddPlay()}>
@@ -1797,7 +1797,7 @@ function OutputMode({
         </button>
         <p>
           Los enlaces públicos llegarán cuando Tactovia incorpore cuentas y
-          sincronización. Por ahora todo permanece en local.
+          La jugada se guarda dentro del análisis y puede exportarse cuando esté lista.
         </p>
       </aside>
     </div>
@@ -1820,7 +1820,7 @@ export function Playbook({
   const [selected, setSelected] = useState(null);
   const [librarySearch, setLibrarySearch] = useState("");
   const [templatePicker, setTemplatePicker] = useState(null);
-  const [libraryOpen, setLibraryOpen] = useState(true);
+  const [libraryOpen, setLibraryOpen] = useState(false);
   const historyRef = useRef({ past: [], future: [] });
 
   const play =

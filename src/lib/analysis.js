@@ -1,3 +1,5 @@
+import { zoneStats } from "./shotZones.js";
+
 export function clamp(value, minimum, maximum) {
   return Math.min(Math.max(Number(value) || 0, minimum), maximum);
 }
@@ -142,8 +144,26 @@ export function projectToCsv(project) {
   return [header, ...rows].map((row) => row.map(csvCell).join(",")).join("\n");
 }
 
-export function reportPayload(project) {
+export function reportPayload(project, options = {}) {
   const stats = statisticsFor(project.template.tags, project.events);
+  const players = project.teams
+    .flatMap((team) =>
+      (team.players || []).map((player) => {
+        const events = project.events.filter(
+          (event) => event.playerId === player.id
+        );
+        return {
+          id: player.id,
+          name: player.name,
+          number: player.number || "",
+          team: team.name,
+          count: events.length,
+          shots: events.filter((event) => event.shotZoneId).length
+        };
+      })
+    )
+    .filter((player) => player.count > 0)
+    .sort((left, right) => right.count - left.count);
   return {
     projectName: project.projectName,
     videoName: project.video?.name || "",
@@ -154,10 +174,13 @@ export function reportPayload(project) {
     totalEvents: project.events.length,
     totalTags: stats.length,
     analyzedTime: formatTime(project.video?.duration || 0),
+    options,
     stats: stats.map((row) => ({
       ...row,
       duration: formatTime(row.duration)
     })),
+    shotZones: zoneStats(project.events),
+    players,
     events: project.events
       .slice()
       .sort((left, right) => left.start - right.start)
@@ -167,7 +190,7 @@ export function reportPayload(project) {
         team: event.team,
         player: event.player,
         shotZone: event.shotZoneName || event.shotZoneId || "",
-        notes: event.notes || ""
+        notes: options.notes === false ? "" : event.notes || ""
       }))
   };
 }

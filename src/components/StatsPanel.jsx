@@ -166,6 +166,13 @@ export function StatsPanel({ project }) {
   const [playerId, setPlayerId] = useState("");
   const [tagId, setTagId] = useState("");
   const [page, setPage] = useState("overview");
+  const [showVisualSettings, setShowVisualSettings] = useState(false);
+  const [visibleVisuals, setVisibleVisuals] = useState([
+    "trend",
+    "tags",
+    "teams",
+    "players"
+  ]);
 
   const selectedTeam = project.teams.find((team) => team.id === teamId);
   const filteredEvents = useMemo(
@@ -292,12 +299,44 @@ export function StatsPanel({ project }) {
             <h1>Inteligencia del partido</h1>
             <p>{selectedTeam?.name || "Todos los equipos"} · {filteredEvents.length} acciones filtradas</p>
           </div>
-          <div className="bi-page-tabs">
-            <button className={page === "overview" ? "active" : ""} onClick={() => setPage("overview")}>Resumen</button>
-            <button className={page === "shooting" ? "active" : ""} onClick={() => setPage("shooting")}>Tiro y zonas</button>
-            <button className={page === "quality" ? "active" : ""} onClick={() => setPage("quality")}>Calidad del dato</button>
+          <div className="bi-header-actions">
+            <div className="bi-page-tabs">
+              <button className={page === "overview" ? "active" : ""} onClick={() => setPage("overview")}>Resumen</button>
+              <button className={page === "shooting" ? "active" : ""} onClick={() => setPage("shooting")}>Tiro y zonas</button>
+              <button className={page === "quality" ? "active" : ""} onClick={() => setPage("quality")}>Calidad del dato</button>
+            </div>
+            <button className="button ghost" onClick={() => setShowVisualSettings((current) => !current)}>
+              Personalizar visuales
+            </button>
           </div>
         </header>
+
+        {showVisualSettings && (
+          <div className="bi-visual-settings">
+            <strong>Visuales del resumen</strong>
+            {[
+              ["trend", "Evolución temporal"],
+              ["tags", "Acciones por etiqueta"],
+              ["teams", "Comparativa de equipos"],
+              ["players", "Ranking de jugadores"]
+            ].map(([id, label]) => (
+              <label key={id}>
+                <input
+                  type="checkbox"
+                  checked={visibleVisuals.includes(id)}
+                  onChange={() =>
+                    setVisibleVisuals((current) =>
+                      current.includes(id)
+                        ? current.filter((item) => item !== id)
+                        : [...current, id]
+                    )
+                  }
+                />
+                <span>{label}</span>
+              </label>
+            ))}
+          </div>
+        )}
 
         <div className="bi-kpi-grid">
           <article className="bi-kpi primary"><span>Acciones</span><strong>{filteredEvents.length}</strong><small>{stats.length} tipos distintos</small></article>
@@ -309,17 +348,17 @@ export function StatsPanel({ project }) {
         {page === "overview" ? (
           <>
             <div className="bi-visual-grid">
-              <article className="bi-visual wide">
+              {visibleVisuals.includes("trend") && <article className="bi-visual wide">
                 <header><div><span>Evolución</span><h2>Actividad durante el partido</h2></div><em>12 segmentos</em></header>
                 {filteredEvents.length ? (
                   <TrendChart events={filteredEvents} duration={project.video?.duration || 0} color={chartColor} />
                 ) : <div className="empty-inline">No hay registros para este filtro.</div>}
-              </article>
-              <article className="bi-visual">
+              </article>}
+              {visibleVisuals.includes("tags") && <article className="bi-visual">
                 <header><div><span>Distribución</span><h2>Acciones por etiqueta</h2></div></header>
                 {stats.length ? <HorizontalBars rows={stats} /> : <div className="empty-inline">Sin datos.</div>}
-              </article>
-              <article className="bi-visual">
+              </article>}
+              {visibleVisuals.includes("teams") && <article className="bi-visual">
                 <header><div><span>Comparativa</span><h2>Equipos</h2></div></header>
                 <div className="bi-team-table">
                   {teamRows.map((team) => (
@@ -330,8 +369,8 @@ export function StatsPanel({ project }) {
                     </div>
                   ))}
                 </div>
-              </article>
-              <article className="bi-visual wide player-ranking-visual">
+              </article>}
+              {visibleVisuals.includes("players") && <article className="bi-visual wide player-ranking-visual">
                 <header><div><span>Detalle</span><h2>Participación por jugador</h2></div><em>Top 12</em></header>
                 <div className="bi-player-ranking">
                   {playerRows.map((player, index) => (
@@ -344,7 +383,7 @@ export function StatsPanel({ project }) {
                   ))}
                   {playerRows.length === 0 && <div className="empty-inline">Todavía no hay jugadores etiquetados.</div>}
                 </div>
-              </article>
+              </article>}
             </div>
           </>
         ) : page === "shooting" ? (

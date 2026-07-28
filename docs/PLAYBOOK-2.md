@@ -1,4 +1,4 @@
-# Guía del Playbook 2.0
+# Guía del Playbook
 
 El Playbook permite diseñar, animar, explicar y exportar jugadas sin salir de
 Tactovia. Todo se guarda dentro del análisis local `.scout.json`.
@@ -14,7 +14,7 @@ Tactovia. Todo se guarda dentro del análisis local `.scout.json`.
 Las carpetas pueden ser personales o estar vinculadas a un equipo. Las jugadas
 también se pueden duplicar, mover de carpeta o asociar a un equipo.
 
-## Dibujar
+## Diseñar
 
 - La media pista aparece en orientación vertical, con la canasta en la parte
   superior y el semicírculo de medio campo en la parte inferior.
@@ -52,9 +52,9 @@ hasta el destino. El inspector permite cambiar color, inicio y duración.
 - **Reflejar** invierte la fase sobre la pista.
 - Las flechas permiten cambiar su orden.
 
-## Animar
+## Secuencia
 
-El modo **Animar** reproduce la fase actual o toda la jugada. Cada acción tiene:
+El modo **Secuencia** reproduce la fase actual o toda la jugada. Cada acción tiene:
 
 - Orden.
 - Segundo de inicio.
@@ -64,7 +64,7 @@ La duración total de la fase se puede establecer manualmente o calcular con
 **Ajustar automáticamente**. También se puede mostrar u ocultar el título de la
 fase y reproducir a 0,5×, 1×, 1,5× o 2×.
 
-## Notas y recursos
+## Explicar
 
 La jugada y cada fase disponen de:
 
@@ -78,7 +78,7 @@ La jugada y cada fase disponen de:
 Los archivos adjuntos se conservan como referencias a su ubicación original.
 Si se trasladan a otro ordenador, deben copiarse por separado.
 
-## Presentación y exportación
+## Compartir
 
 La vista **Clásica** genera un documento preparado para usar. La vista
 **Avanzada** permite ordenar bloques de descripción, fases, notas, recursos o

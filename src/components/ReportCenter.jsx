@@ -27,6 +27,14 @@ export function ReportCenter({
   onCopySummary
 }) {
   const [section, setSection] = useState("summary");
+  const [reportOptions, setReportOptions] = useState({
+    executiveSummary: true,
+    tagBreakdown: true,
+    shotZones: true,
+    playerBreakdown: true,
+    chronology: true,
+    notes: true
+  });
   const home = project.teams.find((team) => team.id === project.match?.homeTeamId);
   const away = project.teams.find((team) => team.id === project.match?.awayTeamId);
   const readyChecks = [
@@ -109,6 +117,31 @@ export function ReportCenter({
               ))}
               {stats.length === 0 && <p>Todavía no hay acciones que resumir.</p>}
             </div>
+            <div className="report-section-picker">
+              <strong>Contenido del informe</strong>
+              {[
+                ["executiveSummary", "Resumen ejecutivo"],
+                ["tagBreakdown", "Gráficos por etiqueta"],
+                ["shotZones", "Mapa y zonas de tiro"],
+                ["playerBreakdown", "Detalle por jugador"],
+                ["chronology", "Cronología de acciones"],
+                ["notes", "Notas del analista"]
+              ].map(([id, label]) => (
+                <label key={id}>
+                  <input
+                    type="checkbox"
+                    checked={reportOptions[id]}
+                    onChange={() =>
+                      setReportOptions((current) => ({
+                        ...current,
+                        [id]: !current[id]
+                      }))
+                    }
+                  />
+                  <span>{label}</span>
+                </label>
+              ))}
+            </div>
           </article>
           <aside className="report-action-panel">
             <span className="eyebrow">Salida recomendada</span>
@@ -117,7 +150,11 @@ export function ReportCenter({
               Incluye portada, indicadores, recuentos y cronología detallada
               con equipos, jugadores y zonas de tiro.
             </p>
-            <button className="button primary" onClick={onExportReport} disabled={!project.events.length}>
+            <button
+              className="button primary"
+              onClick={() => onExportReport(reportOptions)}
+              disabled={!project.events.length}
+            >
               Crear informe PDF
             </button>
             <button className="button ghost" onClick={onCopySummary} disabled={!project.events.length}>
@@ -143,6 +180,16 @@ export function ReportCenter({
               >
                 <span>XLSX</span>
                 <div><strong>Libro Excel</strong><small>Resumen, eventos, equipos y jugadores</small></div>
+              </button>
+              <button
+                className={dataExportFormat === "powerbi" ? "active" : ""}
+                onClick={() => onDataExportFormat("powerbi")}
+              >
+                <span>BI</span>
+                <div>
+                  <strong>Modelo Power BI</strong>
+                  <small>Tablas normalizadas en XLSX listas para importar</small>
+                </div>
               </button>
               <button
                 className={dataExportFormat === "csv" ? "active" : ""}

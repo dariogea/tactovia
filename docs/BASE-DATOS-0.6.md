@@ -1,70 +1,65 @@
-# Base de datos de Tactovia
+# Base de datos local de Tactovia
 
-## Decisión de producto
+## Modelo actual
 
-El MVP comienza con Primera División Masculina GESA FBRM, temporada 2026/27.
-La base tiene dos capas:
+Tactovia 0.11 utiliza SQLite como biblioteca local y separa los datos por
+perfil. La interfaz ya no incluye un catálogo oficial precargado, importación
+masiva, calendarios ni partidos predichos.
 
-1. Un catálogo compartido en PostgreSQL/Supabase para competiciones, equipos,
-   jugadores, plantillas, partidos y estadísticas oficiales.
-2. Una caché SQLite dentro de la aplicación para trabajar sin conexión y
-   conservar el histórico local.
+La biblioteca contiene exclusivamente:
 
-Los vídeos, clips y rutas del ordenador nunca se envían a la base compartida.
+- competiciones y temporadas creadas por el usuario;
+- equipos, colores, logos y datos deportivos;
+- jugadores con identidad global;
+- relación del jugador con su equipo o estado de agente libre;
+- proyectos editables y sus eventos;
+- fichas históricas estadísticas de partidos finalizados.
 
-## Permisos
+## Dos niveles de guardado
 
-- Todo usuario registrado puede consultar el catálogo oficial.
-- Solo los administradores pueden modificar los datos oficiales.
-- Cada análisis es privado por defecto.
-- Los miembros autorizados de un club pueden consultar o editar los análisis
-  de su espacio de trabajo según su rol.
-- Un análisis solo es público cuando su propietario lo publica expresamente.
+El archivo `.scout.json` es el proyecto de trabajo. Conserva la referencia al
+vídeo, la plantilla de etiquetas, el partido, las acciones y el Playbook.
 
-Las políticas se encuentran en:
+Al guardar un proyecto con partido y acciones, SQLite crea además una ficha
+histórica. Esa ficha elimina:
 
-`supabase/migrations/202607270001_scout_core.sql`
+- el objeto y la ruta del vídeo;
+- los tiempos de inicio y final;
+- el ancla temporal necesaria para saltar o generar clips.
 
-## Datos locales
+Así, el histórico permite comparar y exportar estadísticas sin duplicar el
+vídeo ni convertir la biblioteca en una fuente de clips.
 
-La aplicación crea automáticamente `scoutanalyzer.db` dentro de la carpeta
-privada histórica `scout-analyzer` en macOS o Windows. Ambos nombres técnicos
-se conservan tras el cambio de marca a Tactovia para que las instalaciones
-existentes encuentren sus datos. Al arrancar por primera vez:
+## Privacidad
 
-- migra los equipos, jugadores, partido y eventos del análisis actual;
-- crea la competición piloto FBRM 2026/27;
-- mantiene una cola de cambios pendientes para la futura sincronización.
+- Cada ficha histórica incluye `owner_profile_id`.
+- La aplicación consulta únicamente las fichas del perfil activo.
+- La demo de desarrollo no escribe datos persistentes.
+- Los datos no salen del ordenador.
+- El archivo técnico conserva el nombre `scoutanalyzer.db` y la carpeta
+  histórica `scout-analyzer` para no romper instalaciones existentes.
 
-La pestaña Biblioteca permite crear una copia de seguridad del archivo. Esa
-copia no contiene los vídeos.
+## Migración
 
-## Importación administrativa
+El esquema actual es la versión 3. La actualización:
 
-Desde Competiciones y equipos → Importar:
+1. añade propiedad de perfil a los análisis;
+2. crea la tabla `game_records`;
+3. elimina únicamente el catálogo FBRM precargado que no esté relacionado con
+   datos reales;
+4. conserva cualquier equipo, jugador, partido o evento ya utilizado.
 
-1. Guardar la plantilla Excel.
-2. Completar primero Equipos.
-3. Completar Jugadores usando `codigo_equipo`.
-4. Completar `CambiosPlantilla` para altas, bajas, cambios de dorsal o posición.
-5. Importar el libro en Tactovia.
+## Futuro online
 
-Los códigos deben ser únicos y mantenerse estables entre importaciones. El
-importador actualiza los registros existentes sin borrar sus análisis.
+Para sincronización entre ordenadores será necesario añadir un servicio de
+cuentas y una base central. Antes de activarlo deberán definirse:
 
-No deben importarse datos personales innecesarios, logos o fotografías sin
-autorización.
+- organizaciones y roles;
+- consentimiento y política de privacidad;
+- resolución de conflictos;
+- cifrado y copias de seguridad;
+- reglas para compartir análisis y catálogos.
 
-## Activación de la nube
-
-La estructura cloud ya está definida, pero el repositorio no contiene
-credenciales. Para activar la sincronización:
-
-1. Crear un proyecto de Supabase bajo la cuenta del producto.
-2. Ejecutar la migración SQL.
-3. Configurar URL y clave pública `anon`.
-4. Activar las cuentas de usuario.
-5. Validar las políticas con tres perfiles: usuario, club y administrador.
-6. Conectar y probar la cola local de sincronización.
-
-Nunca se debe incluir la clave `service_role` dentro de la aplicación.
+Los vídeos seguirían siendo locales salvo autorización expresa para una
+función de almacenamiento remoto. Nunca debe incluirse una clave administrativa
+del backend dentro de la aplicación de escritorio.

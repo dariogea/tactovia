@@ -56,8 +56,7 @@
 
 - Biblioteca local relacional de competiciones, temporadas y partidos. ✓
 - Histórico relacionado de equipos, jugadores, análisis y acciones. ✓
-- Importación administrativa Excel/CSV y copias de seguridad. ✓
-- Competición piloto FBRM Primera División Masculina 2026/27. ✓
+- Copias de seguridad de la biblioteca. ✓
 - Modelo de catálogo compartido y análisis privados por defecto. ✓
 - Esquema de cuentas, espacios, roles y permisos para la nube. ✓
 - Activación de cuentas y sincronización real entre ordenadores.
@@ -80,3 +79,16 @@
 La IA debe asistir al etiquetado, no sustituir silenciosamente las decisiones
 del analista. Cada acción propuesta automáticamente deberá indicar su origen y
 permitir confirmación o corrección.
+
+## Versión 0.11 — Producto local por perfiles
+
+- Varios perfiles locales con biblioteca e histórico independientes. ✓
+- Demo de desarrollo efímera y sin persistencia. ✓
+- Convocatorias de 5 a 12 jugadores y selección por camiseta. ✓
+- Histórico estadístico sin vídeo ni capacidad de clips. ✓
+- Competición → equipo → plantilla creada únicamente por el usuario. ✓
+- Traspasos y agentes libres con identidad única de jugador. ✓
+- Mapa profesional de tiro con diez zonas. ✓
+- Paneles, informes y exportación preparada para Power BI. ✓
+- Guía integrada, nuevos temas y módulos configurables. ✓
+- Validación física completa de la versión Windows.

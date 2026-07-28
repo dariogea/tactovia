@@ -4,100 +4,90 @@ export const shotZones = [
     name: "Zona restringida",
     shortName: "Aro",
     points: 2,
-    x: 41,
-    y: 8,
-    width: 18,
-    height: 15
+    path: "M205 48 Q250 116 295 48 L295 126 L205 126 Z",
+    labelX: 250,
+    labelY: 91
   },
   {
     id: "paint",
     name: "Pintura",
     shortName: "Pintura",
     points: 2,
-    x: 34,
-    y: 21,
-    width: 32,
-    height: 22
+    path: "M170 10 H205 V126 H295 V10 H330 V235 H170 Z",
+    labelX: 250,
+    labelY: 177
   },
   {
     id: "mid-left",
     name: "Media distancia izquierda",
     shortName: "Media izq.",
     points: 2,
-    x: 9,
-    y: 22,
-    width: 24,
-    height: 25
+    path: "M35 95 Q49 184 136 262 L170 235 V10 H35 Z",
+    labelX: 108,
+    labelY: 154
   },
   {
     id: "mid-right",
     name: "Media distancia derecha",
     shortName: "Media der.",
     points: 2,
-    x: 67,
-    y: 22,
-    width: 24,
-    height: 25
+    path: "M330 10 V235 L364 262 Q451 184 465 95 V10 Z",
+    labelX: 392,
+    labelY: 154
   },
   {
     id: "mid-center",
     name: "Media distancia frontal",
     shortName: "Media centro",
     points: 2,
-    x: 34,
-    y: 44,
-    width: 32,
-    height: 18
+    path: "M170 235 H330 L364 262 Q250 318 136 262 Z",
+    labelX: 250,
+    labelY: 270
   },
   {
     id: "corner-left",
     name: "Triple esquina izquierda",
-    shortName: "Esquina izq.",
+    shortName: "Izq.",
     points: 3,
-    x: 1,
-    y: 3,
-    width: 8,
-    height: 46
+    path: "M10 10 H35 V95 H10 Z",
+    labelX: 22,
+    labelY: 58
   },
   {
     id: "corner-right",
     name: "Triple esquina derecha",
-    shortName: "Esquina der.",
+    shortName: "Der.",
     points: 3,
-    x: 91,
-    y: 3,
-    width: 8,
-    height: 46
+    path: "M465 10 H490 V95 H465 Z",
+    labelX: 478,
+    labelY: 58
   },
   {
     id: "wing-left",
     name: "Triple lateral izquierdo",
     shortName: "Ala izq.",
     points: 3,
-    x: 5,
-    y: 50,
-    width: 27,
-    height: 25
+    path: "M10 95 H35 Q49 184 136 262 L91 460 H10 Z",
+    labelX: 62,
+    labelY: 304
   },
   {
     id: "wing-right",
     name: "Triple lateral derecho",
     shortName: "Ala der.",
     points: 3,
-    x: 68,
-    y: 50,
-    width: 27,
-    height: 25
+    path: "M465 95 H490 V460 H409 L364 262 Q451 184 465 95 Z",
+    labelX: 438,
+    labelY: 304
   },
   {
     id: "top",
     name: "Triple frontal",
     shortName: "Triple frontal",
     points: 3,
-    x: 32,
-    y: 63,
-    width: 36,
-    height: 28
+    path: "M136 262 Q250 318 364 262 L409 460 H91 Z",
+    labelX: 250,
+    labelY: 370
   }
 ];
 

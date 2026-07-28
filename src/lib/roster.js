@@ -24,6 +24,7 @@ export function createTeamDraft(name = "Nuevo equipo") {
     clubName: "",
     category: "",
     season: "",
+    competitionId: "",
     country: "",
     city: "",
     arena: "",
@@ -69,3 +70,60 @@ export function enrichTeam(team) {
   };
 }
 
+const templateNames = [
+  ["Plantilla completa", 12, "#08756D", "#BDEB62"],
+  ["Rotación principal", 10, "#2563EB", "#DBEAFE"],
+  ["Convocatoria corta", 8, "#7C3AED", "#EDE9FE"],
+  ["Quinteto inicial", 5, "#EA580C", "#FFEDD5"]
+];
+
+const playerNames = [
+  "Álex Martín",
+  "Hugo Sánchez",
+  "Pablo Romero",
+  "Leo Navarro",
+  "Marcos Vidal",
+  "Daniel Ortega",
+  "Adrián Molina",
+  "Sergio León",
+  "Iván Torres",
+  "Mario Cano",
+  "Lucas Ríos",
+  "Javier Costa"
+];
+
+export const teamTemplates = templateNames.map(
+  ([name, size, primaryColor, secondaryColor], templateIndex) => ({
+    id: `team-template-${size}`,
+    name,
+    size,
+    primaryColor,
+    secondaryColor,
+    create() {
+      const team = createTeamDraft(`Equipo ${templateIndex + 1}`);
+      return {
+        ...team,
+        shortName: `EQ${templateIndex + 1}`,
+        primaryColor,
+        secondaryColor,
+        players: Array.from({ length: size }, (_, index) => ({
+          ...createPlayerDraft(),
+          id: crypto.randomUUID(),
+          number: String(index + 4),
+          name: playerNames[index],
+          position: ["Base", "Escolta", "Alero", "Ala-pívot", "Pívot"][index % 5]
+        }))
+      };
+    }
+  })
+);
+
+export function createRosterPlayers(count = 5) {
+  return Array.from({ length: Math.max(0, count) }, (_, index) => ({
+    ...createPlayerDraft(),
+    id: crypto.randomUUID(),
+    number: String(index + 4),
+    name: playerNames[index % playerNames.length],
+    position: ["Base", "Escolta", "Alero", "Ala-pívot", "Pívot"][index % 5]
+  }));
+}

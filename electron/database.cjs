@@ -2,15 +2,11 @@ const crypto = require("node:crypto");
 const fs = require("node:fs");
 const path = require("node:path");
 const { backup, DatabaseSync } = require("node:sqlite");
-const {
-  FBRM_CATALOG_VERSION,
-  createFbrmCatalog
-} = require("./catalogs/fbrm-2026-27.cjs");
 
-const DATABASE_VERSION = 2;
-const PILOT_COMPETITION_ID = "competition-fbrm-1dm";
-const PILOT_SEASON_ID = "season-2026-27";
-const PILOT_COMPETITION_SEASON_ID = "competition-season-fbrm-1dm-2026-27";
+const DATABASE_VERSION = 3;
+const LEGACY_COMPETITION_ID = "competition-fbrm-1dm";
+const LEGACY_SEASON_ID = "season-2026-27";
+const LEGACY_COMPETITION_SEASON_ID = "competition-season-fbrm-1dm-2026-27";
 const LOCAL_WORKSPACE_ID = "workspace-local-private";
 
 function nowIso() {
@@ -226,6 +222,21 @@ function schemaSql() {
       updated_at TEXT NOT NULL
     ) STRICT;
 
+    CREATE TABLE IF NOT EXISTS game_records (
+      id TEXT PRIMARY KEY,
+      owner_profile_id TEXT NOT NULL,
+      project_name TEXT NOT NULL,
+      match_json TEXT NOT NULL DEFAULT '{}',
+      teams_json TEXT NOT NULL DEFAULT '[]',
+      events_json TEXT NOT NULL DEFAULT '[]',
+      summary_json TEXT NOT NULL DEFAULT '{}',
+      created_at TEXT NOT NULL,
+      updated_at TEXT NOT NULL
+    ) STRICT;
+
+    CREATE INDEX IF NOT EXISTS game_records_owner_updated
+      ON game_records(owner_profile_id, updated_at DESC);
+
     CREATE TABLE IF NOT EXISTS events (
       id TEXT PRIMARY KEY,
       analysis_id TEXT NOT NULL REFERENCES analyses(id) ON DELETE CASCADE,
@@ -288,6 +299,14 @@ function migrateSchema(database) {
   if (!eventColumns.has("shot_points")) {
     database.exec("ALTER TABLE events ADD COLUMN shot_points INTEGER NOT NULL DEFAULT 0");
   }
+  const analysisColumns = new Set(
+    database.prepare("PRAGMA table_info(analyses)").all().map((column) => column.name)
+  );
+  if (!analysisColumns.has("owner_profile_id")) {
+    database.exec(
+      "ALTER TABLE analyses ADD COLUMN owner_profile_id TEXT NOT NULL DEFAULT 'legacy-local'"
+    );
+  }
 }
 
 function seedDatabase(database) {
@@ -297,60 +316,6 @@ function seedDatabase(database) {
     VALUES (?, ?, 'private', ?, ?)
     ON CONFLICT(id) DO NOTHING
   `).run(LOCAL_WORKSPACE_ID, "Mi espacio de scouting", now, now);
-
-  database.prepare(`
-    INSERT INTO competitions (
-      id, name, short_name, governing_body, country, region, level, gender,
-      source, external_id, created_at, updated_at
-    )
-    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-    ON CONFLICT(id) DO UPDATE SET
-      name = excluded.name,
-      short_name = excluded.short_name,
-      updated_at = excluded.updated_at
-  `).run(
-    PILOT_COMPETITION_ID,
-    "Primera División Masculina GESA",
-    "1DM GESA",
-    "FBRM",
-    "España",
-    "Región de Murcia",
-    "Regional sénior",
-    "Masculina",
-    "official-catalog",
-    "fbrm-1dm",
-    now,
-    now
-  );
-
-  database.prepare(`
-    INSERT INTO seasons (
-      id, label, starts_on, ends_on, is_current, created_at, updated_at
-    )
-    VALUES (?, ?, ?, ?, 1, ?, ?)
-    ON CONFLICT(id) DO UPDATE SET
-      label = excluded.label,
-      is_current = 1,
-      updated_at = excluded.updated_at
-  `).run(PILOT_SEASON_ID, "2026/27", "2026-07-01", "2027-06-30", now, now);
-
-  database.prepare(`
-    INSERT INTO competition_seasons (
-      id, competition_id, season_id, name, format, status, created_at, updated_at
-    )
-    VALUES (?, ?, ?, ?, ?, 'planned', ?, ?)
-    ON CONFLICT(id) DO UPDATE SET
-      name = excluded.name,
-      updated_at = excluded.updated_at
-  `).run(
-    PILOT_COMPETITION_SEASON_ID,
-    PILOT_COMPETITION_ID,
-    PILOT_SEASON_ID,
-    "Primera División Masculina GESA 2026/27",
-    "Formato FBRM 2026/27",
-    now,
-    now
-  );
 
   database.prepare(`
     INSERT INTO metadata(key, value) VALUES ('schema_version', ?)
@@ -397,6 +362,51 @@ function createDatabaseService(filePath, options = {}) {
   database.exec(schemaSql());
   migrateSchema(database);
   seedDatabase(database);
+
+  function cleanupUnusedLegacyCatalog() {
+    return transaction(() => {
+      const removedTeams = database.prepare(`
+        DELETE FROM teams
+        WHERE source = 'official-fbrm-2026-27'
+          AND NOT EXISTS (
+            SELECT 1 FROM matches m
+            WHERE m.home_team_id = teams.id OR m.away_team_id = teams.id
+          )
+          AND NOT EXISTS (
+            SELECT 1 FROM events e WHERE e.team_id = teams.id
+          )
+      `).run().changes;
+      database.prepare(`
+        DELETE FROM competition_seasons
+        WHERE id = ?
+          AND NOT EXISTS (
+            SELECT 1 FROM competition_teams ct
+            WHERE ct.competition_season_id = competition_seasons.id
+          )
+          AND NOT EXISTS (
+            SELECT 1 FROM matches m
+            WHERE m.competition_season_id = competition_seasons.id
+          )
+      `).run(LEGACY_COMPETITION_SEASON_ID);
+      database.prepare(`
+        DELETE FROM competitions
+        WHERE id = ?
+          AND NOT EXISTS (
+            SELECT 1 FROM competition_seasons cs
+            WHERE cs.competition_id = competitions.id
+          )
+      `).run(LEGACY_COMPETITION_ID);
+      database.prepare(`
+        DELETE FROM seasons
+        WHERE id = ?
+          AND NOT EXISTS (
+            SELECT 1 FROM competition_seasons cs
+            WHERE cs.season_id = seasons.id
+          )
+      `).run(LEGACY_SEASON_ID);
+      return removedTeams;
+    });
+  }
 
   const upsertTeam = database.prepare(`
     INSERT INTO teams (
@@ -560,10 +570,18 @@ function createDatabaseService(filePath, options = {}) {
     );
   }
 
-  function syncProject(project) {
+  function syncProject(project, ownerProfileId = "legacy-local") {
     if (!project?.id) throw new Error("El análisis no tiene un identificador válido.");
     return transaction(() => {
-      const competitionSeasonId = project.match?.competitionSeasonId || null;
+      const requestedCompetitionSeasonId =
+        project.match?.competitionSeasonId || null;
+      const competitionSeasonId =
+        requestedCompetitionSeasonId &&
+        database
+          .prepare("SELECT 1 AS found FROM competition_seasons WHERE id = ?")
+          .get(requestedCompetitionSeasonId)
+          ? requestedCompetitionSeasonId
+          : null;
       for (const team of project.teams || []) {
         saveTeam(team, { competitionSeasonId });
         if (competitionSeasonId) {
@@ -637,9 +655,9 @@ function createDatabaseService(filePath, options = {}) {
         INSERT INTO analyses (
           id, workspace_id, match_id, project_name, video_name,
           video_path_local, video_duration, visibility, project_json,
-          created_at, updated_at
+          created_at, updated_at, owner_profile_id
         )
-        VALUES (?, ?, ?, ?, ?, ?, ?, 'private', ?, ?, ?)
+        VALUES (?, ?, ?, ?, ?, ?, ?, 'private', ?, ?, ?, ?)
         ON CONFLICT(id) DO UPDATE SET
           match_id = excluded.match_id,
           project_name = excluded.project_name,
@@ -647,6 +665,7 @@ function createDatabaseService(filePath, options = {}) {
           video_path_local = excluded.video_path_local,
           video_duration = excluded.video_duration,
           project_json = excluded.project_json,
+          owner_profile_id = excluded.owner_profile_id,
           updated_at = excluded.updated_at
       `).run(
         project.id,
@@ -658,7 +677,8 @@ function createDatabaseService(filePath, options = {}) {
         Number(project.video?.duration) || 0,
         json(projectArchive),
         project.createdAt || now,
-        now
+        now,
+        ownerProfileId || "legacy-local"
       );
 
       database.prepare("DELETE FROM events WHERE analysis_id = ?").run(project.id);
@@ -709,7 +729,104 @@ function createDatabaseService(filePath, options = {}) {
     });
   }
 
-  function snapshot() {
+  function finalizeProject(project, ownerProfileId) {
+    if (!project?.id || !ownerProfileId) {
+      throw new Error("No se puede crear el histórico sin proyecto y perfil.");
+    }
+    const now = nowIso();
+    const teams = (project.teams || []).map((team) => ({
+      id: team.id,
+      name: team.name,
+      shortName: team.shortName || "",
+      logo: team.logo || "",
+      primaryColor: team.primaryColor || "#08756D",
+      secondaryColor: team.secondaryColor || "#BDEB62",
+      category: team.category || "",
+      season: team.season || "",
+      competitionId: team.competitionId || "",
+      players: (team.players || []).map((player) => ({
+        id: player.id,
+        name: player.name,
+        number: player.number || "",
+        position: player.position || "",
+        photo: player.photo || ""
+      }))
+    }));
+    const events = (project.events || []).map((event) => ({
+      id: event.id,
+      tagId: event.tagId || "",
+      tagName: event.tagName || "Acción",
+      color: event.color || "",
+      mode: event.mode === "interval" ? "interval" : "point",
+      teamId: event.teamId || "",
+      playerId: event.playerId || "",
+      team: event.team || "",
+      player: event.player || "",
+      shotZoneId: event.shotZoneId || "",
+      shotZoneName: event.shotZoneName || "",
+      shotPoints: Number(event.shotPoints) || 0,
+      notes: event.notes || ""
+    }));
+    const byTag = new Map();
+    const byTeam = new Map();
+    const byPlayer = new Map();
+    for (const event of events) {
+      byTag.set(event.tagId, (byTag.get(event.tagId) || 0) + 1);
+      if (event.teamId) {
+        byTeam.set(event.teamId, (byTeam.get(event.teamId) || 0) + 1);
+      }
+      if (event.playerId) {
+        byPlayer.set(event.playerId, (byPlayer.get(event.playerId) || 0) + 1);
+      }
+    }
+    const summary = {
+      totalEvents: events.length,
+      uniquePlayers: byPlayer.size,
+      byTag: Object.fromEntries(byTag),
+      byTeam: Object.fromEntries(byTeam),
+      byPlayer: Object.fromEntries(byPlayer)
+    };
+    const match = {
+      ...(project.match || {}),
+      videoDuration: Number(project.video?.duration) || 0
+    };
+    database.prepare(`
+      INSERT INTO game_records (
+        id, owner_profile_id, project_name, match_json, teams_json,
+        events_json, summary_json, created_at, updated_at
+      )
+      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+      ON CONFLICT(id) DO UPDATE SET
+        owner_profile_id = excluded.owner_profile_id,
+        project_name = excluded.project_name,
+        match_json = excluded.match_json,
+        teams_json = excluded.teams_json,
+        events_json = excluded.events_json,
+        summary_json = excluded.summary_json,
+        updated_at = excluded.updated_at
+    `).run(
+      project.id,
+      ownerProfileId,
+      project.projectName || "Partido analizado",
+      json(match),
+      json(teams, []),
+      json(events, []),
+      json(summary),
+      project.createdAt || now,
+      now
+    );
+    return { ok: true, recordId: project.id };
+  }
+
+  function deleteGameRecord(recordId, ownerProfileId) {
+    const result = database.prepare(`
+      DELETE FROM game_records
+      WHERE id = ? AND owner_profile_id = ?
+    `).run(recordId, ownerProfileId);
+    return { ok: true, deleted: result.changes > 0 };
+  }
+
+  function snapshot(ownerProfileId = "") {
     const competitions = database.prepare(`
       SELECT
         cs.id,
@@ -950,40 +1067,32 @@ function createDatabaseService(filePath, options = {}) {
         (SELECT COUNT(*) FROM sync_queue) AS pending_sync
     `).get();
 
+    const gameRecords = ownerProfileId
+      ? database.prepare(`
+          SELECT *
+          FROM game_records
+          WHERE owner_profile_id = ?
+          ORDER BY updated_at DESC
+        `).all(ownerProfileId)
+      : database.prepare(`
+          SELECT *
+          FROM game_records
+          ORDER BY updated_at DESC
+        `).all();
+    const mappedGameRecords = gameRecords.map((row) => ({
+      id: row.id,
+      ownerProfileId: row.owner_profile_id,
+      projectName: row.project_name,
+      match: parseJson(row.match_json, {}),
+      teams: parseJson(row.teams_json, []),
+      events: parseJson(row.events_json, []),
+      summary: parseJson(row.summary_json, {}),
+      createdAt: row.created_at,
+      updatedAt: row.updated_at
+    }));
+
     return {
       databaseVersion: DATABASE_VERSION,
-      pilotCompetitionSeasonId: PILOT_COMPETITION_SEASON_ID,
-      catalog: {
-        fbrmVersion:
-          database
-            .prepare("SELECT value FROM metadata WHERE key = ?")
-            .get("catalog_fbrm_2026_27_version")?.value || "",
-        fbrmTeamCount: Number(
-          database
-            .prepare(`
-              SELECT COUNT(*) AS total
-              FROM competition_teams
-              WHERE competition_season_id = ?
-            `)
-            .get(PILOT_COMPETITION_SEASON_ID).total
-        ),
-        officialLogoCount: teams.filter(
-          (team) =>
-            team.source === "official-fbrm-2026-27" &&
-            team.logoStatus === "official-bundled"
-        ).length,
-        provisionalLogoCount: teams.filter(
-          (team) =>
-            team.source === "official-fbrm-2026-27" &&
-            team.logoStatus === "provisional"
-        ).length
-      },
-      cloud: {
-        configured: Boolean(
-          process.env.SCOUT_SUPABASE_URL && process.env.SCOUT_SUPABASE_ANON_KEY
-        ),
-        mode: process.env.SCOUT_SUPABASE_URL ? "configured" : "local-cache"
-      },
       totals: {
         teams: Number(totals.teams),
         players: Number(totals.players),
@@ -998,210 +1107,9 @@ function createDatabaseService(filePath, options = {}) {
       rosters,
       competitionTeams,
       matches,
-      analyses
+      analyses,
+      gameRecords: mappedGameRecords
     };
-  }
-
-  function importCatalog(catalog) {
-    let competitionSeasonId =
-      catalog.competitionSeasonId || PILOT_COMPETITION_SEASON_ID;
-    return transaction(() => {
-      if (catalog.competition) {
-        const now = nowIso();
-        const competition = catalog.competition;
-        const season = competition.season || {};
-        const competitionSeason = competition.competitionSeason || {};
-        const existingSeason = season.label
-          ? database.prepare("SELECT id FROM seasons WHERE label = ?").get(season.label)
-          : null;
-        const seasonDatabaseId = existingSeason?.id || season.id;
-        database.prepare(`
-          INSERT INTO competitions (
-            id, name, short_name, governing_body, country, region, level, gender,
-            source, external_id, created_at, updated_at
-          )
-          VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-          ON CONFLICT(id) DO UPDATE SET
-            name = excluded.name,
-            short_name = excluded.short_name,
-            governing_body = excluded.governing_body,
-            country = excluded.country,
-            region = excluded.region,
-            level = excluded.level,
-            gender = excluded.gender,
-            external_id = excluded.external_id,
-            updated_at = excluded.updated_at
-        `).run(
-          competition.id,
-          competition.name || "Competición importada",
-          competition.shortName || "",
-          competition.governingBody || "",
-          competition.country || "",
-          competition.region || "",
-          competition.level || "",
-          competition.gender || "",
-          catalog.source || "admin-import",
-          competition.externalId || null,
-          now,
-          now
-        );
-        database.prepare(`
-          INSERT INTO seasons (
-            id, label, starts_on, ends_on, is_current, created_at, updated_at
-          )
-          VALUES (?, ?, ?, ?, ?, ?, ?)
-          ON CONFLICT(id) DO UPDATE SET
-            label = excluded.label,
-            starts_on = excluded.starts_on,
-            ends_on = excluded.ends_on,
-            is_current = excluded.is_current,
-            updated_at = excluded.updated_at
-        `).run(
-          seasonDatabaseId,
-          season.label || "Temporada importada",
-          season.startsOn || null,
-          season.endsOn || null,
-          season.isCurrent === false ? 0 : 1,
-          now,
-          now
-        );
-        database.prepare(`
-          INSERT INTO competition_seasons (
-            id, competition_id, season_id, name, format, status, created_at, updated_at
-          )
-          VALUES (?, ?, ?, ?, ?, ?, ?, ?)
-          ON CONFLICT(id) DO UPDATE SET
-            name = excluded.name,
-            format = excluded.format,
-            status = excluded.status,
-            updated_at = excluded.updated_at
-        `).run(
-          competitionSeason.id || competitionSeasonId,
-          competition.id,
-          seasonDatabaseId,
-          competitionSeason.name ||
-            `${competition.name} ${season.label || ""}`.trim(),
-          competitionSeason.format || "",
-          competitionSeason.status || "active",
-          now,
-          now
-        );
-        competitionSeasonId = competitionSeason.id || competitionSeasonId;
-      }
-      const teamIds = new Set();
-      for (const team of catalog.teams || []) {
-        saveTeam(team, {
-          source: catalog.source || "admin-import",
-          externalId: team.externalId || null,
-          competitionSeasonId
-        });
-        teamIds.add(team.id);
-        database.prepare(`
-          INSERT INTO competition_teams (
-            competition_season_id, team_id, group_name, seed
-          )
-          VALUES (?, ?, ?, ?)
-          ON CONFLICT(competition_season_id, team_id) DO UPDATE SET
-            group_name = excluded.group_name,
-            seed = excluded.seed
-        `).run(
-          competitionSeasonId,
-          team.id,
-          team.groupName || "",
-          nullableNumber(team.seed)
-        );
-      }
-
-      for (const match of catalog.matches || []) {
-        if (
-          !match.homeTeamId ||
-          !match.awayTeamId ||
-          match.homeTeamId === match.awayTeamId
-        ) {
-          continue;
-        }
-        const now = nowIso();
-        database.prepare(`
-          INSERT INTO matches (
-            id, competition_season_id, round_name, scheduled_at, venue,
-            home_team_id, away_team_id, home_score, away_score, status,
-            source, external_id, created_at, updated_at
-          )
-          VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-          ON CONFLICT(id) DO UPDATE SET
-            round_name = excluded.round_name,
-            scheduled_at = excluded.scheduled_at,
-            venue = excluded.venue,
-            home_team_id = excluded.home_team_id,
-            away_team_id = excluded.away_team_id,
-            home_score = excluded.home_score,
-            away_score = excluded.away_score,
-            status = excluded.status,
-            updated_at = excluded.updated_at
-        `).run(
-          match.id,
-          competitionSeasonId,
-          match.roundName || "",
-          match.scheduledAt || null,
-          match.venue || "",
-          match.homeTeamId,
-          match.awayTeamId,
-          nullableNumber(match.homeScore),
-          nullableNumber(match.awayScore),
-          match.status || (
-            match.homeScore !== null && match.homeScore !== undefined
-              ? "finished"
-              : "scheduled"
-          ),
-          catalog.source || "admin-import",
-          match.externalId || null,
-          now,
-          now
-        );
-      }
-
-      let appliedRosterChanges = 0;
-      for (const change of catalog.rosterChanges || []) {
-        const current = database.prepare(`
-          SELECT id, jersey_number, position, status
-          FROM roster_memberships
-          WHERE competition_season_id = ? AND team_id = ? AND player_id = ?
-        `).get(competitionSeasonId, change.teamId, change.playerId);
-        if (!current) continue;
-        const status =
-          change.action === "baja"
-            ? change.status || "Baja"
-            : change.action === "alta"
-              ? change.status || "Activo"
-              : change.status || current.status || "Activo";
-        const number =
-          change.action === "cambio_dorsal" || change.action === "actualizar"
-            ? change.number || current.jersey_number
-            : current.jersey_number;
-        const position =
-          change.action === "cambio_posicion" || change.action === "actualizar"
-            ? change.position || current.position
-            : current.position;
-        database.prepare(`
-          UPDATE roster_memberships
-          SET jersey_number = ?, position = ?, status = ?, updated_at = ?
-          WHERE id = ?
-        `).run(number || "", position || "", status, nowIso(), current.id);
-        appliedRosterChanges += 1;
-      }
-
-      return {
-        ok: true,
-        competitionSeasonId,
-        teams: (catalog.teams || []).length,
-        players: (catalog.teams || []).reduce(
-          (total, team) => total + (team.players || []).length,
-          0
-        ),
-        matches: (catalog.matches || []).length,
-        rosterChanges: appliedRosterChanges
-      };
-    });
   }
 
   async function backupTo(destination) {
@@ -1214,28 +1122,18 @@ function createDatabaseService(filePath, options = {}) {
     if (database.isOpen) database.close();
   }
 
-  if (options.seedOfficialCatalog !== false) {
-    const installedCatalogVersion =
-      database
-        .prepare("SELECT value FROM metadata WHERE key = ?")
-        .get("catalog_fbrm_2026_27_version")?.value || "";
-    if (installedCatalogVersion !== FBRM_CATALOG_VERSION) {
-      importCatalog(createFbrmCatalog());
-      database.prepare(`
-        INSERT INTO metadata(key, value) VALUES (?, ?)
-        ON CONFLICT(key) DO UPDATE SET value = excluded.value
-      `).run("catalog_fbrm_2026_27_version", FBRM_CATALOG_VERSION);
-    }
-  }
+  cleanupUnusedLegacyCatalog();
 
   return {
     backupTo,
     close,
     database,
     filePath,
-    importCatalog,
     snapshot,
-    syncProject
+    syncProject,
+    finalizeProject,
+    deleteGameRecord,
+    cleanupUnusedLegacyCatalog
   };
 }
 
@@ -1251,9 +1149,6 @@ function deterministicId(prefix, value) {
 module.exports = {
   DATABASE_VERSION,
   LOCAL_WORKSPACE_ID,
-  PILOT_COMPETITION_ID,
-  PILOT_COMPETITION_SEASON_ID,
-  PILOT_SEASON_ID,
   createDatabaseService,
   deterministicId
 };

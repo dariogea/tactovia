@@ -15,6 +15,14 @@ const tagSizePresets = {
   large: 88
 };
 
+const liveModuleOptions = [
+  ["score", "Marcador estimado"],
+  ["pace", "Ritmo de etiquetado"],
+  ["shooting", "Acierto de tiro"],
+  ["coverage", "Cobertura de jugadores"],
+  ["latest", "Última acción"]
+];
+
 function ShortcutButton({ value, onChange }) {
   const [recording, setRecording] = useState(false);
   return (
@@ -100,6 +108,15 @@ export function SettingsPanel({
 
   function setTagButtonSize(size) {
     updateLayout({ tagButtonSize: size, tagButtonHeight: tagSizePresets[size] });
+  }
+
+  function toggleLiveModule(id) {
+    const current = preferences.layout.liveModules || [];
+    updateLayout({
+      liveModules: current.includes(id)
+        ? current.filter((item) => item !== id)
+        : [...current, id]
+    });
   }
 
   return (
@@ -270,6 +287,35 @@ export function SettingsPanel({
               />
               <span>Nombres</span>
             </label>
+            <select
+              value={preferences.layout.shotCourtPosition || "above"}
+              disabled={preferences.layout.shotCourtVisible === false}
+              onChange={(event) =>
+                updateLayout({ shotCourtPosition: event.target.value })
+              }
+              aria-label="Posición del mapa de tiro"
+            >
+              <option value="above">Encima</option>
+              <option value="below">Debajo</option>
+            </select>
+          </div>
+        </div>
+        <div className="settings-choice-row live-module-settings">
+          <div>
+            <strong>Módulos en tiempo real</strong>
+            <span>Elige qué indicadores aparecen bajo el reproductor.</span>
+          </div>
+          <div className="settings-inline-toggles">
+            {liveModuleOptions.map(([id, label]) => (
+              <label className="switch-control" key={id}>
+                <input
+                  type="checkbox"
+                  checked={(preferences.layout.liveModules || []).includes(id)}
+                  onChange={() => toggleLiveModule(id)}
+                />
+                <span>{label}</span>
+              </label>
+            ))}
           </div>
         </div>
       </article>

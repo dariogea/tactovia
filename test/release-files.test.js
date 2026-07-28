@@ -11,14 +11,15 @@ const {
   deliverableNames,
   pruneReleaseDirectory
 } = require("../scripts/release-files.cjs");
+const { version: currentVersion } = require("../package.json");
 
 test("conserva únicamente los tres instaladores útiles de la versión actual", () => {
   assert.deepEqual(
-    [...deliverableNames("0.10.0")].sort(),
+    [...deliverableNames(currentVersion)].sort(),
     [
-      "Tactovia-0.10.0-mac-arm64.dmg",
-      "Tactovia-0.10.0-win-x64.exe",
-      "Tactovia-0.10.0-win-x64.zip"
+      `Tactovia-${currentVersion}-mac-arm64.dmg`,
+      `Tactovia-${currentVersion}-win-x64.exe`,
+      `Tactovia-${currentVersion}-win-x64.zip`
     ].sort()
   );
 });
@@ -29,17 +30,17 @@ test("elimina versiones anteriores, blockmaps y carpetas intermedias", () => {
   fs.mkdirSync(path.join(release, "win-unpacked"), { recursive: true });
   [
     "Tactovia-0.9.0-mac-arm64.dmg",
-    "Tactovia-0.10.0-mac-arm64.dmg",
-    "Tactovia-0.10.0-mac-arm64.dmg.blockmap",
+    `Tactovia-${currentVersion}-mac-arm64.dmg`,
+    `Tactovia-${currentVersion}-mac-arm64.dmg.blockmap`,
     "builder-debug.yml"
   ].forEach((name) => fs.writeFileSync(path.join(release, name), "test"));
 
   try {
-    const removed = pruneReleaseDirectory(release, "0.10.0");
+    const removed = pruneReleaseDirectory(release, currentVersion);
     assert.ok(removed.includes("Tactovia-0.9.0-mac-arm64.dmg"));
     assert.ok(removed.includes("win-unpacked"));
     assert.deepEqual(fs.readdirSync(release), [
-      "Tactovia-0.10.0-mac-arm64.dmg"
+      `Tactovia-${currentVersion}-mac-arm64.dmg`
     ]);
   } finally {
     fs.rmSync(parent, { recursive: true, force: true });

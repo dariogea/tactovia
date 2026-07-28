@@ -1,17 +1,110 @@
 import { shotZones, zoneStats } from "../lib/shotZones.js";
 
-function CourtLines() {
+function CourtMarkings() {
   return (
-    <svg viewBox="0 0 100 100" aria-hidden="true">
-      <rect x="2" y="2" width="96" height="96" rx="2" />
-      <path d="M36 2v40h28V2" />
-      <path d="M39 42a11 11 0 0 0 22 0" />
-      <path d="M41 24a9 9 0 0 0 18 0" />
-      <circle cx="50" cy="16" r="2.6" />
-      <path d="M44 12h12" />
-      <path d="M8 2v39M92 2v39" />
-      <path d="M8 41a46 46 0 0 0 84 0" />
-      <path d="M34 98a16 16 0 0 1 32 0" />
+    <g className="court-markings" aria-hidden="true">
+      <rect x="10" y="10" width="480" height="450" rx="2" />
+      <path d="M170 10V235H330V10" />
+      <path d="M170 235A80 80 0 0 0 330 235" />
+      <path className="court-dashed" d="M170 235A80 80 0 0 1 330 235" />
+      <path d="M205 48A45 45 0 0 0 295 48" />
+      <circle cx="250" cy="70" r="12" />
+      <path d="M220 48H280" />
+      <path d="M35 10V95M465 10V95M35 95A216 216 0 0 0 465 95" />
+      <path d="M170 10H330" />
+      <path d="M214 10V34M286 10V34" />
+      <path d="M91 460A159 159 0 0 1 409 460" />
+      <circle cx="250" cy="460" r="28" />
+    </g>
+  );
+}
+
+function CourtSvg({
+  value = "",
+  onChange,
+  showLabels = true,
+  stats = null
+}) {
+  const statsById = new Map((stats || []).map((zone) => [zone.id, zone]));
+  const interactive = typeof onChange === "function";
+  const maximum = Math.max(...(stats || []).map((zone) => zone.attempts), 1);
+  return (
+    <svg
+      className="shot-court-svg"
+      viewBox="0 0 500 470"
+      role={interactive ? "group" : "img"}
+      aria-label={interactive ? "Selector de zonas de tiro" : "Mapa de tiro por zonas"}
+    >
+      <defs>
+        <pattern id="court-wood" width="52" height="80" patternUnits="userSpaceOnUse">
+          <rect width="52" height="80" fill="#d9a860" />
+          <rect width="25" height="80" fill="#e9bd78" opacity=".62" />
+          <path d="M0 20H52M0 52H52" stroke="#f3cf94" strokeOpacity=".5" />
+          <path d="M13 0V80M39 0V80" stroke="#bf8745" strokeOpacity=".28" />
+        </pattern>
+        <filter id="zone-shadow" x="-20%" y="-20%" width="140%" height="140%">
+          <feDropShadow dx="0" dy="2" stdDeviation="2" floodOpacity=".22" />
+        </filter>
+      </defs>
+      <rect x="0" y="0" width="500" height="470" rx="10" fill="url(#court-wood)" />
+      <g className="court-zones">
+        {shotZones.map((zone) => {
+          const row = statsById.get(zone.id);
+          const intensity = row ? row.attempts / maximum : 0;
+          return (
+            <g
+              key={zone.id}
+              className={[
+                "court-zone",
+                `points-${zone.points}`,
+                value === zone.id ? "active" : "",
+                interactive ? "interactive" : "heat"
+              ].filter(Boolean).join(" ")}
+              role={interactive ? "button" : undefined}
+              tabIndex={interactive ? 0 : undefined}
+              aria-label={
+                interactive
+                  ? `${zone.name}, ${zone.points} puntos`
+                  : `${zone.name}: ${row?.made || 0} de ${row?.attempts || 0}`
+              }
+              onClick={() => interactive && onChange(value === zone.id ? zone.id : zone.id)}
+              onDoubleClick={(event) => {
+                if (!interactive) return;
+                event.preventDefault();
+                onChange("");
+              }}
+              onKeyDown={(event) => {
+                if (!interactive) return;
+                if (event.key === "Enter" || event.key === " ") {
+                  event.preventDefault();
+                  onChange(value === zone.id ? "" : zone.id);
+                }
+              }}
+              style={row ? { "--zone-intensity": 0.12 + intensity * 0.68 } : undefined}
+            >
+              <path d={zone.path} filter={value === zone.id ? "url(#zone-shadow)" : undefined} />
+              {(showLabels || row) && (
+                <g className="zone-label" transform={`translate(${zone.labelX} ${zone.labelY})`}>
+                  {row ? (
+                    <>
+                      <text y="-6">{row.made} / {row.attempts}</text>
+                      <text className="zone-percentage" y="13">
+                        {row.attempts ? `${row.percentage}%` : "—"}
+                      </text>
+                    </>
+                  ) : (
+                    <>
+                      <text>{zone.shortName}</text>
+                      <text className="zone-points" y="15">{zone.points}P</text>
+                    </>
+                  )}
+                </g>
+              )}
+            </g>
+          );
+        })}
+      </g>
+      <CourtMarkings />
     </svg>
   );
 }
@@ -41,39 +134,14 @@ export function ShotCourtSelector({
         )}
       </div>
       <div className="shot-court">
-        <CourtLines />
-        {shotZones.map((zone) => (
-          <button
-            type="button"
-            key={zone.id}
-            className={`${value === zone.id ? "active" : ""} points-${zone.points}`}
-            style={{
-              left: `${zone.x}%`,
-              top: `${zone.y}%`,
-              width: `${zone.width}%`,
-              height: `${zone.height}%`
-            }}
-            onClick={(event) => {
-              if (event.detail > 1 && value === zone.id) onChange("");
-              else onChange(zone.id);
-            }}
-            onDoubleClick={(event) => {
-              event.preventDefault();
-              onChange("");
-            }}
-            title={`${zone.name} · ${zone.points} puntos`}
-            aria-label={
-              value === zone.id
-                ? `${zone.name} seleccionada. Doble clic para deshacer`
-                : `Seleccionar ${zone.name}`
-            }
-          >
-            {showLabels && <span>{zone.shortName}</span>}
-          </button>
-        ))}
+        <CourtSvg
+          value={value}
+          onChange={onChange}
+          showLabels={showLabels}
+        />
       </div>
       <small className="shot-court-help">
-        Un clic selecciona · doble clic sobre la zona activa deshace la selección
+        Un clic selecciona · doble clic sobre cualquier zona limpia la selección
       </small>
     </section>
   );
@@ -81,36 +149,15 @@ export function ShotCourtSelector({
 
 export function ShotCourtHeatmap({ events = [] }) {
   const stats = zoneStats(events);
-  const maximum = Math.max(...stats.map((zone) => zone.attempts), 1);
   return (
     <div className="shot-heatmap">
       <div className="shot-court heatmap">
-        <CourtLines />
-        {stats.map((zone) => {
-          const intensity = zone.attempts / maximum;
-          return (
-            <div
-              key={zone.id}
-              className={`heat-zone points-${zone.points}`}
-              style={{
-                left: `${zone.x}%`,
-                top: `${zone.y}%`,
-                width: `${zone.width}%`,
-                height: `${zone.height}%`,
-                "--heat-opacity": 0.12 + intensity * 0.72
-              }}
-              title={`${zone.name}: ${zone.made}/${zone.attempts} · ${zone.percentage}%`}
-            >
-              <strong>{zone.attempts}</strong>
-              <span>{zone.attempts ? `${zone.percentage}%` : "—"}</span>
-            </div>
-          );
-        })}
+        <CourtSvg stats={stats} />
       </div>
       <div className="heatmap-legend">
         <span><i className="points-2" /> Zona de 2 puntos</span>
         <span><i className="points-3" /> Zona de 3 puntos</span>
-        <small>Volumen de tiro y acierto estimado por zona</small>
+        <small>Canastas / intentos y porcentaje de acierto por zona</small>
       </div>
     </div>
   );

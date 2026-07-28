@@ -4,6 +4,7 @@ import { BrandLogo, BrandSplash } from "./components/Brand.jsx";
 import { EventEditor } from "./components/EventEditor.jsx";
 import { ExportClipsModal } from "./components/ExportClipsModal.jsx";
 import { MatchSetup } from "./components/MatchSetup.jsx";
+import { PlayerJersey } from "./components/PlayerJersey.jsx";
 import { Playbook } from "./components/Playbook.jsx";
 import { ProfilePanel } from "./components/ProfilePanel.jsx";
 import { ReportCenter } from "./components/ReportCenter.jsx";
@@ -13,6 +14,7 @@ import { StatsPanel } from "./components/StatsPanel.jsx";
 import { TagEditor } from "./components/TagEditor.jsx";
 import { ThemeSelector } from "./components/ThemeSelector.jsx";
 import { Timeline } from "./components/Timeline.jsx";
+import { UserGuide } from "./components/UserGuide.jsx";
 import {
   clamp,
   createIntervalEvent,
@@ -51,6 +53,11 @@ const appVersion = __APP_VERSION__;
 const autosaveKey = "scout-analyzer-autosave-v1";
 const preferencesKey = "scout-analyzer-preferences-v3";
 const teamsLibraryKey = "scout-analyzer-teams-v1";
+const dataLibraryKey = "tactovia-data-library-v1";
+
+function profileStorageKey(base, accountId) {
+  return accountId ? `${base}:${accountId}` : base;
+}
 
 function migrateBasketballTags(tags = []) {
   const requiredShotIds = new Set([
@@ -104,9 +111,11 @@ function migrateProject(project) {
       : null;
   return {
     ...project,
-    version: 8,
+    version: 9,
     teams,
     match: validMatch,
+    competitions: Array.isArray(project.competitions) ? project.competitions : [],
+    freeAgents: Array.isArray(project.freeAgents) ? project.freeAgents : [],
     template: {
       ...(project.template || {}),
       tags: migrateBasketballTags(project.template?.tags || defaultTags)
@@ -149,14 +158,49 @@ function migrateProject(project) {
   };
 }
 
-function readTeamLibrary() {
+function readTeamLibrary(accountId = "") {
   try {
-    const stored = JSON.parse(localStorage.getItem(teamsLibraryKey));
+    const stored = JSON.parse(
+      localStorage.getItem(profileStorageKey(teamsLibraryKey, accountId))
+    );
     if (Array.isArray(stored) && stored.length > 0) return stored.map(enrichTeam);
   } catch {
     // The team library can always be reconstructed from the current project.
   }
   return defaultTeams.map(enrichTeam);
+}
+
+function readDataLibrary(accountId = "") {
+  try {
+    const stored = JSON.parse(
+      localStorage.getItem(profileStorageKey(dataLibraryKey, accountId))
+    );
+    if (Array.isArray(stored?.teams)) {
+      return {
+        teams: stored.teams.map(enrichTeam),
+        competitions: Array.isArray(stored.competitions)
+          ? stored.competitions
+          : [],
+        freeAgents: Array.isArray(stored.freeAgents) ? stored.freeAgents : []
+      };
+    }
+  } catch {
+    // A damaged library falls back to the compatible team storage.
+  }
+  return {
+    teams: readTeamLibrary(accountId),
+    competitions: [],
+    freeAgents: []
+  };
+}
+
+function createProjectFromLibrary(accountId = "") {
+  const library = readDataLibrary(accountId);
+  return {
+    ...createBlankProject(library.teams),
+    competitions: library.competitions,
+    freeAgents: library.freeAgents
+  };
 }
 
 function hasValidMatch(project) {
@@ -178,11 +222,13 @@ function hasMeaningfulAnalysis(project) {
   );
 }
 
-function readAutosave() {
+function readAutosave(accountId = "") {
   try {
-    const stored = JSON.parse(localStorage.getItem(autosaveKey));
+    const stored = JSON.parse(
+      localStorage.getItem(profileStorageKey(autosaveKey, accountId))
+    );
     if (
-      [1, 2, 3, 4, 5, 6, 7, 8].includes(stored?.version) &&
+      [1, 2, 3, 4, 5, 6, 7, 8, 9].includes(stored?.version) &&
       Array.isArray(stored.events) &&
       Array.isArray(stored.template?.tags)
     ) {
@@ -191,12 +237,14 @@ function readAutosave() {
   } catch {
     // A damaged autosave should never prevent the application from starting.
   }
-  return createBlankProject(readTeamLibrary());
+  return createProjectFromLibrary(accountId);
 }
 
-function readPreferences() {
+function readPreferences(accountId = "") {
   try {
-    const stored = JSON.parse(localStorage.getItem(preferencesKey));
+    const stored = JSON.parse(
+      localStorage.getItem(profileStorageKey(preferencesKey, accountId))
+    );
     if (stored?.layout && stored?.playback && stored?.shortcuts) {
       return {
         layout: { ...defaultPreferences.layout, ...stored.layout },
@@ -230,6 +278,7 @@ function App() {
   const [editingEvent, setEditingEvent] = useState(null);
   const [showTagEditor, setShowTagEditor] = useState(false);
   const [showExportClips, setShowExportClips] = useState(false);
+  const [showUserGuide, setShowUserGuide] = useState(false);
   const [activeView, setActiveView] = useState("tagging");
   const [notice, setNotice] = useState("");
   const [busy, setBusy] = useState("");
@@ -237,7 +286,6 @@ function App() {
   const [databaseSnapshot, setDatabaseSnapshot] = useState(null);
   const [databaseLoading, setDatabaseLoading] = useState(false);
   const [databaseError, setDatabaseError] = useState("");
-  const [databaseImportReport, setDatabaseImportReport] = useState(null);
   const [themeMode, setThemeMode] = useState(readThemeMode);
   const [paletteMode, setPaletteMode] = useState(readPaletteMode);
   const [prefersDark, setPrefersDark] = useState(systemPrefersDark);
@@ -272,6 +320,20 @@ function App() {
       null,
     [selectedTeam, context.playerId]
   );
+  const activeRosterPlayers = useMemo(() => {
+    if (!selectedTeam || !project.match) return selectedTeam?.players || [];
+    const rosterIds =
+      selectedTeam.id === project.match.homeTeamId
+        ? project.match.homeRosterIds
+        : selectedTeam.id === project.match.awayTeamId
+          ? project.match.awayRosterIds
+          : null;
+    if (!Array.isArray(rosterIds) || rosterIds.length === 0) {
+      return selectedTeam.players || [];
+    }
+    const allowed = new Set(rosterIds);
+    return (selectedTeam.players || []).filter((player) => allowed.has(player.id));
+  }, [project.match, selectedTeam]);
   const eventContext = useMemo(
     () => {
       const zone = shotZoneById(context.shotZoneId);
@@ -301,13 +363,38 @@ function App() {
       (event) => event.playerId || event.player
     ).length;
     const elapsedMinutes = Math.max(currentTime / 60, 1 / 60);
+    const teamScores = Object.fromEntries(
+      matchTeams.map((team) => [
+        team.id,
+        project.events
+          .filter(
+            (event) =>
+              event.teamId === team.id &&
+              String(event.tagName || "").toLowerCase().includes("canasta")
+          )
+          .reduce(
+            (total, event) =>
+              total +
+              (Number(event.shotPoints) ||
+                (String(event.tagName).includes("3") ? 3 : 2)),
+            0
+          )
+      ])
+    );
+    const shots = project.events.filter((event) => isShotTag(event)).length;
+    const made = project.events.filter((event) =>
+      String(event.tagName || "").toLowerCase().includes("canasta")
+    ).length;
     return {
       latest,
       leading: stats[0] || null,
       rate: total ? (total / elapsedMinutes).toFixed(1).replace(".", ",") : "0,0",
-      identifiedPercentage: total ? Math.round((identified / total) * 100) : 0
+      identifiedPercentage: total ? Math.round((identified / total) * 100) : 0,
+      teamScores,
+      shotPercentage: shots ? Math.round((made / shots) * 100) : 0,
+      shots
     };
-  }, [currentTime, project.events, stats]);
+  }, [currentTime, matchTeams, project.events, stats]);
 
   function notify(message) {
     setNotice(message);
@@ -334,16 +421,45 @@ function App() {
   }, []);
 
   useEffect(() => {
-    localStorage.setItem(autosaveKey, JSON.stringify(project));
-  }, [project]);
+    if (!account || account.isDemo) return;
+    localStorage.setItem(
+      profileStorageKey(autosaveKey, account.id),
+      JSON.stringify(project)
+    );
+  }, [account, project]);
 
   useEffect(() => {
-    localStorage.setItem(teamsLibraryKey, JSON.stringify(project.teams));
-  }, [project.teams]);
+    if (!account || account.isDemo) return;
+    localStorage.setItem(
+      profileStorageKey(teamsLibraryKey, account.id),
+      JSON.stringify(project.teams)
+    );
+  }, [account, project.teams]);
 
   useEffect(() => {
-    localStorage.setItem(preferencesKey, JSON.stringify(preferences));
-  }, [preferences]);
+    if (!account || account.isDemo) return;
+    localStorage.setItem(
+      profileStorageKey(dataLibraryKey, account.id),
+      JSON.stringify({
+        teams: project.teams,
+        competitions: project.competitions || [],
+        freeAgents: project.freeAgents || []
+      })
+    );
+  }, [
+    account,
+    project.competitions,
+    project.freeAgents,
+    project.teams
+  ]);
+
+  useEffect(() => {
+    if (!account || account.isDemo) return;
+    localStorage.setItem(
+      profileStorageKey(preferencesKey, account.id),
+      JSON.stringify(preferences)
+    );
+  }, [account, preferences]);
 
   const resolvedTheme = resolveThemeMode(themeMode, prefersDark);
 
@@ -372,12 +488,16 @@ function App() {
   }, [workspaceReady]);
 
   useEffect(() => {
-    if (!desktop?.initializeDatabase) return undefined;
+    if (!desktop?.initializeDatabase || !authenticated || !account) return undefined;
     let active = true;
+    databaseReadyRef.current = false;
     setDatabaseLoading(true);
     desktop
       .initializeDatabase({
-        legacyProject: hasMeaningfulAnalysis(project) ? project : null
+        legacyProject:
+          !account.isDemo && hasMeaningfulAnalysis(project) ? project : null,
+        ownerProfileId: account.id,
+        isDemo: Boolean(account.isDemo)
       })
       .then((result) => {
         if (!active) return;
@@ -399,19 +519,25 @@ function App() {
     };
     // La migración de datos anteriores solo se ejecuta al arrancar.
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  }, [account?.id, authenticated]);
 
   useEffect(() => {
     if (
       !databaseReadyRef.current ||
       !desktop?.syncProjectToDatabase ||
-      !hasMeaningfulAnalysis(project)
+      !hasMeaningfulAnalysis(project) ||
+      !account ||
+      account.isDemo
     ) {
       return undefined;
     }
     window.clearTimeout(databaseSyncTimerRef.current);
     databaseSyncTimerRef.current = window.setTimeout(async () => {
-      const result = await desktop.syncProjectToDatabase(project);
+      const result = await desktop.syncProjectToDatabase({
+        project,
+        ownerProfileId: account.id,
+        isDemo: false
+      });
       if (!result.ok) {
         setDatabaseError(
           result.error || "No se pudo actualizar el histórico local."
@@ -419,7 +545,9 @@ function App() {
         return;
       }
       if (activeView === "database") {
-        const refreshed = await desktop.getDatabaseSnapshot();
+        const refreshed = await desktop.getDatabaseSnapshot({
+          ownerProfileId: account.id
+        });
         if (refreshed.ok) {
           setDatabaseSnapshot(refreshed.snapshot);
           setDatabaseError("");
@@ -427,7 +555,7 @@ function App() {
       }
     }, 650);
     return () => window.clearTimeout(databaseSyncTimerRef.current);
-  }, [activeView, project]);
+  }, [account, activeView, project]);
 
   useEffect(() => {
     if (
@@ -459,9 +587,7 @@ function App() {
       active = false;
       window.clearTimeout(noticeTimer.current);
     };
-    // This restoration only belongs to initial startup.
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  }, [project.video?.path]);
 
   function seekTo(seconds) {
     const video = videoRef.current;
@@ -785,56 +911,53 @@ function App() {
       filePath: projectFilePath
     });
     if (result.canceled) return;
+    if (result.error) {
+      notify(result.error);
+      return;
+    }
     setProjectFilePath(result.filePath);
-    notify("Análisis guardado.");
+    if (
+      !account?.isDemo &&
+      account?.id &&
+      hasValidMatch(project) &&
+      project.events.length > 0 &&
+      desktop.finalizeProject
+    ) {
+      const finalized = await desktop.finalizeProject({
+        project,
+        ownerProfileId: account.id,
+        isDemo: false
+      });
+      if (!finalized.ok) {
+        notify(
+          finalized.error ||
+            "El archivo se guardó, pero no se pudo actualizar el histórico."
+        );
+        return;
+      }
+      await refreshDatabase();
+      notify("Análisis e histórico estadístico guardados.");
+      return;
+    }
+    notify(
+      account?.isDemo
+        ? "Análisis guardado. La demo no conserva un histórico de perfil."
+        : "Análisis guardado."
+    );
   }
 
   async function refreshDatabase() {
     if (!desktop?.getDatabaseSnapshot) return;
     setDatabaseLoading(true);
     try {
-      const result = await desktop.getDatabaseSnapshot();
+      const result = await desktop.getDatabaseSnapshot({
+        ownerProfileId: account?.isDemo ? "" : account?.id || ""
+      });
       if (result.ok) {
         setDatabaseSnapshot(result.snapshot);
         setDatabaseError("");
       } else {
         setDatabaseError(result.error || "No se pudo actualizar la biblioteca.");
-      }
-    } finally {
-      setDatabaseLoading(false);
-    }
-  }
-
-  async function createDatabaseImportTemplate() {
-    if (!desktop?.createDatabaseImportTemplate) return;
-    const result = await desktop.createDatabaseImportTemplate();
-    if (result.error) {
-      notify(result.error);
-    } else if (!result.canceled) {
-      notify("Plantilla Excel preparada.");
-      desktop.revealFile(result.filePath);
-    }
-  }
-
-  async function importDatabaseCatalog() {
-    if (!desktop?.importDatabaseCatalog) return;
-    setDatabaseLoading(true);
-    try {
-      const result = await desktop.importDatabaseCatalog();
-      if (result.error) {
-        notify(result.error);
-      } else if (!result.canceled) {
-        setDatabaseSnapshot(result.snapshot);
-        const warningCount = result.warnings?.length || 0;
-        setDatabaseImportReport({
-          imported: result.imported,
-          warnings: result.warnings || []
-        });
-        notify(
-          warningCount > 0
-            ? `Importación completada con ${warningCount} avisos para revisar.`
-            : `${result.imported.teams} equipos, ${result.imported.players} jugadores y ${result.imported.rosterChanges || 0} cambios de plantilla importados.`
-        );
       }
     } finally {
       setDatabaseLoading(false);
@@ -852,90 +975,6 @@ function App() {
     }
   }
 
-  function useDatabaseMatch(match) {
-    if (
-      project.events.length > 0 &&
-      !window.confirm(
-        "Este análisis ya contiene acciones. ¿Quieres vincularlo a otro partido?"
-      )
-    ) {
-      return;
-    }
-    const teamFromDatabase = (teamId) => {
-      const team = databaseSnapshot?.teams?.find((item) => item.id === teamId);
-      if (!team) return null;
-      const allRosters = databaseSnapshot?.rosters || [];
-      const seasonRosters = allRosters.filter(
-        (roster) =>
-          roster.teamId === teamId &&
-          roster.competitionSeasonId === match.competitionSeasonId
-      );
-      const relevantRosters =
-        seasonRosters.length > 0
-          ? seasonRosters
-          : allRosters.filter((roster) => roster.teamId === teamId);
-      const players = relevantRosters
-        .map((roster) => {
-          const player = (databaseSnapshot?.players || []).find(
-            (item) => item.id === roster.playerId
-          );
-          if (!player) return null;
-          return {
-            ...player,
-            rosterId: roster.id,
-            competitionSeasonId: roster.competitionSeasonId,
-            teamId,
-            number: roster.number || "",
-            position: roster.position || player.position || "",
-            status: roster.status || player.status || "",
-            photo: player.photo || ""
-          };
-        })
-        .filter(Boolean);
-      return enrichTeam({ ...team, players });
-    };
-    const selectedTeams = [
-      teamFromDatabase(match.homeTeamId),
-      teamFromDatabase(match.awayTeamId)
-    ].filter(Boolean);
-    if (selectedTeams.length !== 2) {
-      notify("Faltan las fichas de uno de los equipos del partido.");
-      return;
-    }
-    updateProject((current) => {
-      const selectedIds = new Set(selectedTeams.map((team) => team.id));
-      const teams = [
-        ...current.teams.filter((team) => !selectedIds.has(team.id)),
-        ...selectedTeams
-      ];
-      return {
-        ...current,
-        teams,
-        match: {
-          id: match.id,
-          competitionSeasonId: match.competitionSeasonId,
-          roundName: match.roundName,
-          scheduledAt: match.scheduledAt,
-          venue: match.venue,
-          homeTeamId: match.homeTeamId,
-          awayTeamId: match.awayTeamId,
-          homeScore: match.homeScore,
-          awayScore: match.awayScore,
-          status: match.status,
-          source: match.source,
-          externalId: match.externalId
-        }
-      };
-    });
-    setContext((current) => ({
-      ...current,
-      teamId: match.homeTeamId,
-      playerId: ""
-    }));
-    setActiveView("tagging");
-    notify("Partido preparado para etiquetar.");
-  }
-
   function newProject() {
     if (
       project.events.length > 0 &&
@@ -943,7 +982,7 @@ function App() {
     ) {
       return;
     }
-    setProject(createBlankProject(readTeamLibrary()));
+    setProject(createProjectFromLibrary(account?.id));
     setProjectFilePath("");
     setVideoUrl("");
     setCurrentTime(0);
@@ -956,7 +995,7 @@ function App() {
   }
 
   function startNewSession() {
-    setProject(createBlankProject(readTeamLibrary()));
+    setProject(createProjectFromLibrary(account?.id));
     setProjectFilePath("");
     setVideoUrl("");
     setCurrentTime(0);
@@ -985,8 +1024,8 @@ function App() {
     };
     setAccount(demoAccount);
     setAuthenticated(true);
-    setSelectedSport("basketball");
-    setProject(createBlankProject(readTeamLibrary()));
+    setSelectedSport("");
+    setProject(createBlankProject());
     setProjectFilePath("");
     setVideoUrl("");
     setCurrentTime(0);
@@ -995,10 +1034,14 @@ function App() {
     setSelectedEventIds(new Set());
     setContext({ ...emptyContext });
     setActiveView("tagging");
-    setWorkspaceReady(true);
+    setWorkspaceReady(false);
   }
 
   function logout() {
+    if (account?.isDemo) {
+      setAccount(readLocalAccount());
+      setProject(createBlankProject());
+    }
     setAuthenticated(false);
     setSelectedSport("");
     setWorkspaceReady(false);
@@ -1080,9 +1123,134 @@ function App() {
     }
   }
 
+  async function exportPowerBi(sourceProject = project) {
+    if (!desktop?.exportPowerBi) return;
+    setBusy("Preparando modelo para Power BI…");
+    try {
+      const result = await desktop.exportPowerBi({ project: sourceProject });
+      if (result.error) {
+        notify(result.error);
+      } else if (!result.canceled) {
+        notify("Modelo normalizado para Power BI exportado.");
+        desktop.revealFile(result.filePath);
+      }
+    } finally {
+      setBusy("");
+    }
+  }
+
   function exportData() {
     if (dataExportFormat === "csv") return exportCsv();
+    if (dataExportFormat === "powerbi") return exportPowerBi();
     return exportXlsx();
+  }
+
+  function createHistoricalProject(scope = {}) {
+    const allRecords = databaseSnapshot?.gameRecords || [];
+    const records = allRecords.filter((record) => {
+      if (scope.type === "team") {
+        return [record.match?.homeTeamId, record.match?.awayTeamId].includes(scope.id);
+      }
+      if (scope.type === "player") {
+        return record.events.some((event) => event.playerId === scope.id);
+      }
+      return true;
+    });
+    const teamMap = new Map();
+    const events = [];
+    const tagMap = new Map();
+    records.forEach((record, recordIndex) => {
+      record.teams.forEach((team) => teamMap.set(team.id, team));
+      record.events
+        .filter((event) =>
+          scope.type === "team"
+            ? event.teamId === scope.id
+            : scope.type === "player"
+              ? event.playerId === scope.id
+              : true
+        )
+        .forEach((event, eventIndex) => {
+          const tag = {
+            id: event.tagId,
+            name: event.tagName,
+            color: event.color || "#08756D",
+            mode: event.mode || "point"
+          };
+          tagMap.set(tag.id, tag);
+          events.push({
+            ...event,
+            id: `${record.id}-${event.id || eventIndex}`,
+            anchor: recordIndex,
+            start: recordIndex,
+            end: recordIndex + 0.1,
+            recordName: record.projectName
+          });
+        });
+    });
+    return {
+      ...createBlankProject([...teamMap.values()]),
+      id: crypto.randomUUID(),
+      projectName: scope.name
+        ? `Histórico de ${scope.name}`
+        : `Histórico de ${account?.name || "Tactovia"}`,
+      template: { name: "Histórico", tags: [...tagMap.values()] },
+      events
+    };
+  }
+
+  async function exportHistory(format, scope = {}) {
+    const historicalProject = createHistoricalProject(scope);
+    if (historicalProject.events.length === 0) {
+      notify("Todavía no hay históricos para exportar.");
+      return;
+    }
+    if (format === "powerbi") return exportPowerBi(historicalProject);
+    if (format === "pdf") {
+      setBusy("Preparando informe histórico…");
+      try {
+        const result = await desktop.exportReportPdf(
+          reportPayload(historicalProject)
+        );
+        if (!result.canceled) {
+          notify("Informe histórico exportado.");
+          desktop.revealFile(result.filePath);
+        }
+      } finally {
+        setBusy("");
+      }
+      return;
+    }
+    setBusy("Preparando histórico en Excel…");
+    try {
+      const result = await desktop.exportXlsx({ project: historicalProject });
+      if (!result.canceled) {
+        notify("Histórico Excel exportado.");
+        desktop.revealFile(result.filePath);
+      }
+    } finally {
+      setBusy("");
+    }
+  }
+
+  async function deleteGameRecord(record) {
+    if (
+      !account?.id ||
+      !window.confirm(
+        `¿Eliminar el histórico estadístico “${record.projectName}”? El archivo .scout guardado no se borrará.`
+      )
+    ) {
+      return;
+    }
+    const result = await desktop.deleteGameRecord({
+      recordId: record.id,
+      ownerProfileId: account.id
+    });
+    if (!result.ok) {
+      notify(result.error || "No se pudo eliminar el histórico.");
+      return;
+    }
+    await refreshDatabase();
+    notify("Histórico estadístico eliminado.");
   }
 
   function foldersForEvent(event, groupBy) {
@@ -1151,11 +1319,13 @@ function App() {
     }
   }
 
-  async function exportReport() {
+  async function exportReport(options = {}) {
     if (!desktop) return;
     setBusy("Preparando informe…");
     try {
-      const result = await desktop.exportReportPdf(reportPayload(project));
+      const result = await desktop.exportReportPdf(
+        reportPayload(project, options)
+      );
       if (!result.canceled) {
         notify("Informe PDF exportado.");
         desktop.revealFile(result.filePath);
@@ -1276,6 +1446,11 @@ function App() {
           onAccountChange={setAccount}
           onAuthenticated={(nextAccount) => {
             setAccount(nextAccount);
+            setProject(readAutosave(nextAccount.id));
+            setPreferences(readPreferences(nextAccount.id));
+            setProjectFilePath("");
+            setVideoUrl("");
+            setContext({ ...emptyContext });
             setAuthenticated(true);
           }}
           onDemo={startDemoSession}
@@ -1331,6 +1506,7 @@ function App() {
               <div className="profile-popover">
                 <div><span>{accountInitials(account)}</span><strong>{account?.name}</strong><small>{account?.email}</small></div>
                 <button onClick={() => { setActiveView("profile"); setProfileMenuOpen(false); }}>Perfil y ajustes</button>
+                <button onClick={() => { setShowUserGuide(true); setProfileMenuOpen(false); }}>Guía de usuario</button>
                 <button onClick={() => { setWorkspaceReady(false); setProfileMenuOpen(false); }}>Cambiar sesión</button>
                 <button className="danger-text" onClick={logout}>Cerrar sesión</button>
               </div>
@@ -1529,47 +1705,68 @@ function App() {
                   </div>
                 </div>
                 <section className="live-tagging-strip" aria-label="Resumen del etiquetado">
-                  <div>
-                    <span>Acciones</span>
-                    <strong>{project.events.length}</strong>
-                    <small>registradas</small>
-                  </div>
-                  <div>
-                    <span>Ritmo</span>
-                    <strong>{liveTaggingSummary.rate}</strong>
-                    <small>acciones/min</small>
-                  </div>
-                  <div>
-                    <span>Más usada</span>
-                    <strong>{liveTaggingSummary.leading?.name || "—"}</strong>
-                    <small>
-                      {liveTaggingSummary.leading
-                        ? `${liveTaggingSummary.leading.count} registros`
-                        : "sin datos"}
-                    </small>
-                  </div>
-                  <div>
-                    <span>Jugador identificado</span>
-                    <strong>{liveTaggingSummary.identifiedPercentage}%</strong>
-                    <small>de las acciones</small>
-                  </div>
+                  {(preferences.layout.liveModules || []).includes("score") && (
+                    <div className="live-score-module">
+                      <span>Marcador etiquetado</span>
+                      <strong>
+                        {matchTeams[0]?.shortName || "LOC"}{" "}
+                        {liveTaggingSummary.teamScores[matchTeams[0]?.id] || 0}
+                        <i>–</i>
+                        {liveTaggingSummary.teamScores[matchTeams[1]?.id] || 0}{" "}
+                        {matchTeams[1]?.shortName || "VIS"}
+                      </strong>
+                      <small>calculado desde canastas registradas</small>
+                    </div>
+                  )}
+                  {(preferences.layout.liveModules || []).includes("pace") && (
+                    <div>
+                      <span>Ritmo</span>
+                      <strong>{liveTaggingSummary.rate}</strong>
+                      <small>{project.events.length} acciones · por minuto</small>
+                    </div>
+                  )}
+                  {(preferences.layout.liveModules || []).includes("shooting") && (
+                    <div>
+                      <span>Acierto de tiro</span>
+                      <strong>{liveTaggingSummary.shotPercentage}%</strong>
+                      <small>{liveTaggingSummary.shots} intentos localizados</small>
+                    </div>
+                  )}
+                  {(preferences.layout.liveModules || []).includes("coverage") && (
+                    <div>
+                      <span>Cobertura</span>
+                      <strong>{liveTaggingSummary.identifiedPercentage}%</strong>
+                      <small>acciones con jugador</small>
+                    </div>
+                  )}
+                  {(preferences.layout.liveModules || []).includes("latest") && (
+                    <button
+                      className="live-last-event"
+                      disabled={!liveTaggingSummary.latest}
+                      onClick={() =>
+                        liveTaggingSummary.latest &&
+                        seekTo(liveTaggingSummary.latest.start)
+                      }
+                    >
+                      <span>Última acción</span>
+                      <strong>
+                        {liveTaggingSummary.latest?.tagName || "Todavía sin acciones"}
+                      </strong>
+                      <small>
+                        {liveTaggingSummary.latest
+                          ? `${formatTime(liveTaggingSummary.latest.start, true)} · volver al momento`
+                          : "Empieza a etiquetar para verla aquí"}
+                      </small>
+                    </button>
+                  )}
                   <button
-                    className="live-last-event"
-                    disabled={!liveTaggingSummary.latest}
-                    onClick={() =>
-                      liveTaggingSummary.latest &&
-                      seekTo(liveTaggingSummary.latest.start)
-                    }
+                    className="live-shortcut-help"
+                    onClick={() => setShowUserGuide(true)}
+                    title="Ver atajos y guía"
                   >
-                    <span>Última acción</span>
-                    <strong>
-                      {liveTaggingSummary.latest?.tagName || "Todavía sin acciones"}
-                    </strong>
-                    <small>
-                      {liveTaggingSummary.latest
-                        ? `${formatTime(liveTaggingSummary.latest.start, true)} · volver al momento`
-                        : "Empieza a etiquetar para verla aquí"}
-                    </small>
+                    <span>?</span>
+                    <strong>Atajos</strong>
+                    <small>guía rápida</small>
                   </button>
                 </section>
               </section>
@@ -1613,22 +1810,6 @@ function App() {
                       ))}
                     </select>
                   </label>
-                  <label className="field">
-                    <span>Jugador</span>
-                    <select
-                      value={context.playerId}
-                      onChange={(event) =>
-                        setContext((current) => ({ ...current, playerId: event.target.value }))
-                      }
-                    >
-                      <option value="">Sin indicar</option>
-                      {sortPlayersByNumber(selectedTeam?.players || []).map((player) => (
-                        <option value={player.id} key={player.id}>
-                          {player.number ? `#${player.number} ` : ""}{player.name}
-                        </option>
-                      ))}
-                    </select>
-                  </label>
                   <label className="field span-two">
                     <span>Nota rápida</span>
                     <input
@@ -1639,7 +1820,40 @@ function App() {
                   </label>
                 </div>
 
-                {preferences.layout.shotCourtVisible !== false && (
+                <div className="tagging-player-selector">
+                  <header>
+                    <span>Jugador</span>
+                    <button
+                      className={`mini-button ${!context.playerId ? "active" : ""}`}
+                      onClick={() =>
+                        setContext((current) => ({ ...current, playerId: "" }))
+                      }
+                    >
+                      Sin indicar
+                    </button>
+                  </header>
+                  <div>
+                    {sortPlayersByNumber(activeRosterPlayers).map((player) => (
+                      <PlayerJersey
+                        key={player.id}
+                        player={player}
+                        team={selectedTeam}
+                        selected={context.playerId === player.id}
+                        compact
+                        onClick={() =>
+                          setContext((current) => ({
+                            ...current,
+                            playerId:
+                              current.playerId === player.id ? "" : player.id
+                          }))
+                        }
+                      />
+                    ))}
+                  </div>
+                </div>
+
+                {preferences.layout.shotCourtVisible !== false &&
+                  (preferences.layout.shotCourtPosition || "above") === "above" && (
                   <ShotCourtSelector
                     value={context.shotZoneId}
                     onChange={(shotZoneId) =>
@@ -1682,6 +1896,17 @@ function App() {
                     );
                   })}
                 </div>
+                {preferences.layout.shotCourtVisible !== false &&
+                  preferences.layout.shotCourtPosition === "below" && (
+                    <ShotCourtSelector
+                      value={context.shotZoneId}
+                      onChange={(shotZoneId) =>
+                        setContext((current) => ({ ...current, shotZoneId }))
+                      }
+                      showLabels={preferences.layout.shotCourtLabels !== false}
+                      compact
+                    />
+                  )}
                 <div
                   className="tag-size-resizer"
                   onPointerDown={startTagResize}
@@ -1718,8 +1943,9 @@ function App() {
             snapshot={databaseSnapshot}
             loading={databaseLoading}
             error={databaseError}
-            importReport={databaseImportReport}
             teams={project.teams}
+            competitions={project.competitions || []}
+            freeAgents={project.freeAgents || []}
             onTeamsChange={(teams) => {
               updateProject((current) => {
                 const matchStillValid =
@@ -1736,11 +1962,16 @@ function App() {
                 }));
               }
             }}
+            onCompetitionsChange={(competitions) =>
+              updateProject((current) => ({ ...current, competitions }))
+            }
+            onFreeAgentsChange={(freeAgents) =>
+              updateProject((current) => ({ ...current, freeAgents }))
+            }
             onRefresh={refreshDatabase}
-            onImport={importDatabaseCatalog}
-            onCreateTemplate={createDatabaseImportTemplate}
             onBackup={backupDatabase}
-            onUseMatch={useDatabaseMatch}
+            onDeleteRecord={deleteGameRecord}
+            onExportHistory={exportHistory}
           />
         )}
 
@@ -1814,7 +2045,8 @@ function App() {
           tags={project.template.tags}
           courtOptions={{
             visible: preferences.layout.shotCourtVisible,
-            showLabels: preferences.layout.shotCourtLabels
+            showLabels: preferences.layout.shotCourtLabels,
+            position: preferences.layout.shotCourtPosition
           }}
           onClose={() => setShowTagEditor(false)}
           onSave={(tags, courtOptions) => {
@@ -1827,7 +2059,8 @@ function App() {
               layout: {
                 ...current.layout,
                 shotCourtVisible: courtOptions.visible,
-                shotCourtLabels: courtOptions.showLabels
+                shotCourtLabels: courtOptions.showLabels,
+                shotCourtPosition: courtOptions.position
               }
             }));
             setActiveIntervals({});
@@ -1863,6 +2096,13 @@ function App() {
           selectedIds={selectedEventIds}
           onClose={() => setShowExportClips(false)}
           onExport={exportClips}
+        />
+      )}
+
+      {showUserGuide && (
+        <UserGuide
+          shortcuts={preferences.shortcuts}
+          onClose={() => setShowUserGuide(false)}
         />
       )}
 

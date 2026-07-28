@@ -3,6 +3,8 @@ import {
   accountInitials,
   createPasswordSalt,
   passwordDigest,
+  readLocalAccounts,
+  setActiveLocalAccount,
   saveLocalAccount
 } from "../lib/account.js";
 import { BrandLogo } from "./Brand.jsx";
@@ -45,9 +47,18 @@ function AccessBrand({ inverse = false }) {
 }
 
 function AccountStage({ account, onAuthenticated, onAccountChange, onDemo }) {
-  const creating = !account;
+  const accounts = readLocalAccounts();
+  const [mode, setMode] = useState(accounts.length ? "login" : "register");
+  const creating = mode === "register";
+  const [selectedAccountId, setSelectedAccountId] = useState(
+    account?.id || accounts[0]?.id || ""
+  );
+  const selectedAccount =
+    accounts.find((candidate) => candidate.id === selectedAccountId) ||
+    account ||
+    null;
   const [name, setName] = useState("");
-  const [email, setEmail] = useState(account?.email || "");
+  const [email, setEmail] = useState(selectedAccount?.email || "");
   const [password, setPassword] = useState("");
   const [club, setClub] = useState("");
   const [error, setError] = useState("");
@@ -56,16 +67,26 @@ function AccountStage({ account, onAuthenticated, onAccountChange, onDemo }) {
   async function submit(event) {
     event.preventDefault();
     setError("");
-    if (!email.trim() || password.length < 4 || (creating && !name.trim())) {
+    if (!email.trim() || password.length < 6 || (creating && !name.trim())) {
       setError(
         creating
-          ? "Indica tu nombre, un correo y una contraseña de al menos 4 caracteres."
+          ? "Indica tu nombre, un correo y una contraseña de al menos 6 caracteres."
           : "Introduce el correo y la contraseña de este perfil."
       );
       return;
     }
     setBusy(true);
     if (creating) {
+      if (
+        accounts.some(
+          (candidate) =>
+            candidate.email.toLowerCase() === email.trim().toLowerCase()
+        )
+      ) {
+        setError("Ya existe un perfil local con ese correo.");
+        setBusy(false);
+        return;
+      }
       const passwordSalt = createPasswordSalt();
       const passwordHash = await passwordDigest(password, passwordSalt);
       const next = saveLocalAccount({
@@ -82,15 +103,22 @@ function AccountStage({ account, onAuthenticated, onAccountChange, onDemo }) {
       onAccountChange(next);
       onAuthenticated(next);
     } else {
+      if (!selectedAccount) {
+        setError("Selecciona un perfil o crea uno nuevo.");
+        setBusy(false);
+        return;
+      }
       const passwordHash = await passwordDigest(
         password,
-        account.passwordSalt || ""
+        selectedAccount.passwordSalt || ""
       );
       if (
-        email.trim().toLowerCase() === account.email.toLowerCase() &&
-        passwordHash === account.passwordHash
+        email.trim().toLowerCase() === selectedAccount.email.toLowerCase() &&
+        passwordHash === selectedAccount.passwordHash
       ) {
-        onAuthenticated(account);
+        const next = setActiveLocalAccount(selectedAccount.id);
+        onAccountChange(next);
+        onAuthenticated(next);
       } else {
         setError("El correo o la contraseña no son correctos.");
       }
@@ -124,7 +152,7 @@ function AccountStage({ account, onAuthenticated, onAccountChange, onDemo }) {
           <span className="access-step">01</span>
           <div>
             <span className="eyebrow">{creating ? "Primer acceso" : "Bienvenido de nuevo"}</span>
-            <h2>{creating ? "Crea tu perfil local" : `Hola, ${account.name}`}</h2>
+            <h2>{creating ? "Crea tu espacio" : "Accede a tu espacio"}</h2>
             <p>
               {creating
                 ? "Este perfil protege la entrada y permanece únicamente en este ordenador."
@@ -132,10 +160,56 @@ function AccountStage({ account, onAuthenticated, onAccountChange, onDemo }) {
             </p>
           </div>
         </div>
-        {!creating && (
-          <div className="known-account">
-            <span>{accountInitials(account)}</span>
-            <div><strong>{account.name}</strong><small>{account.club || account.role}</small></div>
+        <div className="access-mode-switch segmented-control">
+          <button
+            type="button"
+            className={!creating ? "active" : ""}
+            onClick={() => {
+              setMode("login");
+              const next = selectedAccount || accounts[0];
+              setSelectedAccountId(next?.id || "");
+              setEmail(next?.email || "");
+              setError("");
+            }}
+            disabled={accounts.length === 0}
+          >
+            Iniciar sesión
+          </button>
+          <button
+            type="button"
+            className={creating ? "active" : ""}
+            onClick={() => {
+              setMode("register");
+              setName("");
+              setEmail("");
+              setPassword("");
+              setError("");
+            }}
+          >
+            Crear cuenta
+          </button>
+        </div>
+        {!creating && accounts.length > 0 && (
+          <div className="account-picker">
+            {accounts.map((candidate) => (
+              <button
+                type="button"
+                key={candidate.id}
+                className={candidate.id === selectedAccount?.id ? "active" : ""}
+                onClick={() => {
+                  setSelectedAccountId(candidate.id);
+                  setEmail(candidate.email);
+                  setPassword("");
+                }}
+              >
+                <span>{accountInitials(candidate)}</span>
+                <div>
+                  <strong>{candidate.name}</strong>
+                  <small>{candidate.club || candidate.email}</small>
+                </div>
+                <i>{candidate.id === selectedAccount?.id ? "✓" : ""}</i>
+              </button>
+            ))}
           </div>
         )}
         <form onSubmit={submit} className="access-form">
@@ -157,21 +231,25 @@ function AccountStage({ account, onAuthenticated, onAccountChange, onDemo }) {
           </label>
           <label className="field">
             <span>Contraseña local</span>
-            <input type="password" value={password} onChange={(event) => setPassword(event.target.value)} placeholder="Mínimo 4 caracteres" />
+            <input type="password" value={password} onChange={(event) => setPassword(event.target.value)} placeholder="Mínimo 6 caracteres" />
           </label>
           {error && <p className="form-error">{error}</p>}
           <button className="button primary access-submit" disabled={busy}>
             {busy ? "Comprobando…" : creating ? "Crear perfil y continuar" : "Entrar a Tactovia"}
           </button>
         </form>
-        <div className="demo-access-divider"><span>o prueba la aplicación</span></div>
-        <button type="button" className="button demo-access-button" onClick={onDemo}>
-          <span>▶</span>
-          Entrar directamente en la demo
-        </button>
+        {import.meta.env.DEV && (
+          <>
+            <div className="demo-access-divider"><span>herramientas de desarrollo</span></div>
+            <button type="button" className="button demo-access-button" onClick={onDemo}>
+              <span>▶</span>
+              Saltar acceso con una demo efímera
+            </button>
+          </>
+        )}
         <small className="access-privacy-note">
-          La cuenta es local en esta fase. No se envían credenciales, vídeos ni
-          análisis a Internet.
+          Los perfiles y sus históricos están separados en este dispositivo.
+          Tactovia no envía credenciales, vídeos ni análisis a Internet.
         </small>
       </section>
     </div>

@@ -6,14 +6,16 @@ export function ScoutingLibrary({
   snapshot,
   loading,
   error,
-  importReport,
   teams,
+  competitions,
+  freeAgents,
   onTeamsChange,
+  onCompetitionsChange,
+  onFreeAgentsChange,
   onRefresh,
-  onImport,
-  onCreateTemplate,
   onBackup,
-  onUseMatch
+  onDeleteRecord,
+  onExportHistory
 }) {
   const [workspace, setWorkspace] = useState("directory");
   return (
@@ -45,18 +47,26 @@ export function ScoutingLibrary({
       {workspace === "directory" ? (
         <DatabaseLibrary
           snapshot={snapshot}
+          teams={teams}
+          competitions={competitions}
+          freeAgents={freeAgents}
           loading={loading}
           error={error}
-          importReport={importReport}
           onRefresh={onRefresh}
-          onImport={onImport}
-          onCreateTemplate={onCreateTemplate}
           onBackup={onBackup}
-          onUseMatch={onUseMatch}
+          onDeleteRecord={onDeleteRecord}
+          onExportHistory={onExportHistory}
           onManageTeams={() => setWorkspace("manage")}
         />
       ) : (
-        <RosterManager teams={teams} onChange={onTeamsChange} />
+        <RosterManager
+          teams={teams}
+          competitions={competitions}
+          freeAgents={freeAgents}
+          onChange={onTeamsChange}
+          onCompetitionsChange={onCompetitionsChange}
+          onFreeAgentsChange={onFreeAgentsChange}
+        />
       )}
     </section>
   );

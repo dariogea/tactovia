@@ -1,18 +1,96 @@
 export const accountStorageKey = "scout-analyzer-local-account-v1";
+export const accountsStorageKey = "tactovia-local-accounts-v2";
+export const activeAccountStorageKey = "tactovia-active-account-v2";
+
+function isDiscardedProfile(account) {
+  const name = String(account?.name || "").trim().toLowerCase();
+  const email = String(account?.email || "").trim().toLowerCase();
+  return name === "dghfghfg" || email.startsWith("dghfghfg@");
+}
+
+function validAccount(account) {
+  return Boolean(
+    account?.id &&
+      account?.email &&
+      account?.passwordHash &&
+      !account?.isDemo &&
+      !isDiscardedProfile(account)
+  );
+}
+
+export function readLocalAccounts() {
+  if (typeof localStorage === "undefined") return [];
+  try {
+    const stored = JSON.parse(localStorage.getItem(accountsStorageKey));
+    const accounts = Array.isArray(stored) ? stored.filter(validAccount) : [];
+    if (accounts.length > 0) {
+      localStorage.setItem(accountsStorageKey, JSON.stringify(accounts));
+      return accounts;
+    }
+  } catch {
+    // A damaged registry falls back to the legacy single-profile format.
+  }
+
+  try {
+    const legacy = JSON.parse(localStorage.getItem(accountStorageKey));
+    if (validAccount(legacy)) {
+      localStorage.setItem(accountsStorageKey, JSON.stringify([legacy]));
+      return [legacy];
+    }
+    if (isDiscardedProfile(legacy)) {
+      localStorage.removeItem(accountStorageKey);
+    }
+  } catch {
+    // Invalid legacy data is intentionally ignored.
+  }
+  return [];
+}
 
 export function readLocalAccount() {
   if (typeof localStorage === "undefined") return null;
-  try {
-    const account = JSON.parse(localStorage.getItem(accountStorageKey));
-    return account?.id && account?.email && account?.passwordHash ? account : null;
-  } catch {
-    return null;
-  }
+  const accounts = readLocalAccounts();
+  const activeId = localStorage.getItem(activeAccountStorageKey);
+  return accounts.find((account) => account.id === activeId) || accounts[0] || null;
 }
 
 export function saveLocalAccount(account) {
+  if (!validAccount(account)) return account;
+  const accounts = readLocalAccounts();
+  const next = [
+    ...accounts.filter((candidate) => candidate.id !== account.id),
+    account
+  ].sort((left, right) =>
+    String(left.name || "").localeCompare(String(right.name || ""), "es", {
+      sensitivity: "base"
+    })
+  );
+  localStorage.setItem(accountsStorageKey, JSON.stringify(next));
+  localStorage.setItem(activeAccountStorageKey, account.id);
   localStorage.setItem(accountStorageKey, JSON.stringify(account));
   return account;
+}
+
+export function setActiveLocalAccount(accountId) {
+  const account = readLocalAccounts().find((candidate) => candidate.id === accountId);
+  if (!account) return null;
+  localStorage.setItem(activeAccountStorageKey, account.id);
+  localStorage.setItem(accountStorageKey, JSON.stringify(account));
+  return account;
+}
+
+export function deleteLocalAccount(accountId) {
+  const next = readLocalAccounts().filter((account) => account.id !== accountId);
+  localStorage.setItem(accountsStorageKey, JSON.stringify(next));
+  const current = localStorage.getItem(activeAccountStorageKey);
+  if (current === accountId) {
+    if (next[0]) {
+      setActiveLocalAccount(next[0].id);
+    } else {
+      localStorage.removeItem(activeAccountStorageKey);
+      localStorage.removeItem(accountStorageKey);
+    }
+  }
+  return next;
 }
 
 export function createPasswordSalt() {

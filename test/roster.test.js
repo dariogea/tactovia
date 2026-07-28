@@ -1,6 +1,6 @@
 import test from "node:test";
 import assert from "node:assert/strict";
-import { sortPlayersByNumber } from "../src/lib/roster.js";
+import { sortPlayersByNumber, teamTemplates } from "../src/lib/roster.js";
 
 test("ordena jugadores por dorsal numérico y deja los vacíos al final", () => {
   const players = [
@@ -17,3 +17,12 @@ test("ordena jugadores por dorsal numérico y deja los vacíos al final", () => 
   ]);
 });
 
+test("ofrece exactamente cuatro plantillas con convocatorias útiles", () => {
+  assert.deepEqual(teamTemplates.map((template) => template.size), [12, 10, 8, 5]);
+  teamTemplates.forEach((template) => {
+    const team = template.create();
+    assert.equal(team.players.length, template.size);
+    assert.equal(new Set(team.players.map((player) => player.id)).size, template.size);
+    assert.ok(team.players.every((player) => player.number && player.name));
+  });
+});

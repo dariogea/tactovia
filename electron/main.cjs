@@ -10,10 +10,6 @@ const { spawn } = require("node:child_process");
 const fs = require("node:fs");
 const path = require("node:path");
 const ExcelJS = require("exceljs");
-const {
-  createCatalogTemplate,
-  readCatalogWorkbook
-} = require("./catalog.cjs");
 const { createDatabaseService } = require("./database.cjs");
 const {
   findMacAppBundle,
@@ -221,6 +217,15 @@ function escapeHtml(value) {
 }
 
 function reportHtml(report) {
+  const options = {
+    executiveSummary: true,
+    tagBreakdown: true,
+    shotZones: true,
+    playerBreakdown: true,
+    chronology: true,
+    notes: true,
+    ...(report.options || {})
+  };
   const rows = (report.stats || [])
     .map(
       (row) => `
@@ -246,6 +251,45 @@ function reportHtml(report) {
         </tr>`
     )
     .join("");
+  const shotZones = (report.shotZones || [])
+    .map(
+      (zone) => `
+        <tr>
+          <td>${escapeHtml(zone.name)}</td>
+          <td>${escapeHtml(zone.points)}P</td>
+          <td>${escapeHtml(zone.made)} / ${escapeHtml(zone.attempts)}</td>
+          <td>${escapeHtml(zone.attempts ? `${zone.percentage}%` : "—")}</td>
+        </tr>`
+    )
+    .join("");
+  const players = (report.players || [])
+    .map(
+      (player) => `
+        <tr>
+          <td>${escapeHtml(player.number ? `#${player.number}` : "—")}</td>
+          <td>${escapeHtml(player.name)}</td>
+          <td>${escapeHtml(player.team)}</td>
+          <td>${escapeHtml(player.count)}</td>
+          <td>${escapeHtml(player.shots)}</td>
+        </tr>`
+    )
+    .join("");
+  const maximumZoneAttempts = Math.max(
+    ...(report.shotZones || []).map((zone) => Number(zone.attempts) || 0),
+    1
+  );
+  const shotMap = (report.shotZones || [])
+    .map((zone) => {
+      const opacity = 0.12 + ((Number(zone.attempts) || 0) / maximumZoneAttempts) * 0.62;
+      return `
+        <g>
+          <path d="${escapeHtml(zone.path || "")}" fill="#08756D" fill-opacity="${opacity.toFixed(2)}" stroke="#263640" stroke-width="1.5"/>
+          <text x="${escapeHtml(zone.labelX)}" y="${escapeHtml(zone.labelY)}" text-anchor="middle" fill="#ffffff" stroke="#0B1218" stroke-width="3" paint-order="stroke" font-size="11" font-weight="700">
+            ${escapeHtml(`${zone.made}/${zone.attempts} · ${zone.attempts ? `${zone.percentage}%` : "—"}`)}
+          </text>
+        </g>`;
+    })
+    .join("");
 
   return `<!doctype html>
     <html lang="es">
@@ -266,6 +310,7 @@ function reportHtml(report) {
           th { background: #edf1f6; text-align: left; }
           th, td { border-bottom: 1px solid #dfe3eb; padding: 7px; vertical-align: top; }
           .dot { display: inline-block; width: 8px; height: 8px; border-radius: 50%; margin-right: 7px; }
+          .shot-map { display: block; width: 54%; max-height: 390px; margin: 10px auto 16px; border-radius: 12px; background: #d9a860; }
           footer { color: #64717C; font-size: 10px; margin-top: 24px; }
         </style>
       </head>
@@ -274,21 +319,41 @@ function reportHtml(report) {
           <h1>${escapeHtml(report.projectName || "Análisis")}</h1>
           <p>${escapeHtml(report.videoName || "Sin vídeo")} · ${escapeHtml(report.generatedAt)}</p>
         </header>
-        <div class="summary">
+        ${options.executiveSummary ? `<div class="summary">
           <div class="card"><strong>${escapeHtml(report.totalEvents || 0)}</strong>eventos</div>
           <div class="card"><strong>${escapeHtml(report.totalTags || 0)}</strong>etiquetas usadas</div>
           <div class="card"><strong>${escapeHtml(report.analyzedTime || "00:00")}</strong>vídeo analizado</div>
-        </div>
-        <h2>Resumen por etiqueta</h2>
+        </div>` : ""}
+        ${options.tagBreakdown ? `<h2>Resumen por etiqueta</h2>
         <table>
           <thead><tr><th>Etiqueta</th><th>Eventos</th><th>Duración total</th></tr></thead>
           <tbody>${rows || '<tr><td colspan="3">Todavía no hay eventos.</td></tr>'}</tbody>
-        </table>
-        <h2>Registro de acciones</h2>
+        </table>` : ""}
+        ${options.shotZones ? `<h2>Mapa estadístico de tiro</h2>
+        <svg class="shot-map" viewBox="0 0 500 470" aria-label="Mapa de tiro">
+          <rect width="500" height="470" rx="10" fill="#d9a860"/>
+          ${shotMap}
+          <g fill="none" stroke="#ffffff" stroke-width="4">
+            <rect x="10" y="10" width="480" height="450"/>
+            <path d="M170 10V235H330V10M170 235A80 80 0 0 0 330 235M205 48A45 45 0 0 0 295 48"/>
+            <circle cx="250" cy="70" r="12"/><path d="M220 48H280"/>
+            <path d="M35 10V95M465 10V95M35 95A216 216 0 0 0 465 95"/>
+          </g>
+        </svg>
+        <table>
+          <thead><tr><th>Zona</th><th>Valor</th><th>Canastas / tiros</th><th>Acierto</th></tr></thead>
+          <tbody>${shotZones || '<tr><td colspan="4">No hay tiros localizados.</td></tr>'}</tbody>
+        </table>` : ""}
+        ${options.playerBreakdown ? `<h2>Actividad por jugador</h2>
+        <table>
+          <thead><tr><th>Dorsal</th><th>Jugador</th><th>Equipo</th><th>Acciones</th><th>Tiros</th></tr></thead>
+          <tbody>${players || '<tr><td colspan="5">No hay jugadores identificados.</td></tr>'}</tbody>
+        </table>` : ""}
+        ${options.chronology ? `<h2>Registro de acciones</h2>
         <table>
           <thead><tr><th>Tiempo</th><th>Etiqueta</th><th>Equipo</th><th>Jugador</th><th>Zona</th><th>Notas</th></tr></thead>
           <tbody>${events || '<tr><td colspan="6">Todavía no hay eventos.</td></tr>'}</tbody>
-        </table>
+        </table>` : ""}
         <footer>Generado localmente con Tactovia · Plataforma de análisis deportivo.</footer>
       </body>
     </html>`;
@@ -690,75 +755,71 @@ app.whenReady().then(() => {
   });
   registerMediaProtocol();
   scoutingDatabase = createDatabaseService(
-    path.join(app.getPath("userData"), "scoutanalyzer.db")
+    path.join(app.getPath("userData"), "scoutanalyzer.db"),
+    { seedOfficialCatalog: false }
   );
 
   ipcMain.handle("database:initialize", async (_event, payload = {}) => {
     try {
-      if (payload.legacyProject?.id) {
-        scoutingDatabase.syncProject(payload.legacyProject);
+      if (payload.legacyProject?.id && !payload.isDemo) {
+        scoutingDatabase.syncProject(
+          payload.legacyProject,
+          payload.ownerProfileId || "legacy-local"
+        );
       }
       return {
         ok: true,
         fileName: path.basename(scoutingDatabase.filePath),
-        snapshot: scoutingDatabase.snapshot()
+        snapshot: scoutingDatabase.snapshot(payload.ownerProfileId || "")
       };
     } catch (error) {
       return { ok: false, error: error.message };
     }
   });
 
-  ipcMain.handle("database:sync-project", async (_event, project) => {
+  ipcMain.handle("database:sync-project", async (_event, payload) => {
     try {
-      return scoutingDatabase.syncProject(project);
+      if (payload?.isDemo) return { ok: true, skipped: true };
+      return scoutingDatabase.syncProject(
+        payload?.project || payload,
+        payload?.ownerProfileId || "legacy-local"
+      );
     } catch (error) {
       return { ok: false, error: error.message };
     }
   });
 
-  ipcMain.handle("database:snapshot", async () => {
+  ipcMain.handle("database:snapshot", async (_event, payload = {}) => {
     try {
-      return { ok: true, snapshot: scoutingDatabase.snapshot() };
-    } catch (error) {
-      return { ok: false, error: error.message };
-    }
-  });
-
-  ipcMain.handle("database:create-import-template", async () => {
-    const result = await dialog.showSaveDialog(mainWindow, {
-      title: "Guardar plantilla de importación",
-      defaultPath: "Plantilla-FBRM-Primera-Division-2026-27.xlsx",
-      filters: [{ name: "Libro Excel", extensions: ["xlsx"] }]
-    });
-    if (result.canceled || !result.filePath) return { canceled: true };
-    try {
-      await createCatalogTemplate(result.filePath);
-      return { canceled: false, filePath: result.filePath };
-    } catch (error) {
-      return { canceled: false, error: error.message };
-    }
-  });
-
-  ipcMain.handle("database:import-catalog", async () => {
-    const result = await dialog.showOpenDialog(mainWindow, {
-      title: "Importar competición",
-      properties: ["openFile"],
-      filters: [
-        { name: "Excel o CSV", extensions: ["xlsx", "csv"] }
-      ]
-    });
-    if (result.canceled || !result.filePaths[0]) return { canceled: true };
-    try {
-      const catalog = await readCatalogWorkbook(result.filePaths[0]);
-      const imported = scoutingDatabase.importCatalog(catalog);
       return {
-        canceled: false,
-        imported,
-        warnings: catalog.warnings,
-        snapshot: scoutingDatabase.snapshot()
+        ok: true,
+        snapshot: scoutingDatabase.snapshot(payload.ownerProfileId || "")
       };
     } catch (error) {
-      return { canceled: false, error: error.message };
+      return { ok: false, error: error.message };
+    }
+  });
+
+  ipcMain.handle("database:finalize-project", async (_event, payload) => {
+    try {
+      if (payload?.isDemo) return { ok: true, skipped: true };
+      return scoutingDatabase.finalizeProject(
+        payload.project,
+        payload.ownerProfileId
+      );
+    } catch (error) {
+      return { ok: false, error: error.message };
+    }
+  });
+
+  ipcMain.handle("database:delete-game-record", async (_event, payload) => {
+    try {
+      return scoutingDatabase.deleteGameRecord(
+        payload.recordId,
+        payload.ownerProfileId
+      );
+    } catch (error) {
+      return { ok: false, error: error.message };
     }
   });
 
@@ -902,6 +963,22 @@ app.whenReady().then(() => {
       title: "Exportar libro de Excel",
       defaultPath: `${safeFilePart(payload.project.projectName)}-analisis.xlsx`,
       filters: [{ name: "Libro de Excel", extensions: ["xlsx"] }]
+    });
+    if (result.canceled || !result.filePath) return { canceled: true };
+    try {
+      const buffer = await createAnalysisWorkbook(payload.project);
+      fs.writeFileSync(result.filePath, Buffer.from(buffer));
+      return { canceled: false, filePath: result.filePath };
+    } catch (error) {
+      return { canceled: false, error: error.message };
+    }
+  });
+
+  ipcMain.handle("export:powerbi", async (_event, payload) => {
+    const result = await dialog.showSaveDialog(mainWindow, {
+      title: "Exportar modelo para Power BI",
+      defaultPath: `${safeFilePart(payload.project.projectName)}-power-bi.xlsx`,
+      filters: [{ name: "Modelo de datos Power BI", extensions: ["xlsx"] }]
     });
     if (result.canceled || !result.filePath) return { canceled: true };
     try {

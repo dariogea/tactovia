@@ -1,223 +1,81 @@
-# Tactovia 0.10.0
+# Tactovia 0.11.0
 
-**Plataforma de análisis deportivo.**
+**Plataforma local de análisis deportivo.**
 
-Tactovia es una aplicación de escritorio para analizar vídeo local y etiquetar
-acciones de baloncesto. Funciona sin conexión y mantiene tanto el vídeo como
-los análisis en el ordenador.
+Tactovia convierte un vídeo de baloncesto en acciones etiquetadas, estadísticas,
+informes, clips y conocimiento reutilizable sobre equipos y jugadores.
 
-**Ve el juego. Decide mejor.**
+## Novedades principales
 
-## Funciones incluidas
+- Acceso mediante varios perfiles locales, registro e inicio de sesión.
+- Entrada demo disponible únicamente durante el desarrollo y sin persistencia.
+- Datos, autoguardado e histórico separados por perfil.
+- Histórico estadístico de partidos guardados sin vídeo, ruta ni tiempos de clip.
+- Biblioteca creada por el usuario: competición → equipo → plantilla.
+- Cuatro plantillas iniciales de 5, 8, 10 o 12 jugadores.
+- Identidad única de jugador, traspasos entre equipos y agentes libres.
+- Convocatoria obligatoria de entre 5 y 12 jugadores por equipo.
+- Selección de jugador mediante camiseta y dorsal.
+- Etiquetas predeterminadas de canasta y fallo de 2P/3P con colores semánticos.
+- Mapa SVG original de diez zonas con volumen, acierto y porcentaje.
+- Panel estadístico interactivo con filtros y visuales personalizables.
+- Informes PDF configurables con zonas, jugadores y cronología.
+- CSV, Excel y libro normalizado preparado para importar en Power BI.
+- Presets para exportar clips por jugador, equipo o cronología.
+- Playbook organizado en Diseñar, Secuencia, Explicar y Compartir.
+- Cuatro paletas visuales, modo claro, oscuro y automático.
+- Guía completa integrada en Perfil y ajustes.
 
-- Reproducción de vídeos MP4, MOV, M4V, WebM y OGV.
-- Acceso mediante perfil local y contraseña, o entrada directa en modo demo sin
-  registro, sin enviar credenciales fuera del ordenador.
-- Selección inicial del deporte y flujo para crear, continuar o abrir una
-  sesión de análisis en cada arranque.
-- Sistema de marca Tactovia con modo automático, claro y oscuro, Game Ink,
-  Strategic Teal y Signal Lime reservado para selección y reproducción activa.
-- Preferencia de apariencia persistente y adaptación en tiempo real al tema de
-  Windows o macOS.
-- Navegación flotante, superficies translúcidas, controles compactos y
-  jerarquía visual unificada en todas las pestañas.
-- Biblioteca histórica local en SQLite para competiciones, temporadas, equipos,
-  plantillas, partidos, análisis y acciones.
-- Catálogo inicial de Primera División Masculina GESA FBRM 2026/27 con sus 16
-  equipos oficiales, ocho partidos de la primera jornada, sedes, ciudades,
-  colores de trabajo y enlaces de procedencia.
-- Doce jugadores ficticios con nombre y dorsal por equipo para probar el MVP,
-  siempre identificados visualmente como `DEMO` y sin datos personales reales.
-- Siete escudos obtenidos de fuentes oficiales y nueve identidades provisionales
-  claramente diferenciadas hasta disponer de los archivos autorizados.
-- Importación guiada mediante una plantilla Excel de competiciones, equipos,
-  jugadores y cambios de plantilla.
-- Identidad única de jugador separada de sus plantillas por temporada.
-- Copia de seguridad de la biblioteca desde la propia aplicación.
-- Estructura PostgreSQL/Supabase con catálogo compartido, roles y análisis
-  privados por defecto, preparada para la fase online.
-- Etiquetas de instante y de intervalo.
-- Base de datos persistente de equipos y jugadores con logo o fotografía.
-- Fichas rápidas y detalladas de clubes y jugadores.
-- Selección obligatoria de los dos equipos del partido al cargar el vídeo.
-- Plantilla completamente configurable: nombre, color, comportamiento, atajo y
-  segundos anteriores/posteriores.
-- Contexto por acción: equipo, jugador, zona de pista y nota rápida.
-- Etiquetas predeterminadas separadas para canasta y tiro fallado de 2P y 3P,
-  con colores semánticos.
-- Mapa interactivo con diez zonas de tiro; la zona y su valor quedan guardados
-  en el evento, SQLite, CSV, Excel y PDF.
-- Línea temporal navegable, edición y selección de eventos.
-- Ventanas informativas de etiqueta, equipo y jugador desde la tabla de eventos.
-- Panel estadístico interactivo tipo Power BI con filtros globales, indicadores,
-  evolución, rankings, mapa de tiro y control de calidad del etiquetado.
-- Paneles de vídeo y etiquetado redimensionables mediante arrastre.
-- Reproductor verificado con saltos reales, lectura por rangos, tres controles
-  visibles por defecto y atajos configurables hasta ×16.
-- Control de sonido con botón de silencio, barra de volumen y porcentaje, más
-  un resumen en directo bajo el reproductor.
-- Tabla de eventos ordenable por cualquiera de sus columnas.
-- Exportación de datos a CSV.
-- Exportación a XLSX con hojas de resumen, eventos, equipos y jugadores.
-- Exportación de uno o varios clips MP4.
-- Organización de clips por etiqueta, equipo o jugador.
-- Centro de informes dividido en informe técnico, datos y clips, con preparación
-  guiada de cada entrega.
-- Resumen ejecutivo copiable para compartir con el cuerpo técnico.
-- Playbook 2.0 con interfaz simplificada, modo concentrado, biblioteca por
-  carpetas y equipos, plantillas tácticas,
-  jugadores ofensivos y defensivos, acciones temporizadas, fases inteligentes,
-  animación completa, notas por bloques, recursos adjuntos y presentación
-  configurable.
-- Media pista profesional en orientación vertical, con parqué de madera,
-  canasta superior, marcajes reglamentarios y conversión automática de las
-  jugadas dibujadas en la pista anterior.
-- Exportación del Playbook como PNG, PDF o vídeo animado WebM.
-- Guardado automático local y archivos de proyecto `.scout.json`.
-- Limpieza automática de versiones anteriores y archivos intermedios de
-  empaquetado.
+## Flujo de trabajo
 
-## Instalar en macOS
+1. Crea o abre un perfil local.
+2. Selecciona Baloncesto y crea una sesión.
+3. Elige un vídeo local.
+4. Selecciona los equipos y una convocatoria de 5 a 12 jugadores por equipo.
+5. Selecciona equipo, dorsal y zona de pista antes de registrar la acción.
+6. Etiqueta el partido y revisa la cronología.
+7. Guarda el archivo `.scout.json`. Si el análisis contiene un partido y
+   acciones, Tactovia crea además un histórico estadístico privado del perfil.
+8. Consulta Estadísticas o genera datos, PDF y clips desde Informe y
+   exportación.
 
-El instalador generado para Apple Silicon está en:
+La guía paso a paso está en [docs/GUIA-USUARIO.md](docs/GUIA-USUARIO.md) y la
+referencia de teclado en [docs/ATAJOS.md](docs/ATAJOS.md).
 
-`release/Tactovia-0.10.0-mac-arm64.dmg`
+## Privacidad y alcance
 
-1. Abre el DMG.
-2. Arrastra Tactovia a Aplicaciones.
-3. Al no estar firmado todavía con una cuenta de desarrollador de Apple, macOS
-   puede mostrar un aviso. Pulsa Control y haz clic sobre la aplicación, elige
-   **Abrir** y confirma.
-4. Comprueba que en la esquina superior izquierda aparece **Versión 0.10.0**.
+- Todo funciona de forma local y sin conexión.
+- El vídeo nunca se guarda dentro del histórico estadístico.
+- Los clips solo se pueden generar desde el proyecto editable que conserva la
+  referencia al vídeo original.
+- El acceso actual es local: no es todavía una cuenta sincronizada en la nube.
+- La exportación para Power BI es un libro `.xlsx` normalizado. Tactovia no
+  genera el formato propietario `.pbix`.
+- No hay catálogo oficial precargado, importador masivo, calendarios ni partidos
+  predichos. La biblioteca contiene exclusivamente datos creados por el usuario.
 
-Al iniciar una actualización instalada en Aplicaciones, las copias anteriores
-identificadas mediante el mismo bundle ID se mueven a la Papelera, aunque aún
-se llamen ScoutAnalyzer. El nuevo DMG se instala como `Tactovia.app`.
+## Instalación
 
-## Instalar en Windows
+macOS Apple Silicon:
 
-El instalador generado para Windows x64 está en:
+`release/Tactovia-0.11.0-mac-arm64.dmg`
 
-`release/Tactovia-0.10.0-win-x64.exe`
+Windows x64:
 
-También existe una versión portable:
+`release/Tactovia-0.11.0-win-x64.exe`
 
-`release/Tactovia-0.10.0-win-x64.zip`
+Windows portable:
 
-En la versión portable hay que descomprimir primero todo el archivo y después
-abrir `Tactovia.exe`. Como el programa todavía no dispone de certificado
-de firma, Windows SmartScreen puede mostrar un aviso de editor desconocido.
+`release/Tactovia-0.11.0-win-x64.zip`
 
-## Primer análisis
-
-1. Crea o abre tu perfil local e inicia sesión, o entra directamente en la demo.
-2. Selecciona **Baloncesto** y elige nueva sesión, continuar o abrir archivo.
-3. Pulsa **Seleccionar vídeo**.
-4. Selecciona los dos equipos del partido.
-5. Cambia el nombre del análisis en la parte superior.
-6. Completa equipo, jugador, zona de pista y, si quieres, nota rápida.
-7. Pulsa una etiqueta o utiliza su atajo.
-   - Una etiqueta de instante se guarda al pulsarla.
-   - Una etiqueta de intervalo se inicia con la primera pulsación y termina con
-     la segunda.
-8. Revisa o corrige los eventos desde la tabla inferior.
-9. Guarda el análisis para crear un archivo `.scout.json`.
-10. Usa **Informe y exportación** para generar datos, clips o PDF.
-
-## Biblioteca de scouting
-
-La pestaña **Competiciones y equipos** reúne el histórico deportivo y la
-edición de equipos y jugadores:
-
-1. Despliega una competición, después un equipo y finalmente su plantilla.
-2. Abre cualquier jugador para consultar su ficha completa.
-3. En **Importar**, guarda la plantilla Excel cuando quieras sustituir las
-   fichas `DEMO` por plantillas oficiales.
-4. Completa competición, equipos, jugadores y cambios de plantilla conservando
-   sus códigos.
-5. Importa el libro y revisa los posibles avisos.
-6. **Partidos analizados** muestra únicamente encuentros que ya contienen un
-   análisis; los previstos no aparecen en el histórico.
-7. Crea periódicamente una copia de seguridad desde **Importar**.
-
-Los análisis existentes se incorporan automáticamente a la nueva base local al
-abrir esta versión. El archivo de vídeo no se copia ni se sube.
-
-La estructura futura de cuentas y permisos ya está definida, pero la
-sincronización entre ordenadores todavía no se activa hasta crear y configurar
-el servicio de nube. La guía técnica y de permisos está en
-`docs/BASE-DATOS-0.6.md`.
-
-La procedencia y las limitaciones de uso de los datos iniciales están
-documentadas en `docs/CATALOGO-FBRM-2026-27.md`.
-
-## Playbook 2.0
-
-El Playbook se organiza en cuatro modos:
-
-1. **Dibujar**: coloca jugadores, utiliza plantillas tácticas y traza botes,
-   pases, cortes, bloqueos, tiros y manos a mano.
-2. **Animar**: configura el orden, inicio y duración de cada acción, reproduce
-   una fase o la jugada completa y ajusta su velocidad.
-3. **Notas**: añade explicación general, información por fase, bloques de
-   texto, listas y recursos locales o enlaces.
-4. **Presentación**: configura el documento final y exporta PNG, PDF o vídeo
-   animado WebM.
-
-La opción **Siguiente inteligente** crea una fase nueva aplicando los
-movimientos y los cambios de posesión definidos en la fase actual. Las jugadas
-de versiones anteriores se convierten automáticamente al nuevo formato.
-
-La media pista utiliza ahora una vista vertical profesional: parqué segmentado,
-canasta centrada en la línea superior, zona, semicírculo de tiro libre, arco de
-triple y semicírculo de medio campo. Las jugadas creadas sobre la pista
-horizontal anterior se recolocan automáticamente al abrirlas.
-
-La guía detallada está en `docs/PLAYBOOK-2.md`.
-
-## Apariencia
-
-El selector de la cabecera y la sección **Perfil y ajustes > Apariencia** permiten
-elegir:
-
-- **Automático**: sigue el modo claro u oscuro del sistema y responde a sus
-  cambios.
-- **Claro**: fondo luminoso, tarjetas blancas y controles de alto contraste.
-- **Oscuro**: superficies grafito pensadas para sesiones largas de análisis.
-
-La elección se guarda localmente. Los vídeos, la pista y los documentos del
-Playbook conservan sus fondos específicos para no alterar el contenido.
-
-La identidad cromática es común a ambos modos. Strategic Teal organiza las
-acciones y Signal Lime se reserva para foco, selección y reproducción activa.
-La guía completa de integración está en `BRAND_IMPLEMENTATION.md`.
-
-Atajos generales:
-
-- `Espacio`: reproducir o pausar.
-- `←` / `→`: retroceder o avanzar diez segundos.
-- `Ctrl+S` o `Cmd+S`: guardar el análisis.
-- Los atajos de las etiquetas se configuran desde **Configurar**.
-- La guía completa está en `docs/ATAJOS.md` y dentro de **Perfil y ajustes**.
-
-## Privacidad y archivos
-
-El vídeo no se copia dentro del proyecto y nunca se sube a internet. El archivo
-`.scout.json` guarda la ruta del vídeo original, la plantilla y los eventos. Si
-el vídeo se mueve, habrá que volver a seleccionarlo.
-
-Existe además una recuperación automática local para proteger el trabajo entre
-sesiones. Conviene guardar explícitamente cada análisis que se quiera conservar
-o trasladar a otro ordenador.
+Los instaladores no están firmados todavía. macOS puede requerir
+**Control + clic → Abrir** y Windows puede mostrar SmartScreen. Cada empaquetado
+elimina los entregables de versiones anteriores y conserva únicamente los tres
+archivos de la versión actual.
 
 ## Desarrollo
 
-Requisitos:
-
-- Node.js 24
-- pnpm 11
-
-Comandos:
+Requisitos: Node.js 24 y pnpm 11.
 
 ```text
 pnpm install
@@ -227,27 +85,9 @@ pnpm test:database
 pnpm test:video
 pnpm build
 pnpm dist
-pnpm clean:release
 ```
 
-Los ejecutables de FFmpeg para macOS Apple Silicon y Windows x64 se mantienen
-separados en `vendor/ffmpeg` y se incorpora únicamente el correspondiente a cada
-paquete.
-
-Cada empaquetado elimina automáticamente instaladores de versiones anteriores,
-carpetas desempaquetadas, archivos `blockmap` e informes temporales. La carpeta
-`release` conserva únicamente el DMG actual, el instalador de Windows y el ZIP
-portable de Windows.
-
-## Alcance de esta versión
-
-Esta versión incorpora un perfil local para organizar el acceso. No es todavía
-una cuenta en la nube y no sincroniza entre ordenadores. Tampoco incluye vídeo en
-directo, plantillas compartidas ni reconocimiento automático mediante IA. El
-instalador de Windows ha sido
-empaquetado y verificado estructuralmente desde macOS; su prueba de ejecución
-debe hacerse en un ordenador Windows x64.
-
-Antes de distribuir la aplicación comercialmente deben añadirse firma y
-notarización de los instaladores, validación legal del nombre y el símbolo y una
-revisión de las licencias del binario de FFmpeg incluido.
+El instalador de Windows se puede empaquetar desde macOS, pero debe probarse
+físicamente en Windows antes de distribuirlo. Para comercializar la aplicación
+también faltan la firma y notarización, la infraestructura de cuentas y una
+revisión de licencias de los binarios incluidos.

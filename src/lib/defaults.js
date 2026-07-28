@@ -17,9 +17,18 @@ export const defaultTags = [
   {
     id: "tag-shot-made-2",
     name: "Canasta de 2P",
-    color: "#22C55E",
+    color: "#0F9F75",
     mode: "point",
     shortcut: "1",
+    before: 5,
+    after: 3
+  },
+  {
+    id: "tag-shot-made-3",
+    name: "Canasta de 3P",
+    color: "#08756D",
+    mode: "point",
+    shortcut: "2",
     before: 5,
     after: 3
   },
@@ -28,15 +37,6 @@ export const defaultTags = [
     name: "Tiro fallado de 2P",
     color: "#F97316",
     mode: "point",
-    shortcut: "2",
-    before: 5,
-    after: 3
-  },
-  {
-    id: "tag-shot-made-3",
-    name: "Canasta de 3P",
-    color: "#3B82F6",
-    mode: "point",
     shortcut: "3",
     before: 5,
     after: 3
@@ -44,7 +44,7 @@ export const defaultTags = [
   {
     id: "tag-shot-missed-3",
     name: "Tiro fallado de 3P",
-    color: "#EF4444",
+    color: "#E5484D",
     mode: "point",
     shortcut: "4",
     before: 5,
@@ -53,7 +53,7 @@ export const defaultTags = [
   {
     id: "tag-off-rebound",
     name: "Rebote ofensivo",
-    color: "#FBBF24",
+    color: "#F2B84B",
     mode: "point",
     shortcut: "5",
     before: 4,
@@ -62,7 +62,7 @@ export const defaultTags = [
   {
     id: "tag-def-rebound",
     name: "Rebote defensivo",
-    color: "#06B6D4",
+    color: "#3B82F6",
     mode: "point",
     shortcut: "6",
     before: 4,
@@ -71,7 +71,7 @@ export const defaultTags = [
   {
     id: "tag-turnover",
     name: "Pérdida",
-    color: "#FB7185",
+    color: "#E5484D",
     mode: "point",
     shortcut: "7",
     before: 6,
@@ -80,7 +80,7 @@ export const defaultTags = [
   {
     id: "tag-steal",
     name: "Recuperación",
-    color: "#34D399",
+    color: "#10B981",
     mode: "point",
     shortcut: "8",
     before: 5,
@@ -89,7 +89,7 @@ export const defaultTags = [
   {
     id: "tag-pick-roll",
     name: "Pick & Roll",
-    color: "#A78BFA",
+    color: "#8B5CF6",
     mode: "interval",
     shortcut: "9",
     before: 1,
@@ -98,7 +98,7 @@ export const defaultTags = [
   {
     id: "tag-transition",
     name: "Transición",
-    color: "#38BDF8",
+    color: "#06B6D4",
     mode: "interval",
     shortcut: "0",
     before: 1,
@@ -107,7 +107,7 @@ export const defaultTags = [
   {
     id: "tag-possession",
     name: "Posesión",
-    color: "#6366F1",
+    color: "#64748B",
     mode: "interval",
     shortcut: "P",
     before: 0,
@@ -174,7 +174,9 @@ export const defaultPreferences = {
     workspaceSize: "medium",
     tagButtonSize: "medium",
     shotCourtVisible: true,
-    shotCourtLabels: true
+    shotCourtLabels: true,
+    shotCourtPosition: "above",
+    liveModules: ["score", "pace", "shooting", "coverage", "latest"]
   },
   playback: {
     smallStep: 1,
@@ -224,7 +226,7 @@ export {
 export function createBlankProject(teams = defaultTeams) {
   const now = new Date().toISOString();
   return {
-    version: 8,
+    version: 9,
     id: crypto.randomUUID(),
     projectName: "Nuevo análisis",
     createdAt: now,
@@ -238,6 +240,8 @@ export function createBlankProject(teams = defaultTeams) {
       ...team,
       players: (team.players || []).map((player) => ({ ...player }))
     })),
+    competitions: [],
+    freeAgents: [],
     match: null,
     playbook: createBlankPlaybook(),
     events: []

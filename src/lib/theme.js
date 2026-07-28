@@ -26,6 +26,24 @@ export const paletteOptions = [
       brandColors.signalLime,
       brandColors.analysisWhite
     ]
+  },
+  {
+    id: "arena",
+    label: "Arena",
+    description: "Madera cálida, naranja táctico y superficies marfil",
+    colors: ["#19130F", "#B45309", "#FDBA74", "#FFF8ED"]
+  },
+  {
+    id: "ocean",
+    label: "Océano",
+    description: "Azul profundo, turquesa y contraste sereno",
+    colors: ["#081624", "#0369A1", "#22D3EE", "#F2F8FC"]
+  },
+  {
+    id: "graphite",
+    label: "Grafito",
+    description: "Neutros deportivos con acento eléctrico",
+    colors: ["#111318", "#4B5563", "#A3E635", "#F5F6F8"]
   }
 ];
 
@@ -34,7 +52,9 @@ export function normalizeThemeMode(value) {
 }
 
 export function normalizePaletteMode(value) {
-  return "tactovia";
+  return paletteOptions.some((option) => option.id === value)
+    ? value
+    : "tactovia";
 }
 
 export function resolveThemeMode(mode, prefersDark) {

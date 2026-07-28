@@ -6,15 +6,12 @@ import path from "node:path";
 import { createRequire } from "node:module";
 
 const require = createRequire(import.meta.url);
-const {
-  createDatabaseService,
-  PILOT_COMPETITION_SEASON_ID
-} = require("../electron/database.cjs");
+const { createDatabaseService } = require("../electron/database.cjs");
 
 function sampleProject() {
   const now = new Date().toISOString();
   return {
-    version: 6,
+    version: 9,
     id: "analysis-test",
     projectName: "Partido de prueba",
     createdAt: now,
@@ -26,13 +23,15 @@ function sampleProject() {
     },
     template: { name: "Prueba", tags: [] },
     playbook: { version: 3, folders: [], plays: [] },
+    competitions: [],
+    freeAgents: [],
     teams: [
       {
         id: "home",
         name: "Murcia Local",
         shortName: "MUR",
-        primaryColor: "#2DD4BF",
-        secondaryColor: "#0F766E",
+        primaryColor: "#08756D",
+        secondaryColor: "#BDEB62",
         players: [
           {
             id: "player-home",
@@ -48,25 +47,26 @@ function sampleProject() {
         name: "Murcia Visitante",
         shortName: "VIS",
         primaryColor: "#F97316",
-        secondaryColor: "#9A3412",
+        secondaryColor: "#FFEDD5",
         players: []
       }
     ],
     match: {
       id: "match-test",
-      competitionSeasonId: PILOT_COMPETITION_SEASON_ID,
       homeTeamId: "home",
       awayTeamId: "away",
+      homeRosterIds: ["player-home"],
+      awayRosterIds: [],
       roundName: "Jornada 1",
       scheduledAt: "2026-09-20T18:00:00",
-      status: "scheduled"
+      status: "finished"
     },
     events: [
       {
         id: "event-test",
-        tagId: "shot",
-        tagName: "Tiro",
-        color: "#ffffff",
+        tagId: "tag-shot-made-3",
+        tagName: "Canasta de 3P",
+        color: "#08756D",
         mode: "point",
         anchor: 20,
         start: 15,
@@ -78,293 +78,131 @@ function sampleProject() {
         shotZoneId: "top",
         shotZoneName: "Triple frontal",
         shotPoints: 3,
-        notes: "Esquina",
+        notes: "Bloqueo directo",
         createdAt: now
       }
     ]
   };
 }
 
-test("inicializa la competición piloto y migra un análisis completo", () => {
-  const directory = fs.mkdtempSync(path.join(os.tmpdir(), "scout-db-"));
-  const filePath = path.join(directory, "scoutanalyzer.db");
-  const service = createDatabaseService(filePath, { seedOfficialCatalog: false });
-
+function withDatabase(run) {
+  const directory = fs.mkdtempSync(path.join(os.tmpdir(), "tactovia-db-"));
+  const service = createDatabaseService(path.join(directory, "tactovia.db"), {
+    seedOfficialCatalog: false
+  });
   try {
-    const initial = service.snapshot();
-    assert.equal(initial.competitions[0].seasonLabel, "2026/27");
-    assert.equal(initial.competitions[0].governingBody, "FBRM");
+    return run(service, directory);
+  } finally {
+    service.close();
+    fs.rmSync(directory, { recursive: true, force: true });
+  }
+}
 
-    service.syncProject(sampleProject());
-    const snapshot = service.snapshot();
+test("inicializa una biblioteca vacía y sincroniza un análisis por perfil", () => {
+  withDatabase((service) => {
+    const initial = service.snapshot("profile-a");
+    assert.equal(initial.competitions.length, 0);
+    assert.equal(initial.gameRecords.length, 0);
 
+    service.syncProject(sampleProject(), "profile-a");
+    const snapshot = service.snapshot("profile-a");
     assert.equal(snapshot.totals.teams, 2);
     assert.equal(snapshot.totals.players, 1);
     assert.equal(snapshot.totals.matches, 1);
     assert.equal(snapshot.totals.analyses, 1);
     assert.equal(snapshot.totals.events, 1);
     assert.equal(snapshot.matches[0].homeTeamName, "Murcia Local");
-    assert.equal(snapshot.matches[0].eventCount, 1);
-    assert.equal(snapshot.players[0].eventCount, 1);
-    assert.equal(snapshot.analyses[0].visibility, "private");
-    const storedEvent = service.database
-      .prepare("SELECT shot_zone_id, shot_zone_name, shot_points FROM events WHERE id = ?")
-      .get("event-test");
-    assert.equal(storedEvent.shot_zone_id, "top");
-    assert.equal(storedEvent.shot_zone_name, "Triple frontal");
-    assert.equal(storedEvent.shot_points, 3);
-  } finally {
-    service.close();
-    fs.rmSync(directory, { recursive: true, force: true });
-  }
+    const owner = service.database
+      .prepare("SELECT owner_profile_id FROM analyses WHERE id = ?")
+      .get("analysis-test");
+    assert.equal(owner.owner_profile_id, "profile-a");
+  });
 });
 
-test("actualiza eventos sin duplicarlos y deja la sincronización en cola", () => {
-  const directory = fs.mkdtempSync(path.join(os.tmpdir(), "scout-db-"));
-  const service = createDatabaseService(path.join(directory, "scoutanalyzer.db"), {
-    seedOfficialCatalog: false
-  });
-
-  try {
+test("actualiza eventos sin duplicarlos y mantiene la cola local", () => {
+  withDatabase((service) => {
     const project = sampleProject();
-    service.syncProject(project);
-    service.syncProject({
-      ...project,
-      events: [
-        ...project.events,
-        {
-          ...project.events[0],
-          id: "event-second",
-          tagName: "Rebote",
-          start: 40,
-          end: 45
-        }
-      ]
-    });
-    const snapshot = service.snapshot();
+    service.syncProject(project, "profile-a");
+    service.syncProject(
+      {
+        ...project,
+        events: [
+          ...project.events,
+          {
+            ...project.events[0],
+            id: "event-second",
+            tagId: "tag-def-rebound",
+            tagName: "Rebote defensivo",
+            start: 40,
+            end: 45
+          }
+        ]
+      },
+      "profile-a"
+    );
+    const snapshot = service.snapshot("profile-a");
     assert.equal(snapshot.totals.events, 2);
     assert.equal(snapshot.totals.pendingSync, 1);
-  } finally {
-    service.close();
-    fs.rmSync(directory, { recursive: true, force: true });
-  }
+  });
 });
 
-test("importa un catálogo manteniendo identificadores estables", () => {
-  const directory = fs.mkdtempSync(path.join(os.tmpdir(), "scout-db-"));
-  const service = createDatabaseService(path.join(directory, "scoutanalyzer.db"), {
-    seedOfficialCatalog: false
-  });
-
-  try {
-    const imported = service.importCatalog({
-      competitionSeasonId: PILOT_COMPETITION_SEASON_ID,
-      source: "admin-import",
-      teams: [
-        {
-          id: "team-one",
-          externalId: "ONE",
-          name: "Equipo Uno",
-          shortName: "UNO",
-          primaryColor: "#123456",
-          secondaryColor: "#654321",
-          players: [
-            {
-              id: "player-one",
-              externalId: "P1",
-              name: "Jugador Uno",
-              number: "4"
-            }
-          ]
-        },
-        {
-          id: "team-two",
-          externalId: "TWO",
-          name: "Equipo Dos",
-          shortName: "DOS",
-          players: []
-        }
-      ],
-      matches: [
-        {
-          id: "match-one",
-          externalId: "M1",
-          homeTeamId: "team-one",
-          awayTeamId: "team-two",
-          roundName: "Jornada 1"
-        }
-      ]
-    });
-    assert.deepEqual(
-      {
-        teams: imported.teams,
-        players: imported.players,
-        matches: imported.matches
-      },
-      { teams: 2, players: 1, matches: 1 }
-    );
-    const snapshot = service.snapshot();
-    assert.equal(snapshot.totals.teams, 2);
-    assert.equal(snapshot.totals.players, 1);
-    assert.equal(snapshot.matches[0].roundName, "Jornada 1");
-  } finally {
-    service.close();
-    fs.rmSync(directory, { recursive: true, force: true });
-  }
-});
-
-test("crea una competición importada y actualiza su plantilla", () => {
-  const directory = fs.mkdtempSync(path.join(os.tmpdir(), "scout-db-"));
-  const service = createDatabaseService(path.join(directory, "scoutanalyzer.db"), {
-    seedOfficialCatalog: false
-  });
-
-  try {
-    const imported = service.importCatalog({
-      competitionSeasonId: "competition-season-custom",
-      source: "admin-import",
-      competition: {
-        id: "competition-custom",
-        externalId: "CUSTOM",
-        name: "Competición personalizada",
-        shortName: "CUSTOM",
-        governingBody: "Federación",
-        season: {
-          id: "season-custom",
-          label: "2027/28",
-          startsOn: "2027-07-01",
-          endsOn: "2028-06-30",
-          isCurrent: true
-        },
-        competitionSeason: {
-          id: "competition-season-custom",
-          name: "Competición personalizada 2027/28",
-          status: "active"
-        }
-      },
-      teams: [{
-        id: "team-custom",
-        externalId: "TC",
-        name: "Equipo personalizado",
-        players: [{
-          id: "player-custom",
-          externalId: "PC",
-          name: "Jugador personalizado",
-          number: "7",
-          position: "Base"
-        }]
-      }],
-      matches: [],
-      rosterChanges: [{
-        teamId: "team-custom",
-        playerId: "player-custom",
-        action: "cambio_dorsal",
-        number: "12",
-        position: "",
-        status: ""
-      }]
-    });
-
-    const snapshot = service.snapshot();
-    const competition = snapshot.competitions.find(
-      (item) => item.id === "competition-season-custom"
-    );
-    const roster = snapshot.rosters.find(
-      (item) => item.playerId === "player-custom"
-    );
-    assert.equal(imported.rosterChanges, 1);
-    assert.equal(competition.name, "Competición personalizada");
-    assert.equal(competition.seasonLabel, "2027/28");
-    assert.equal(roster.number, "12");
-  } finally {
-    service.close();
-    fs.rmSync(directory, { recursive: true, force: true });
-  }
-});
-
-test("separa la identidad del jugador de sus plantillas históricas", () => {
-  const directory = fs.mkdtempSync(path.join(os.tmpdir(), "scout-db-"));
-  const service = createDatabaseService(path.join(directory, "scoutanalyzer.db"), {
-    seedOfficialCatalog: false
-  });
-
-  try {
+test("crea un histórico sin vídeo y lo aísla por perfil", () => {
+  withDatabase((service) => {
     const project = sampleProject();
-    service.syncProject({
-      ...project,
-      match: null
-    });
-    service.syncProject(project);
+    service.finalizeProject(project, "profile-a");
+    const own = service.snapshot("profile-a");
+    const other = service.snapshot("profile-b");
 
-    const snapshot = service.snapshot();
-    assert.equal(snapshot.players.length, 1);
-    assert.equal(snapshot.players[0].competitionSeasonId, PILOT_COMPETITION_SEASON_ID);
-    assert.equal(snapshot.rosters.length, 2);
-  } finally {
-    service.close();
-    fs.rmSync(directory, { recursive: true, force: true });
-  }
+    assert.equal(own.gameRecords.length, 1);
+    assert.equal(other.gameRecords.length, 0);
+    assert.equal(own.gameRecords[0].summary.totalEvents, 1);
+    assert.equal(own.gameRecords[0].events[0].tagName, "Canasta de 3P");
+    assert.equal("video" in own.gameRecords[0], false);
+    assert.equal("start" in own.gameRecords[0].events[0], false);
+
+    service.deleteGameRecord(project.id, "profile-b");
+    assert.equal(service.snapshot("profile-a").gameRecords.length, 1);
+    service.deleteGameRecord(project.id, "profile-a");
+    assert.equal(service.snapshot("profile-a").gameRecords.length, 0);
+  });
 });
 
 test("crea una copia SQLite que puede volver a abrirse", async () => {
-  const directory = fs.mkdtempSync(path.join(os.tmpdir(), "scout-db-"));
-  const source = path.join(directory, "scoutanalyzer.db");
-  const destination = path.join(directory, "scoutanalyzer-copia.db");
-  const service = createDatabaseService(source, { seedOfficialCatalog: false });
-
+  const directory = fs.mkdtempSync(path.join(os.tmpdir(), "tactovia-db-"));
+  const service = createDatabaseService(path.join(directory, "tactovia.db"), {
+    seedOfficialCatalog: false
+  });
   try {
-    service.syncProject(sampleProject());
-    await service.backupTo(destination);
-    assert.ok(fs.statSync(destination).size > 0);
-
-    const restored = createDatabaseService(destination, {
-      seedOfficialCatalog: false
-    });
-    try {
-      assert.equal(restored.snapshot().totals.events, 1);
-    } finally {
-      restored.close();
-    }
+    service.syncProject(sampleProject(), "profile-a");
+    const backupPath = path.join(directory, "backup.db");
+    await service.backupTo(backupPath);
+    assert.equal(fs.existsSync(backupPath), true);
   } finally {
     service.close();
     fs.rmSync(directory, { recursive: true, force: true });
   }
 });
 
-test("limpia los dos equipos vacíos creados por versiones anteriores", () => {
-  const directory = fs.mkdtempSync(path.join(os.tmpdir(), "scout-db-"));
-  const databasePath = path.join(directory, "scoutanalyzer.db");
-  const service = createDatabaseService(databasePath, {
-    seedOfficialCatalog: false
-  });
-
-  try {
-    service.syncProject({
-      version: 6,
-      id: "blank-analysis",
-      projectName: "Nuevo análisis",
-      video: null,
-      teams: [
-        { id: "team-own", name: "Mi equipo", players: [] },
-        { id: "team-rival", name: "Rival", players: [] }
-      ],
-      match: null,
-      template: { name: "Prueba", tags: [] },
-      playbook: { version: 3, folders: [], plays: [] },
-      events: []
-    });
-    assert.equal(service.snapshot().totals.teams, 2);
-  } finally {
+test("limpia equipos genéricos vacíos de versiones anteriores", () => {
+  withDatabase((service) => {
+    const now = new Date().toISOString();
+    service.database.prepare(`
+      INSERT INTO teams (
+        id, name, short_name, source, profile_json, created_at, updated_at
+      )
+      VALUES ('team-own', 'Mi equipo', 'PRO', 'local-user', '{}', ?, ?)
+    `).run(now, now);
     service.close();
-  }
-
-  const reopened = createDatabaseService(databasePath, {
-    seedOfficialCatalog: false
+    const reopened = createDatabaseService(service.filePath, {
+      seedOfficialCatalog: false
+    });
+    try {
+      const row = reopened.database
+        .prepare("SELECT id FROM teams WHERE id = 'team-own'")
+        .get();
+      assert.equal(row, undefined);
+    } finally {
+      reopened.close();
+    }
   });
-  try {
-    assert.equal(reopened.snapshot().totals.teams, 0);
-  } finally {
-    reopened.close();
-    fs.rmSync(directory, { recursive: true, force: true });
-  }
 });

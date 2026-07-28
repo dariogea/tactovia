@@ -5,7 +5,8 @@ export function TagEditor({ tags, courtOptions, onClose, onSave }) {
   const [draft, setDraft] = useState(tags.map((tag) => ({ ...tag })));
   const [courtDraft, setCourtDraft] = useState({
     visible: courtOptions?.visible !== false,
-    showLabels: courtOptions?.showLabels !== false
+    showLabels: courtOptions?.showLabels !== false,
+    position: courtOptions?.position === "below" ? "below" : "above"
   });
   const [error, setError] = useState("");
 
@@ -117,6 +118,22 @@ export function TagEditor({ tags, courtOptions, onClose, onSave }) {
               }
             />
             <span>Mostrar nombres de las zonas</span>
+          </label>
+          <label className="field court-position-field">
+            <span>Posición en el panel</span>
+            <select
+              value={courtDraft.position}
+              disabled={!courtDraft.visible}
+              onChange={(event) =>
+                setCourtDraft((current) => ({
+                  ...current,
+                  position: event.target.value
+                }))
+              }
+            >
+              <option value="above">Encima de las etiquetas</option>
+              <option value="below">Debajo de las etiquetas</option>
+            </select>
           </label>
         </article>
 

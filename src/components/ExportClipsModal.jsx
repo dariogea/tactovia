@@ -35,6 +35,18 @@ export function ExportClipsModal({
         </div>
 
         <div className="export-options-grid">
+          <div className="clip-preset-row">
+            <span>Configuraciones rápidas</span>
+            <button onClick={() => { setScope("all"); setGroupBy("player"); setSortBy("player"); }}>
+              Por jugador
+            </button>
+            <button onClick={() => { setScope("all"); setGroupBy("team"); setSortBy("team"); }}>
+              Por equipo
+            </button>
+            <button onClick={() => { setScope("all"); setGroupBy("none"); setSortBy("time"); }}>
+              Cronológico
+            </button>
+          </div>
           <fieldset>
             <legend>Qué acciones exportar</legend>
             <label className="radio-option">

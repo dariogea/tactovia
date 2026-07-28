@@ -2,8 +2,10 @@ import { useEffect, useMemo, useState } from "react";
 import {
   createPlayerDraft,
   createTeamDraft,
-  sortPlayersByNumber
+  sortPlayersByNumber,
+  teamTemplates
 } from "../lib/roster.js";
+import { PlayerJersey } from "./PlayerJersey.jsx";
 
 function resizeImage(file) {
   return new Promise((resolve, reject) => {
@@ -68,7 +70,14 @@ function DetailField({ label, value, onChange, type = "text", placeholder = "" }
   );
 }
 
-export function RosterManager({ teams, onChange }) {
+export function RosterManager({
+  teams,
+  competitions = [],
+  freeAgents = [],
+  onChange,
+  onCompetitionsChange,
+  onFreeAgentsChange
+}) {
   const [selectedTeamId, setSelectedTeamId] = useState(teams[0]?.id || "");
   const [selectedPlayerId, setSelectedPlayerId] = useState("");
   const [teamViewMode, setTeamViewMode] = useState("simple");
@@ -123,6 +132,68 @@ export function RosterManager({ teams, onChange }) {
     setTeamViewMode("detailed");
   }
 
+  function addTeamFromTemplate(template) {
+    const team = template.create();
+    onChange([...teams, team]);
+    setSelectedTeamId(team.id);
+    setSelectedPlayerId("");
+    setTeamViewMode("detailed");
+  }
+
+  function addCompetition() {
+    const name = window.prompt("Nombre de la competición")?.trim();
+    if (!name) return;
+    const season = window.prompt("Temporada", "2026/27")?.trim() || "";
+    const competition = {
+      id: crypto.randomUUID(),
+      name,
+      shortName: name.slice(0, 5).toUpperCase(),
+      season,
+      description: ""
+    };
+    onCompetitionsChange([...competitions, competition]);
+  }
+
+  function movePlayer(player, destinationTeamId) {
+    const remaining = selectedTeam.players.filter((item) => item.id !== player.id);
+    if (destinationTeamId === "free-agent") {
+      updateTeam({ players: remaining });
+      onFreeAgentsChange([
+        ...freeAgents.filter((item) => item.id !== player.id),
+        { ...player, previousTeamId: selectedTeam.id }
+      ]);
+      setSelectedPlayerId("");
+      return;
+    }
+    onChange(
+      teams.map((team) => {
+        if (team.id === selectedTeam.id) return { ...team, players: remaining };
+        if (team.id === destinationTeamId) {
+          return {
+            ...team,
+            players: [
+              ...team.players.filter((item) => item.id !== player.id),
+              player
+            ]
+          };
+        }
+        return team;
+      })
+    );
+    setSelectedPlayerId("");
+  }
+
+  function signFreeAgent(player, teamId) {
+    onFreeAgentsChange(freeAgents.filter((item) => item.id !== player.id));
+    onChange(
+      teams.map((team) =>
+        team.id === teamId
+          ? { ...team, players: [...team.players, player] }
+          : team
+      )
+    );
+  }
+
   function addPlayer() {
     const player = createPlayerDraft();
     updateTeam({ players: [...selectedTeam.players, player] });
@@ -175,6 +246,39 @@ export function RosterManager({ teams, onChange }) {
             </button>
           ))}
         </div>
+        <div className="team-template-panel">
+          <span className="eyebrow">4 plantillas iniciales</span>
+          {teamTemplates.map((template) => (
+            <button key={template.id} onClick={() => addTeamFromTemplate(template)}>
+              <i style={{ background: template.primaryColor }} />
+              <span><strong>{template.name}</strong><small>{template.size} jugadores</small></span>
+              <em>＋</em>
+            </button>
+          ))}
+        </div>
+        <div className="competition-manager-mini">
+          <div><strong>Competiciones</strong><span>{competitions.length}</span></div>
+          <button className="mini-button" onClick={addCompetition}>+ Crear competición</button>
+        </div>
+        {freeAgents.length > 0 && (
+          <div className="free-agent-pool">
+            <span className="eyebrow">Agentes libres</span>
+            {freeAgents.map((player) => (
+              <div key={player.id}>
+                <strong>#{player.number || "—"} {player.name}</strong>
+                <select
+                  defaultValue=""
+                  onChange={(event) =>
+                    event.target.value && signFreeAgent(player, event.target.value)
+                  }
+                >
+                  <option value="">Fichar por…</option>
+                  {teams.map((team) => <option value={team.id} key={team.id}>{team.name}</option>)}
+                </select>
+              </div>
+            ))}
+          </div>
+        )}
       </aside>
 
       {selectedTeam && (
@@ -244,6 +348,20 @@ export function RosterManager({ teams, onChange }) {
                 <DetailField label="Abreviatura" value={selectedTeam.shortName} onChange={(shortName) => updateTeam({ shortName: shortName.toUpperCase().slice(0, 5) })} />
                 <DetailField label="Categoría" value={selectedTeam.category} onChange={(category) => updateTeam({ category })} />
                 <DetailField label="Temporada" value={selectedTeam.season} onChange={(season) => updateTeam({ season })} />
+                <label className="field">
+                  <span>Competición</span>
+                  <select
+                    value={selectedTeam.competitionId || ""}
+                    onChange={(event) => updateTeam({ competitionId: event.target.value })}
+                  >
+                    <option value="">Sin competición</option>
+                    {competitions.map((competition) => (
+                      <option key={competition.id} value={competition.id}>
+                        {competition.name} · {competition.season || "sin temporada"}
+                      </option>
+                    ))}
+                  </select>
+                </label>
                 <DetailField label="País" value={selectedTeam.country} onChange={(country) => updateTeam({ country })} />
                 <DetailField label="Ciudad" value={selectedTeam.city} onChange={(city) => updateTeam({ city })} />
                 <DetailField label="Pabellón" value={selectedTeam.arena} onChange={(arena) => updateTeam({ arena })} />
@@ -282,18 +400,15 @@ export function RosterManager({ teams, onChange }) {
               {orderedPlayers.length === 0 ? (
                 <div className="empty-inline">Añade jugadores a la plantilla.</div>
               ) : orderedPlayers.map((player) => (
-                <button
-                  className="player-quick-card"
-                  style={{ "--player-team-color": selectedTeam.primaryColor }}
+                <PlayerJersey
                   key={player.id}
+                  player={player}
+                  team={selectedTeam}
                   onClick={() => {
                     setSelectedPlayerId(player.id);
                     setPlayerViewMode("detailed");
                   }}
-                >
-                  {player.photo ? <img src={player.photo} alt="" /> : <span className="player-avatar">#{player.number || "—"}</span>}
-                  <span><strong>{player.name}</strong><small>#{player.number || "—"} · {player.position || "Sin posición"}</small></span>
-                </button>
+                />
               ))}
             </div>
           ) : (
@@ -339,6 +454,23 @@ export function RosterManager({ teams, onChange }) {
                     <label className="field detail-notes"><span>Notas de scouting</span><textarea value={selectedPlayer.notes || ""} onChange={(event) => updatePlayer(selectedPlayer.id, { notes: event.target.value })} /></label>
                   </div>
                   <button className="button ghost danger-text player-delete" onClick={() => deletePlayer(selectedPlayer)}>Eliminar jugador</button>
+                  <label className="field player-transfer-field">
+                    <span>Cambiar situación deportiva</span>
+                    <select
+                      value=""
+                      onChange={(event) => {
+                        if (event.target.value) movePlayer(selectedPlayer, event.target.value);
+                      }}
+                    >
+                      <option value="">Mover a…</option>
+                      <option value="free-agent">Agente libre</option>
+                      {teams
+                        .filter((team) => team.id !== selectedTeam.id)
+                        .map((team) => (
+                          <option value={team.id} key={team.id}>{team.name}</option>
+                        ))}
+                    </select>
+                  </label>
                 </div>
               ) : (
                 <div className="empty-inline">Selecciona o añade un jugador.</div>
