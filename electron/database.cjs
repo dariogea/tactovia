@@ -3,7 +3,7 @@ const fs = require("node:fs");
 const path = require("node:path");
 const { backup, DatabaseSync } = require("node:sqlite");
 
-const DATABASE_VERSION = 3;
+const DATABASE_VERSION = 4;
 const LEGACY_COMPETITION_ID = "competition-fbrm-1dm";
 const LEGACY_SEASON_ID = "season-2026-27";
 const LEGACY_COMPETITION_SEASON_ID = "competition-season-fbrm-1dm-2026-27";
@@ -236,6 +236,13 @@ function schemaSql() {
 
     CREATE INDEX IF NOT EXISTS game_records_owner_updated
       ON game_records(owner_profile_id, updated_at DESC);
+
+    CREATE TABLE IF NOT EXISTS user_libraries (
+      owner_profile_id TEXT PRIMARY KEY,
+      library_json TEXT NOT NULL DEFAULT '{}',
+      created_at TEXT NOT NULL,
+      updated_at TEXT NOT NULL
+    ) STRICT;
 
     CREATE TABLE IF NOT EXISTS events (
       id TEXT PRIMARY KEY,
@@ -643,7 +650,6 @@ function createDatabaseService(filePath, options = {}) {
       const projectArchive = {
         version: project.version,
         template: project.template,
-        playbook: project.playbook,
         teams: (project.teams || []).map((team) => ({
           id: team.id,
           name: team.name,
@@ -824,6 +830,34 @@ function createDatabaseService(filePath, options = {}) {
       WHERE id = ? AND owner_profile_id = ?
     `).run(recordId, ownerProfileId);
     return { ok: true, deleted: result.changes > 0 };
+  }
+
+  function saveUserLibrary(ownerProfileId, library) {
+    if (!ownerProfileId) throw new Error("La biblioteca necesita un perfil.");
+    const now = nowIso();
+    const safeLibrary = {
+      teams: Array.isArray(library?.teams) ? library.teams : [],
+      competitions: Array.isArray(library?.competitions) ? library.competitions : [],
+      freeAgents: Array.isArray(library?.freeAgents) ? library.freeAgents : [],
+      folders: Array.isArray(library?.folders) ? library.folders : []
+    };
+    database.prepare(`
+      INSERT INTO user_libraries (
+        owner_profile_id, library_json, created_at, updated_at
+      ) VALUES (?, ?, ?, ?)
+      ON CONFLICT(owner_profile_id) DO UPDATE SET
+        library_json = excluded.library_json,
+        updated_at = excluded.updated_at
+    `).run(ownerProfileId, json(safeLibrary), now, now);
+    return { ok: true, library: safeLibrary };
+  }
+
+  function getUserLibrary(ownerProfileId) {
+    if (!ownerProfileId) return { ok: true, library: null };
+    const row = database.prepare(`
+      SELECT library_json FROM user_libraries WHERE owner_profile_id = ?
+    `).get(ownerProfileId);
+    return { ok: true, library: row ? parseJson(row.library_json, null) : null };
   }
 
   function snapshot(ownerProfileId = "") {
@@ -1133,6 +1167,8 @@ function createDatabaseService(filePath, options = {}) {
     syncProject,
     finalizeProject,
     deleteGameRecord,
+    saveUserLibrary,
+    getUserLibrary,
     cleanupUnusedLegacyCatalog
   };
 }

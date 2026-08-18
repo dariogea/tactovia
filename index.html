@@ -8,14 +8,19 @@
     />
     <meta
       http-equiv="Content-Security-Policy"
-      content="default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; media-src 'self' scout-media: blob:; img-src 'self' data:;"
+      content="default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; media-src 'self' scout-media: blob:; img-src 'self' data: blob:; worker-src 'self'; connect-src 'self';"
     />
     <meta
       name="description"
       content="Tactovia · Plataforma de análisis deportivo"
     />
     <meta name="application-name" content="Tactovia" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+    <meta name="apple-mobile-web-app-title" content="Tactovia" />
     <meta name="theme-color" content="#0B1218" />
+    <link rel="manifest" href="./manifest.webmanifest" />
+    <link rel="apple-touch-icon" href="./brand/favicon-32.png" />
     <link rel="icon" type="image/svg+xml" href="./brand/tactovia-favicon.svg" />
     <link rel="icon" type="image/png" sizes="32x32" href="./brand/favicon-32.png" />
     <link rel="icon" type="image/png" sizes="16x16" href="./brand/favicon-16.png" />

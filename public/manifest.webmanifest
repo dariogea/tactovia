@@ -1,0 +1,21 @@
+{
+  "name": "Tactovia · Análisis deportivo",
+  "short_name": "Tactovia",
+  "description": "Etiquetado de vídeo y análisis deportivo desde el navegador o el escritorio.",
+  "lang": "es",
+  "start_url": "./",
+  "scope": "./",
+  "display": "standalone",
+  "orientation": "landscape",
+  "background_color": "#0B1218",
+  "theme_color": "#08756D",
+  "categories": ["sports", "productivity", "video"],
+  "icons": [
+    {
+      "src": "./brand/tactovia-symbol-primary.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    }
+  ]
+}

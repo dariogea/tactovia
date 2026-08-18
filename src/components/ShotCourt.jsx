@@ -113,9 +113,14 @@ export function ShotCourtSelector({
   value,
   onChange,
   compact = false,
-  showLabels = true
+  showLabels = true,
+  events = []
 }) {
   const selected = shotZones.find((zone) => zone.id === value);
+  const currentStats = events.some((event) => event.shotZoneId)
+    ? zoneStats(events)
+    : null;
+  const selectedStats = currentStats?.find((zone) => zone.id === value);
   return (
     <section className={`shot-court-selector ${compact ? "compact" : ""}`}>
       <div className="shot-court-heading">
@@ -123,7 +128,7 @@ export function ShotCourtSelector({
           <strong>Zona de la acción</strong>
           <span>
             {selected
-              ? `${selected.name} · ${selected.points} puntos`
+              ? `${selected.name} · ${selected.points} puntos${selectedStats?.attempts ? ` · ${selectedStats.made}/${selectedStats.attempts}` : ""}`
               : "Pulsa una zona de la pista"}
           </span>
         </div>
@@ -138,8 +143,16 @@ export function ShotCourtSelector({
           value={value}
           onChange={onChange}
           showLabels={showLabels}
+          stats={currentStats}
         />
       </div>
+      {currentStats && (
+        <div className="selector-heat-legend">
+          <span><i /> Menos volumen</span>
+          <span><i /> Más volumen</span>
+          <small>Canastas / intentos · acierto</small>
+        </div>
+      )}
       <small className="shot-court-help">
         Un clic selecciona · doble clic sobre cualquier zona limpia la selección
       </small>

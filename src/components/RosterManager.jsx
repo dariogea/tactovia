@@ -73,9 +73,11 @@ function DetailField({ label, value, onChange, type = "text", placeholder = "" }
 export function RosterManager({
   teams,
   competitions = [],
+  folders = [],
   freeAgents = [],
   onChange,
   onCompetitionsChange,
+  onFoldersChange,
   onFreeAgentsChange
 }) {
   const [selectedTeamId, setSelectedTeamId] = useState(teams[0]?.id || "");
@@ -149,9 +151,19 @@ export function RosterManager({
       name,
       shortName: name.slice(0, 5).toUpperCase(),
       season,
-      description: ""
+      description: "",
+      folderId: ""
     };
     onCompetitionsChange([...competitions, competition]);
+  }
+
+  function addFolder() {
+    const name = window.prompt("Nombre de la carpeta")?.trim();
+    if (!name) return;
+    onFoldersChange?.([
+      ...folders,
+      { id: crypto.randomUUID(), name, createdAt: new Date().toISOString() }
+    ]);
   }
 
   function movePlayer(player, destinationTeamId) {
@@ -259,6 +271,29 @@ export function RosterManager({
         <div className="competition-manager-mini">
           <div><strong>Competiciones</strong><span>{competitions.length}</span></div>
           <button className="mini-button" onClick={addCompetition}>+ Crear competición</button>
+          <button className="mini-button" onClick={addFolder}>+ Crear carpeta</button>
+          {competitions.map((competition) => (
+            <label key={competition.id} className="competition-folder-row">
+              <span>{competition.name}</span>
+              <select
+                value={competition.folderId || ""}
+                onChange={(event) =>
+                  onCompetitionsChange(
+                    competitions.map((item) =>
+                      item.id === competition.id
+                        ? { ...item, folderId: event.target.value }
+                        : item
+                    )
+                  )
+                }
+              >
+                <option value="">Sin carpeta</option>
+                {folders.map((folder) => (
+                  <option value={folder.id} key={folder.id}>{folder.name}</option>
+                ))}
+              </select>
+            </label>
+          ))}
         </div>
         {freeAgents.length > 0 && (
           <div className="free-agent-pool">

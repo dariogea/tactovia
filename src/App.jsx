@@ -5,7 +5,6 @@ import { EventEditor } from "./components/EventEditor.jsx";
 import { ExportClipsModal } from "./components/ExportClipsModal.jsx";
 import { MatchSetup } from "./components/MatchSetup.jsx";
 import { PlayerJersey } from "./components/PlayerJersey.jsx";
-import { Playbook } from "./components/Playbook.jsx";
 import { ProfilePanel } from "./components/ProfilePanel.jsx";
 import { ReportCenter } from "./components/ReportCenter.jsx";
 import { ScoutingLibrary } from "./components/ScoutingLibrary.jsx";
@@ -31,7 +30,7 @@ import {
   defaultTeams,
   emptyContext
 } from "./lib/defaults.js";
-import { migratePlaybook } from "./lib/playbook.js";
+import { buildAutomaticAnalysis } from "./lib/insights.js";
 import { enrichTeam, sortPlayersByNumber } from "./lib/roster.js";
 import { accountInitials, readLocalAccount } from "./lib/account.js";
 import {
@@ -47,6 +46,7 @@ import {
   themeStorageKey
 } from "./lib/theme.js";
 import { isShotTag, shotTagPoints, shotZoneById } from "./lib/shotZones.js";
+import { downloadText, safeDownloadName } from "./lib/webFiles.js";
 
 const desktop = window.scoutDesktop;
 const appVersion = __APP_VERSION__;
@@ -98,6 +98,9 @@ function systemPrefersDark() {
 }
 
 function migrateProject(project) {
+  const projectData = Object.fromEntries(
+    Object.entries(project).filter(([key]) => key !== "playbook")
+  );
   const teams =
     Array.isArray(project.teams) && project.teams.length > 0
       ? project.teams.map(enrichTeam)
@@ -110,17 +113,17 @@ function migrateProject(project) {
       ? project.match
       : null;
   return {
-    ...project,
-    version: 9,
+    ...projectData,
+    version: 10,
     teams,
     match: validMatch,
     competitions: Array.isArray(project.competitions) ? project.competitions : [],
+    libraryFolders: Array.isArray(project.libraryFolders) ? project.libraryFolders : [],
     freeAgents: Array.isArray(project.freeAgents) ? project.freeAgents : [],
     template: {
       ...(project.template || {}),
       tags: migrateBasketballTags(project.template?.tags || defaultTags)
     },
-    playbook: migratePlaybook(project.playbook),
     events: (project.events || []).map((event) => {
       const { outcome, ...rest } = event;
       const zonePoints =
@@ -181,7 +184,10 @@ function readDataLibrary(accountId = "") {
         competitions: Array.isArray(stored.competitions)
           ? stored.competitions
           : [],
-        freeAgents: Array.isArray(stored.freeAgents) ? stored.freeAgents : []
+        freeAgents: Array.isArray(stored.freeAgents) ? stored.freeAgents : [],
+        libraryFolders: Array.isArray(stored.libraryFolders)
+          ? stored.libraryFolders
+          : []
       };
     }
   } catch {
@@ -190,7 +196,8 @@ function readDataLibrary(accountId = "") {
   return {
     teams: readTeamLibrary(accountId),
     competitions: [],
-    freeAgents: []
+    freeAgents: [],
+    libraryFolders: []
   };
 }
 
@@ -199,7 +206,17 @@ function createProjectFromLibrary(accountId = "") {
   return {
     ...createBlankProject(library.teams),
     competitions: library.competitions,
-    freeAgents: library.freeAgents
+    freeAgents: library.freeAgents,
+    libraryFolders: library.libraryFolders
+  };
+}
+
+function createProjectFromDataLibrary(library) {
+  return {
+    ...createBlankProject(library.teams),
+    competitions: library.competitions || [],
+    freeAgents: library.freeAgents || [],
+    libraryFolders: library.libraryFolders || []
   };
 }
 
@@ -228,7 +245,7 @@ function readAutosave(accountId = "") {
       localStorage.getItem(profileStorageKey(autosaveKey, accountId))
     );
     if (
-      [1, 2, 3, 4, 5, 6, 7, 8, 9].includes(stored?.version) &&
+      [1, 2, 3, 4, 5, 6, 7, 8, 9, 10].includes(stored?.version) &&
       Array.isArray(stored.events) &&
       Array.isArray(stored.template?.tags)
     ) {
@@ -261,6 +278,9 @@ function readPreferences(accountId = "") {
 function App() {
   const [project, setProject] = useState(readAutosave);
   const [account, setAccount] = useState(readLocalAccount);
+  const [dataLibrary, setDataLibrary] = useState(() =>
+    readDataLibrary(readLocalAccount()?.id || "")
+  );
   const [authenticated, setAuthenticated] = useState(false);
   const [selectedSport, setSelectedSport] = useState("");
   const [workspaceReady, setWorkspaceReady] = useState(false);
@@ -292,11 +312,15 @@ function App() {
   const [profileMenuOpen, setProfileMenuOpen] = useState(false);
   const [showBrandSplash, setShowBrandSplash] = useState(true);
   const videoRef = useRef(null);
+  const webVideoInputRef = useRef(null);
+  const webProjectInputRef = useRef(null);
+  const webVideoObjectUrlRef = useRef("");
   const pendingSeekRef = useRef(null);
   const scrubbingRef = useRef(false);
   const noticeTimer = useRef(null);
   const databaseReadyRef = useRef(false);
   const databaseSyncTimerRef = useRef(null);
+  const librarySyncTimerRef = useRef(null);
 
   const matchTeams = useMemo(
     () =>
@@ -356,6 +380,10 @@ function App() {
     () => statisticsFor(project.template.tags, project.events),
     [project.template.tags, project.events]
   );
+  const automaticAnalysis = useMemo(
+    () => buildAutomaticAnalysis(project),
+    [project]
+  );
   const liveTaggingSummary = useMemo(() => {
     const total = project.events.length;
     const latest = total ? project.events[total - 1] : null;
@@ -385,6 +413,10 @@ function App() {
     const made = project.events.filter((event) =>
       String(event.tagName || "").toLowerCase().includes("canasta")
     ).length;
+    const taggedSeconds = project.events.reduce(
+      (sum, event) => sum + Math.max(0, Number(event.end) - Number(event.start)),
+      0
+    );
     return {
       latest,
       leading: stats[0] || null,
@@ -392,7 +424,15 @@ function App() {
       identifiedPercentage: total ? Math.round((identified / total) * 100) : 0,
       teamScores,
       shotPercentage: shots ? Math.round((made / shots) * 100) : 0,
-      shots
+      shots,
+      tagTypes: stats.length,
+      activePlayers: new Set(
+        project.events.map((event) => event.playerId).filter(Boolean)
+      ).size,
+      taggedSeconds,
+      activeZones: new Set(
+        project.events.map((event) => event.shotZoneId).filter(Boolean)
+      ).size
     };
   }, [currentTime, matchTeams, project.events, stats]);
 
@@ -432,25 +472,24 @@ function App() {
     if (!account || account.isDemo) return;
     localStorage.setItem(
       profileStorageKey(teamsLibraryKey, account.id),
-      JSON.stringify(project.teams)
+      JSON.stringify(dataLibrary.teams)
     );
-  }, [account, project.teams]);
+  }, [account, dataLibrary.teams]);
 
   useEffect(() => {
     if (!account || account.isDemo) return;
     localStorage.setItem(
       profileStorageKey(dataLibraryKey, account.id),
       JSON.stringify({
-        teams: project.teams,
-        competitions: project.competitions || [],
-        freeAgents: project.freeAgents || []
+        teams: dataLibrary.teams,
+        competitions: dataLibrary.competitions || [],
+        freeAgents: dataLibrary.freeAgents || [],
+        libraryFolders: dataLibrary.libraryFolders || []
       })
     );
   }, [
     account,
-    project.competitions,
-    project.freeAgents,
-    project.teams
+    dataLibrary
   ]);
 
   useEffect(() => {
@@ -505,6 +544,30 @@ function App() {
           databaseReadyRef.current = true;
           setDatabaseSnapshot(result.snapshot);
           setDatabaseError("");
+          if (desktop.getUserLibrary && !account.isDemo) {
+            desktop
+              .getUserLibrary({ ownerProfileId: account.id })
+              .then((libraryResult) => {
+                if (!active || !libraryResult?.ok) return;
+                if (libraryResult.library) {
+                  setDataLibrary({
+                    teams: (libraryResult.library.teams || []).map(enrichTeam),
+                    competitions: libraryResult.library.competitions || [],
+                    freeAgents: libraryResult.library.freeAgents || [],
+                    libraryFolders: libraryResult.library.folders || []
+                  });
+                } else {
+                  const localLibrary = readDataLibrary(account.id);
+                  desktop.saveUserLibrary?.({
+                    ownerProfileId: account.id,
+                    library: {
+                      ...localLibrary,
+                      folders: localLibrary.libraryFolders || []
+                    }
+                  });
+                }
+              });
+          }
         } else {
           setDatabaseError(
             result.error || "No se pudo iniciar la biblioteca de scouting."
@@ -520,6 +583,27 @@ function App() {
     // La migración de datos anteriores solo se ejecuta al arrancar.
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [account?.id, authenticated]);
+
+  useEffect(() => {
+    if (!desktop?.saveUserLibrary || !account?.id || account.isDemo) return undefined;
+    window.clearTimeout(librarySyncTimerRef.current);
+    librarySyncTimerRef.current = window.setTimeout(async () => {
+      const result = await desktop.saveUserLibrary({
+        ownerProfileId: account.id,
+        isDemo: false,
+        library: {
+          teams: dataLibrary.teams,
+          competitions: dataLibrary.competitions || [],
+          freeAgents: dataLibrary.freeAgents || [],
+          folders: dataLibrary.libraryFolders || []
+        }
+      });
+      if (!result.ok) {
+        setDatabaseError(result.error || "No se pudo guardar la biblioteca del perfil.");
+      }
+    }, 500);
+    return () => window.clearTimeout(librarySyncTimerRef.current);
+  }, [account, dataLibrary]);
 
   useEffect(() => {
     if (
@@ -588,6 +672,15 @@ function App() {
       window.clearTimeout(noticeTimer.current);
     };
   }, [project.video?.path]);
+
+  useEffect(
+    () => () => {
+      if (webVideoObjectUrlRef.current) {
+        URL.revokeObjectURL(webVideoObjectUrlRef.current);
+      }
+    },
+    []
+  );
 
   function seekTo(seconds) {
     const video = videoRef.current;
@@ -854,7 +947,7 @@ function App() {
 
   async function chooseVideo() {
     if (!desktop) {
-      notify("La selección de vídeo está disponible en la aplicación de escritorio.");
+      webVideoInputRef.current?.click();
       return;
     }
     if (project.events.length > 0 && !window.confirm("Cambiar de vídeo mantendrá las etiquetas actuales. ¿Continuar?")) {
@@ -877,8 +970,32 @@ function App() {
     }));
   }
 
+  function loadWebVideo(file) {
+    if (!file) return;
+    if (project.events.length > 0 && !window.confirm("Cambiar de vídeo mantendrá las etiquetas actuales. ¿Continuar?")) {
+      return;
+    }
+    if (webVideoObjectUrlRef.current) {
+      URL.revokeObjectURL(webVideoObjectUrlRef.current);
+    }
+    const url = URL.createObjectURL(file);
+    webVideoObjectUrlRef.current = url;
+    setVideoUrl(url);
+    setCurrentTime(0);
+    setIsPlaying(false);
+    setActiveIntervals({});
+    updateProject((current) => ({
+      ...current,
+      match: null,
+      video: { path: "", name: file.name, duration: 0, source: "browser-local" }
+    }));
+  }
+
   async function openProject() {
-    if (!desktop) return false;
+    if (!desktop) {
+      webProjectInputRef.current?.click();
+      return false;
+    }
     const result = await desktop.openProject();
     if (result.canceled) return false;
     if (result.error) {
@@ -904,8 +1021,38 @@ function App() {
     return true;
   }
 
+  async function loadWebProject(file) {
+    if (!file) return;
+    try {
+      const parsed = JSON.parse(await file.text());
+      if (!parsed || !Array.isArray(parsed.events) || !parsed.template) {
+        throw new Error("El archivo no contiene un análisis válido.");
+      }
+      const migrated = migrateProject(parsed);
+      setProject(migrated);
+      setProjectFilePath("");
+      setSelectedEventIds(new Set());
+      setActiveIntervals({});
+      setCurrentTime(0);
+      setVideoUrl("");
+      setContext({ ...emptyContext, teamId: migrated.match?.homeTeamId || "" });
+      setWorkspaceReady(true);
+      notify("Análisis abierto. Selecciona de nuevo el vídeo local para reproducirlo.");
+    } catch (error) {
+      notify(error.message || "No se pudo abrir el análisis.");
+    }
+  }
+
   async function saveProject() {
-    if (!desktop) return;
+    if (!desktop) {
+      downloadText(
+        `${safeDownloadName(project.projectName)}.scout.json`,
+        JSON.stringify(project, null, 2),
+        "application/json;charset=utf-8"
+      );
+      notify("Análisis descargado en este dispositivo.");
+      return;
+    }
     const result = await desktop.saveProject({
       project,
       filePath: projectFilePath
@@ -947,7 +1094,10 @@ function App() {
   }
 
   async function refreshDatabase() {
-    if (!desktop?.getDatabaseSnapshot) return;
+    if (!desktop?.getDatabaseSnapshot) {
+      notify("La biblioteca web ya está actualizada en este dispositivo.");
+      return;
+    }
     setDatabaseLoading(true);
     try {
       const result = await desktop.getDatabaseSnapshot({
@@ -965,7 +1115,10 @@ function App() {
   }
 
   async function backupDatabase() {
-    if (!desktop?.backupDatabase) return;
+    if (!desktop?.backupDatabase) {
+      notify("La copia SQLite está disponible en la aplicación de escritorio.");
+      return;
+    }
     const result = await desktop.backupDatabase();
     if (result.error) {
       notify(result.error);
@@ -982,7 +1135,7 @@ function App() {
     ) {
       return;
     }
-    setProject(createProjectFromLibrary(account?.id));
+    setProject(createProjectFromDataLibrary(dataLibrary));
     setProjectFilePath("");
     setVideoUrl("");
     setCurrentTime(0);
@@ -995,7 +1148,7 @@ function App() {
   }
 
   function startNewSession() {
-    setProject(createProjectFromLibrary(account?.id));
+    setProject(createProjectFromDataLibrary(dataLibrary));
     setProjectFilePath("");
     setVideoUrl("");
     setCurrentTime(0);
@@ -1023,6 +1176,13 @@ function App() {
       isDemo: true
     };
     setAccount(demoAccount);
+    setDataLibrary({
+      teams: defaultTeams.map(enrichTeam),
+      competitions: [],
+      freeAgents: [],
+      libraryFolders: []
+    });
+    setPreferences(structuredClone(defaultPreferences));
     setAuthenticated(true);
     setSelectedSport("");
     setProject(createBlankProject());
@@ -1093,8 +1253,17 @@ function App() {
   }
 
   async function exportCsv() {
-    if (!desktop || project.events.length === 0) {
+    if (project.events.length === 0) {
       notify("Todavía no hay acciones para exportar.");
+      return;
+    }
+    if (!desktop) {
+      downloadText(
+        `${safeDownloadName(project.projectName)}-eventos.csv`,
+        `\uFEFF${projectToCsv(project)}`,
+        "text/csv;charset=utf-8"
+      );
+      notify("Datos CSV descargados.");
       return;
     }
     const result = await desktop.exportCsv({
@@ -1108,7 +1277,10 @@ function App() {
   }
 
   async function exportXlsx() {
-    if (!desktop) return;
+    if (!desktop) {
+      notify("Excel y Power BI requieren la aplicación de escritorio; en web puedes exportar CSV.");
+      return;
+    }
     setBusy("Preparando libro de Excel…");
     try {
       const result = await desktop.exportXlsx({ project });
@@ -1124,7 +1296,10 @@ function App() {
   }
 
   async function exportPowerBi(sourceProject = project) {
-    if (!desktop?.exportPowerBi) return;
+    if (!desktop?.exportPowerBi) {
+      notify("La exportación Power BI está disponible en la aplicación de escritorio.");
+      return;
+    }
     setBusy("Preparando modelo para Power BI…");
     try {
       const result = await desktop.exportPowerBi({ project: sourceProject });
@@ -1269,10 +1444,16 @@ function App() {
       notify("Selecciona el vídeo original.");
       return;
     }
-    const selected =
+    const scoped =
       options.scope === "selected"
         ? project.events.filter((event) => selectedEventIds.has(event.id))
         : project.events;
+    const selected = scoped.filter((event) => {
+      if (options.tagId && (event.tagId || event.tagName) !== options.tagId) return false;
+      if (options.teamId && (event.teamId || event.team) !== options.teamId) return false;
+      if (options.playerId && (event.playerId || event.player) !== options.playerId) return false;
+      return true;
+    });
     const events = selected.slice().sort((left, right) => {
       const keys = {
         time: ["start"],
@@ -1306,12 +1487,19 @@ function App() {
           tagName: event.tagName,
           timeLabel: formatTime(event.start).replaceAll(":", "-"),
           folders: foldersForEvent(event, options.groupBy)
-        }))
+        })),
+        outputMode: options.outputMode || "individual",
+        quality: options.quality || "balanced",
+        projectName: project.projectName
       });
       if (result.error) {
         notify(result.error);
       } else if (!result.canceled) {
-        notify(`${result.files.length} ${result.files.length === 1 ? "clip creado" : "clips creados"}.`);
+        notify(
+          options.outputMode === "highlights"
+            ? "Reel de highlights creado."
+            : `${result.files.length} ${result.files.length === 1 ? "clip creado" : "clips creados"}.`
+        );
         if (result.files[0]) desktop.revealFile(result.files[0]);
       }
     } finally {
@@ -1320,7 +1508,10 @@ function App() {
   }
 
   async function exportReport(options = {}) {
-    if (!desktop) return;
+    if (!desktop) {
+      notify("La maquetación PDF está disponible en la aplicación de escritorio.");
+      return;
+    }
     setBusy("Preparando informe…");
     try {
       const result = await desktop.exportReportPdf(
@@ -1347,6 +1538,10 @@ function App() {
       home && away ? `${home.name} vs ${away.name}` : "",
       `${project.events.length} acciones · ${formatTime(project.video?.duration || 0)} analizados`,
       leadingStats,
+      ...automaticAnalysis.teams.flatMap((team) => [
+        `\n${team.name}`,
+        ...team.conclusions.map((conclusion) => `• ${conclusion}`)
+      ]),
       `Generado con Tactovia ${appVersion}`
     ].filter(Boolean).join("\n");
     try {
@@ -1354,25 +1549,6 @@ function App() {
       notify("Resumen copiado. Ya puedes pegarlo en un mensaje o documento.");
     } catch {
       notify("No se pudo copiar el resumen.");
-    }
-  }
-
-  async function exportPlaybook(payload) {
-    if (!desktop) return;
-    const result =
-      payload.format === "pdf"
-        ? await desktop.exportPlaybookPdf(payload)
-        : payload.format === "video"
-          ? await desktop.exportPlaybookVideo(payload)
-          : await desktop.exportPlaybookPng(payload);
-    if (result.error) notify(result.error);
-    else if (!result.canceled) {
-      notify(
-        payload.format === "video"
-          ? "Animación del Playbook exportada."
-          : `Jugada exportada como ${payload.format.toUpperCase()}.`
-      );
-      desktop.revealFile(result.filePath);
     }
   }
 
@@ -1436,6 +1612,18 @@ function App() {
   if (!authenticated || !selectedSport || !workspaceReady) {
     return (
       <>
+        {!desktop && (
+          <input
+            ref={webProjectInputRef}
+            className="visually-hidden-file"
+            type="file"
+            accept=".json,.scout.json,application/json"
+            onChange={(event) => {
+              loadWebProject(event.target.files?.[0]);
+              event.target.value = "";
+            }}
+          />
+        )}
         {showBrandSplash && <BrandSplash />}
         <AccessFlow
           account={account}
@@ -1446,6 +1634,7 @@ function App() {
           onAccountChange={setAccount}
           onAuthenticated={(nextAccount) => {
             setAccount(nextAccount);
+            setDataLibrary(readDataLibrary(nextAccount.id));
             setProject(readAutosave(nextAccount.id));
             setPreferences(readPreferences(nextAccount.id));
             setProjectFilePath("");
@@ -1536,12 +1725,6 @@ function App() {
           }}
         >
           Competiciones y equipos
-        </button>
-        <button
-          className={activeView === "playbook" ? "active" : ""}
-          onClick={() => setActiveView("playbook")}
-        >
-          Playbook
         </button>
         <button
           className={activeView === "report" ? "active" : ""}
@@ -1702,9 +1885,51 @@ function App() {
                       />
                       <span>{Math.round((muted ? 0 : volume) * 100)}%</span>
                     </div>
+                    <button
+                      className="shortcut-help-button"
+                      onClick={() => setShowUserGuide(true)}
+                      title="Ver guía de atajos"
+                    >
+                      <kbd>?</kbd> Atajos
+                    </button>
                   </div>
                 </div>
                 <section className="live-tagging-strip" aria-label="Resumen del etiquetado">
+                  {(preferences.layout.liveModules || []).includes("actions") && (
+                    <div>
+                      <span>Acciones etiquetadas</span>
+                      <strong>{project.events.length}</strong>
+                      <small>registros de este partido</small>
+                    </div>
+                  )}
+                  {(preferences.layout.liveModules || []).includes("tagTypes") && (
+                    <div>
+                      <span>Etiquetas utilizadas</span>
+                      <strong>{liveTaggingSummary.tagTypes}</strong>
+                      <small>tipos con al menos una acción</small>
+                    </div>
+                  )}
+                  {(preferences.layout.liveModules || []).includes("players") && (
+                    <div>
+                      <span>Jugadores implicados</span>
+                      <strong>{liveTaggingSummary.activePlayers}</strong>
+                      <small>identificados en las acciones</small>
+                    </div>
+                  )}
+                  {(preferences.layout.liveModules || []).includes("taggedTime") && (
+                    <div>
+                      <span>Tiempo de clips</span>
+                      <strong>{formatTime(liveTaggingSummary.taggedSeconds)}</strong>
+                      <small>suma de los intervalos exportables</small>
+                    </div>
+                  )}
+                  {(preferences.layout.liveModules || []).includes("zones") && (
+                    <div>
+                      <span>Zonas utilizadas</span>
+                      <strong>{liveTaggingSummary.activeZones}</strong>
+                      <small>áreas con tiros registrados</small>
+                    </div>
+                  )}
                   {(preferences.layout.liveModules || []).includes("score") && (
                     <div className="live-score-module">
                       <span>Marcador etiquetado</span>
@@ -1759,15 +1984,6 @@ function App() {
                       </small>
                     </button>
                   )}
-                  <button
-                    className="live-shortcut-help"
-                    onClick={() => setShowUserGuide(true)}
-                    title="Ver atajos y guía"
-                  >
-                    <span>?</span>
-                    <strong>Atajos</strong>
-                    <small>guía rápida</small>
-                  </button>
                 </section>
               </section>
 
@@ -1856,6 +2072,7 @@ function App() {
                   (preferences.layout.shotCourtPosition || "above") === "above" && (
                   <ShotCourtSelector
                     value={context.shotZoneId}
+                    events={project.events}
                     onChange={(shotZoneId) =>
                       setContext((current) => ({ ...current, shotZoneId }))
                     }
@@ -1900,6 +2117,7 @@ function App() {
                   preferences.layout.shotCourtPosition === "below" && (
                     <ShotCourtSelector
                       value={context.shotZoneId}
+                      events={project.events}
                       onChange={(shotZoneId) =>
                         setContext((current) => ({ ...current, shotZoneId }))
                       }
@@ -1943,47 +2161,26 @@ function App() {
             snapshot={databaseSnapshot}
             loading={databaseLoading}
             error={databaseError}
-            teams={project.teams}
-            competitions={project.competitions || []}
-            freeAgents={project.freeAgents || []}
-            onTeamsChange={(teams) => {
-              updateProject((current) => {
-                const matchStillValid =
-                  current.match &&
-                  teams.some((team) => team.id === current.match.homeTeamId) &&
-                  teams.some((team) => team.id === current.match.awayTeamId);
-                return { ...current, teams, match: matchStillValid ? current.match : null };
-              });
-              if (!teams.some((team) => team.id === context.teamId)) {
-                setContext((current) => ({
-                  ...current,
-                  teamId: teams[0]?.id || "",
-                  playerId: ""
-                }));
-              }
-            }}
+            teams={dataLibrary.teams}
+            competitions={dataLibrary.competitions || []}
+            folders={dataLibrary.libraryFolders || []}
+            freeAgents={dataLibrary.freeAgents || []}
+            onTeamsChange={(teams) =>
+              setDataLibrary((current) => ({ ...current, teams }))
+            }
             onCompetitionsChange={(competitions) =>
-              updateProject((current) => ({ ...current, competitions }))
+              setDataLibrary((current) => ({ ...current, competitions }))
+            }
+            onFoldersChange={(libraryFolders) =>
+              setDataLibrary((current) => ({ ...current, libraryFolders }))
             }
             onFreeAgentsChange={(freeAgents) =>
-              updateProject((current) => ({ ...current, freeAgents }))
+              setDataLibrary((current) => ({ ...current, freeAgents }))
             }
             onRefresh={refreshDatabase}
             onBackup={backupDatabase}
             onDeleteRecord={deleteGameRecord}
             onExportHistory={exportHistory}
-          />
-        )}
-
-        {activeView === "playbook" && (
-          <Playbook
-            playbook={project.playbook}
-            teams={project.teams}
-            onChange={(playbook) =>
-              updateProject((current) => ({ ...current, playbook }))
-            }
-            onExport={exportPlaybook}
-            onNotify={notify}
           />
         )}
 
@@ -2014,7 +2211,14 @@ function App() {
             onExportData={exportData}
             onToggleSelectAll={toggleSelectAll}
             onConfigureClips={() => setShowExportClips(true)}
-            onExportReport={exportReport}
+            automaticAnalysis={automaticAnalysis}
+            desktopAvailable={Boolean(desktop)}
+            onExportAnalysis={() =>
+              exportReport({ mode: "intelligence", automaticAnalysis })
+            }
+            onExportVisualReport={() =>
+              exportReport({ mode: "visual", automaticAnalysis })
+            }
             onCopySummary={copyExecutiveSummary}
           />
         )}
@@ -2025,7 +2229,10 @@ function App() {
           teams={project.teams}
           initialMatch={project.match}
           onTeamsChange={(teams) =>
-            updateProject((current) => ({ ...current, teams }))
+            {
+              updateProject((current) => ({ ...current, teams }));
+              setDataLibrary((current) => ({ ...current, teams }));
+            }
           }
           onManageTeams={() => setActiveView("database")}
           onConfirm={(match) => {
@@ -2112,6 +2319,30 @@ function App() {
           <div className="spinner" />
           <strong>{busy}</strong>
         </div>
+      )}
+      {!desktop && (
+        <>
+          <input
+            ref={webVideoInputRef}
+            className="visually-hidden-file"
+            type="file"
+            accept="video/mp4,video/quicktime,video/webm,video/ogg,video/*"
+            onChange={(event) => {
+              loadWebVideo(event.target.files?.[0]);
+              event.target.value = "";
+            }}
+          />
+          <input
+            ref={webProjectInputRef}
+            className="visually-hidden-file"
+            type="file"
+            accept=".json,.scout.json,application/json"
+            onChange={(event) => {
+              loadWebProject(event.target.files?.[0]);
+              event.target.value = "";
+            }}
+          />
+        </>
       )}
       </div>
     </>

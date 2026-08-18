@@ -38,7 +38,7 @@ const guideSections = [
       "Personaliza las secciones del informe antes de crear el PDF.",
       "Exporta un libro Excel, una tabla CSV o un paquete normalizado para Power BI.",
       "Selecciona clips concretos y ordénalos por jugador, equipo, etiqueta o cronología.",
-      "El Playbook permite crear fases, mover jugadores y exportar una jugada como PNG, PDF o vídeo."
+      "Los informes permiten exportar conclusiones automáticas, gráficos del partido, datos y vídeo."
     ]
   }
 ];

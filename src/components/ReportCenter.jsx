@@ -23,18 +23,13 @@ export function ReportCenter({
   onExportData,
   onToggleSelectAll,
   onConfigureClips,
-  onExportReport,
+  automaticAnalysis,
+  onExportAnalysis,
+  onExportVisualReport,
+  desktopAvailable,
   onCopySummary
 }) {
-  const [section, setSection] = useState("summary");
-  const [reportOptions, setReportOptions] = useState({
-    executiveSummary: true,
-    tagBreakdown: true,
-    shotZones: true,
-    playerBreakdown: true,
-    chronology: true,
-    notes: true
-  });
+  const [section, setSection] = useState("insights");
   const home = project.teams.find((team) => team.id === project.match?.homeTeamId);
   const away = project.teams.find((team) => team.id === project.match?.awayTeamId);
   const readyChecks = [
@@ -58,10 +53,10 @@ export function ReportCenter({
       <header className="report-center-hero">
         <div>
           <span className="eyebrow">Centro de entregables</span>
-          <h1>Convierte el análisis en una entrega clara</h1>
+          <h1>Un portal para cada entrega del partido</h1>
           <p>
-            Revisa el resumen, elige qué necesitas y exporta únicamente el
-            material preparado para cada destinatario.
+            Genera conclusiones automáticas, un dossier visual de estadísticas,
+            datos estructurados o una entrega de vídeo.
           </p>
         </div>
         <div className="report-readiness">
@@ -74,96 +69,70 @@ export function ReportCenter({
       </header>
 
       <nav className="report-section-tabs" aria-label="Tipos de entrega">
-        <button className={section === "summary" ? "active" : ""} onClick={() => setSection("summary")}>
-          <span>01</span><strong>Informe</strong><small>Lectura técnica</small>
+        <button className={section === "insights" ? "active" : ""} onClick={() => setSection("insights")}>
+          <span>01</span><strong>Análisis IA</strong><small>Equipo y jugadores</small>
         </button>
-        <button className={section === "data" ? "active" : ""} onClick={() => setSection("data")}>
-          <span>02</span><strong>Datos</strong><small>Excel o CSV</small>
+        <button className={section === "visuals" ? "active" : ""} onClick={() => setSection("visuals")}>
+          <span>02</span><strong>Visuales</strong><small>Gráficos del partido</small>
         </button>
         <button className={section === "clips" ? "active" : ""} onClick={() => setSection("clips")}>
-          <span>03</span><strong>Vídeo</strong><small>Clips seleccionados</small>
+          <span>03</span><strong>Vídeo</strong><small>Clips y highlights</small>
+        </button>
+        <button className={section === "data" ? "active" : ""} onClick={() => setSection("data")}>
+          <span>04</span><strong>Datos</strong><small>Excel, BI o CSV</small>
         </button>
       </nav>
 
-      {section === "summary" && (
-        <div className="report-workspace">
-          <article className="report-document-card">
+      {section === "insights" && (
+        <div className="report-workspace intelligence-workspace">
+          <article className="intelligence-report-card">
             <header>
-              <div>
-                <span>INFORME DE SCOUTING</span>
-                <h2>{project.projectName}</h2>
-                <small>{project.video?.name || "Vídeo pendiente"}</small>
-              </div>
-              <em>{project.events.length} acciones</em>
+              <div><span className="ai-local-badge">IA local · sin subir datos</span><h2>Conclusiones automáticas</h2></div>
+              <em>{automaticAnalysis?.totalEvents || 0} acciones procesadas</em>
             </header>
-            <div className="report-matchup">
-              <TeamBadge team={home} />
-              <strong>VS</strong>
-              <TeamBadge team={away} />
+            <div className="report-matchup"><TeamBadge team={home} /><strong>VS</strong><TeamBadge team={away} /></div>
+            <div className="analysis-quality-strip">
+              <span><strong>{automaticAnalysis?.dataQuality.teamCoverage || 0}%</strong> equipos identificados</span>
+              <span><strong>{automaticAnalysis?.dataQuality.playerCoverage || 0}%</strong> jugadores identificados</span>
+              <span><strong>{automaticAnalysis?.dataQuality.zoneCoverage || 0}%</strong> tiros con zona</span>
             </div>
-            <div className="report-kpi-row">
-              <div><span>Acciones</span><strong>{project.events.length}</strong></div>
-              <div><span>Tipos usados</span><strong>{stats.length}</strong></div>
-              <div><span>Vídeo</span><strong>{formatTime(project.video?.duration || 0)}</strong></div>
-              <div><span>Jugadores</span><strong>{new Set(project.events.map((event) => event.playerId).filter(Boolean)).size}</strong></div>
-            </div>
-            <div className="report-highlight-list">
-              {stats.slice(0, 6).map((item) => (
-                <div key={item.id}>
-                  <i style={{ background: item.color }} />
-                  <span>{item.name}</span>
-                  <strong>{item.count}</strong>
-                </div>
-              ))}
-              {stats.length === 0 && <p>Todavía no hay acciones que resumir.</p>}
-            </div>
-            <div className="report-section-picker">
-              <strong>Contenido del informe</strong>
-              {[
-                ["executiveSummary", "Resumen ejecutivo"],
-                ["tagBreakdown", "Gráficos por etiqueta"],
-                ["shotZones", "Mapa y zonas de tiro"],
-                ["playerBreakdown", "Detalle por jugador"],
-                ["chronology", "Cronología de acciones"],
-                ["notes", "Notas del analista"]
-              ].map(([id, label]) => (
-                <label key={id}>
-                  <input
-                    type="checkbox"
-                    checked={reportOptions[id]}
-                    onChange={() =>
-                      setReportOptions((current) => ({
-                        ...current,
-                        [id]: !current[id]
-                      }))
-                    }
-                  />
-                  <span>{label}</span>
-                </label>
+            <div className="automatic-team-grid">
+              {(automaticAnalysis?.teams || []).map((team) => (
+                <section key={team.id} style={{ "--analysis-team": team.color }}>
+                  <header><i /><div><strong>{team.name}</strong><small>{team.actions} acciones · {team.score} puntos etiquetados</small></div></header>
+                  <ul>{team.conclusions.map((conclusion) => <li key={conclusion}>{conclusion}</li>)}</ul>
+                </section>
               ))}
             </div>
+            <div className="automatic-player-list">
+              <strong>Lectura individual priorizada</strong>
+              {(automaticAnalysis?.players || []).slice(0, 8).map((player) => (
+                <span key={player.id}><b>#{player.number || "—"} {player.name}</b><small>{player.conclusion}</small></span>
+              ))}
+            </div>
+            <p className="analysis-caveat">{automaticAnalysis?.caveat}</p>
           </article>
           <aside className="report-action-panel">
-            <span className="eyebrow">Salida recomendada</span>
-            <h2>Informe para el cuerpo técnico</h2>
-            <p>
-              Incluye portada, indicadores, recuentos y cronología detallada
-              con equipos, jugadores y zonas de tiro.
-            </p>
-            <button
-              className="button primary"
-              onClick={() => onExportReport(reportOptions)}
-              disabled={!project.events.length}
-            >
-              Crear informe PDF
-            </button>
-            <button className="button ghost" onClick={onCopySummary} disabled={!project.events.length}>
-              Copiar resumen ejecutivo
-            </button>
-            <small>
-              El PDF se genera localmente y no sube el vídeo ni los datos.
-            </small>
+            <span className="eyebrow">Informe interpretativo</span>
+            <h2>Equipo e individual</h2>
+            <p>El motor relaciona tiro, zonas, pérdidas, recuperaciones, rebote y participación sin inventar acciones que no hayan sido etiquetadas.</p>
+            <button className="button primary" onClick={onExportAnalysis} disabled={!automaticAnalysis?.ready || !desktopAvailable}>Exportar análisis PDF</button>
+            <button className="button ghost" onClick={onCopySummary} disabled={!project.events.length}>Copiar resumen</button>
+            {!desktopAvailable && <small>La exportación PDF avanzada está disponible en la app de escritorio. En web puedes copiar el resumen y exportar CSV.</small>}
           </aside>
+        </div>
+      )}
+
+      {section === "visuals" && (
+        <div className="visual-export-workspace">
+          <header><div><span className="eyebrow">Dossier visual</span><h2>Estadísticas sin ruido</h2><p>Un PDF apaisado con gráficos del partido y el mínimo texto imprescindible.</p></div><button className="button primary" onClick={onExportVisualReport} disabled={!project.events.length || !desktopAvailable}>Exportar gráficos PDF</button></header>
+          <div className="visual-report-preview">
+            <article><span>Actividad temporal</span><div className="preview-line-chart"><i /><i /><i /><i /><i /></div></article>
+            <article><span>Acciones por etiqueta</span><div className="preview-bars">{stats.slice(0, 5).map((item) => <i key={item.id} style={{ height: `${Math.max(12, (item.count / Math.max(stats[0]?.count || 1, 1)) * 100)}%`, background: item.color }} />)}</div></article>
+            <article><span>Mapa de tiro</span><div className="preview-court"><i /><b /></div></article>
+            <article><span>Participación</span><strong>{new Set(project.events.map((event) => event.playerId).filter(Boolean)).size}</strong><small>jugadores etiquetados</small></article>
+          </div>
+          {!desktopAvailable && <p className="web-capability-note">La vista web mantiene el dashboard interactivo; la impresión maquetada en PDF requiere la versión de escritorio.</p>}
         </div>
       )}
 
@@ -238,10 +207,11 @@ export function ReportCenter({
               <button className="button ghost" onClick={onToggleSelectAll} disabled={!project.events.length}>
                 {allSelected ? "Quitar selección" : "Seleccionar todas"}
               </button>
-              <button className="button primary" onClick={onConfigureClips} disabled={!project.events.length}>
+              <button className="button primary" onClick={onConfigureClips} disabled={!project.events.length || !desktopAvailable}>
                 Configurar clips
               </button>
             </div>
+            {!desktopAvailable && <small className="web-capability-note">La edición y codificación de vídeo con FFmpeg está disponible en la aplicación de escritorio.</small>}
           </article>
           <article className="report-delivery-guide">
             <span className="eyebrow">Organización</span>

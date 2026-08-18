@@ -1,90 +1,93 @@
 # Contexto permanente de Tactovia
 
-Última actualización: 28 de julio de 2026
-Versión estable: 0.11.0
+Última actualización: 18 de agosto de 2026
+Versión estable: 0.12.0
 
 ## Producto
 
-Aplicación Electron/React/Vite para macOS Apple Silicon y Windows x64. Analiza
-vídeo local de baloncesto, etiqueta acciones, gestiona equipos y jugadores,
-genera estadísticas, informes y clips y permite diseñar jugadas.
+Aplicación React/Vite disponible como Electron para macOS Apple Silicon y
+Windows x64, con una primera base PWA instalable. Analiza vídeo local de
+baloncesto, etiqueta acciones, administra una biblioteca privada y genera
+estadísticas, conclusiones, datos y vídeo.
 
 ## Estado funcional
 
-- Varios perfiles locales con contraseña.
-- Datos, preferencias, autoguardado e histórico separados por perfil.
-- Demo efímera solo en desarrollo y sin persistencia.
-- Baloncesto como deporte activo; otros deportes quedan para fases posteriores.
+- Perfiles locales separados y acceso demo sin registro.
+- Baloncesto activo; otros deportes quedan para fases posteriores.
 - Sesión nueva, continuación del autoguardado o apertura de `.scout.json`.
-- Partido obligatorio y convocatoria de 5 a 12 jugadores por equipo.
-- Biblioteca creada por el usuario: competición → equipo → plantilla.
-- Cuatro plantillas rápidas de 5, 8, 10 y 12 jugadores.
-- Identidad global de jugador, traspasos y agentes libres.
-- Camisetas con colores principal/secundario para seleccionar dorsales.
-- Etiquetas editables de instante o intervalo.
-- Etiquetas iniciales: acierto 2P, acierto 3P, fallo 2P y fallo 3P, seguidas de
-  rebotes, pérdida, recuperación y acciones tácticas.
-- Pista SVG original con diez zonas, doble clic para deshacer y posición
-  configurable encima o debajo de las etiquetas.
-- Reproductor con controles, barra de volumen, velocidades hasta ×16, saltos,
-  fotogramas, navegación por eventos y atajos editables.
-- Resumen en directo configurable.
-- Línea temporal navegable y tabla ordenable con fichas emergentes.
-- Estadísticas tipo informe BI con filtros, KPIs, tendencia, ranking, equipos,
-  jugadores, zonas y control de calidad.
-- Informes PDF configurables, CSV, Excel y Excel normalizado para Power BI.
-- Clips selectivos con presets por jugador, equipo y cronología.
-- Playbook en cuatro pasos: Diseñar, Secuencia, Explicar y Compartir.
-- Paletas Tactovia, Arena, Océano y Grafito; tema automático, claro y oscuro.
-- Guía completa dentro del perfil y en `docs/GUIA-USUARIO.md`.
+- Proyecto con partido, convocatoria, vídeo, etiquetas, zonas y acciones.
+- Estadísticas exclusivamente del partido abierto; no usan registros de la
+  biblioteca y muestran estado vacío si aún no existe etiquetado.
+- Mapa SVG de diez zonas oculto por defecto, activable desde Ajustes, con
+  volumen, acierto y visualización caliente.
+- Reproductor inicial con −10 s, reproducción/pausa, +10 s y volumen. Controles
+  avanzados, velocidades hasta ×16 y atajos configurables.
+- Resumen en directo configurable con diez métricas del etiquetado.
+- Biblioteca del usuario separada del proyecto, organizada en carpetas,
+  competiciones, equipos, plantillas y agentes libres.
+- Centro de informes en cuatro áreas: análisis automático, gráficos, vídeo y
+  datos.
+- Conclusiones locales de equipo y jugador, sin inventar acciones ni enviar
+  información a servicios externos.
+- PDF interpretativo, PDF visual apaisado, CSV, Excel y modelo para Power BI.
+- Portal de vídeo con filtros, selección, agrupación, orden, tres calidades,
+  clips independientes y reel único de highlights.
+- Cuatro paletas; tema automático, claro y oscuro.
+- El Playbook se retiró deliberadamente de 0.12 para concentrar el MVP en
+  scouting y análisis.
+
+## Webapp
+
+- Manifiesto PWA, metadatos de instalación y service worker de shell offline.
+- En navegador: vídeo local, etiquetado, apertura/descarga de proyecto JSON y
+  CSV.
+- En escritorio: SQLite, copias, Excel, PDF, Power BI y codificación FFmpeg.
+- No existe aún backend, cuenta remota ni sincronización entre dispositivos.
 
 ## Datos y privacidad
 
-- SQLite usa esquema 3.
+- SQLite usa esquema 4.
+- `user_libraries` aísla la biblioteca de cada perfil.
 - Al guardar un proyecto con partido y acciones se crea una ficha histórica
-  privada de su perfil.
-- La ficha histórica no contiene vídeo, ruta, inicio, final ni ancla temporal.
-- El proyecto `.scout.json` conserva el vídeo y permite seguir editando y crear
-  clips.
-- No existe catálogo oficial precargado, importador masivo, calendario ni
-  partidos predichos.
-- La migración elimina únicamente datos piloto sin usar. Todo dato relacionado
-  con análisis reales se conserva.
-- El perfil local no es todavía una cuenta cloud y no sincroniza entre equipos.
+  privada sin vídeo, ruta ni tiempos de clip.
+- `.scout.json` conserva el trabajo editable y recupera etiquetas y estadísticas.
+- Se conservan `com.scoutanalyzer.desktop`, `scout-analyzer`,
+  `scoutanalyzer.db` y las claves antiguas para no romper instalaciones.
+- La migración de proyectos elimina la propiedad obsoleta `playbook` y conserva
+  el resto de los datos compatibles.
 
-## Compatibilidad
+## Entregables 0.12.0
 
-Se conservan `com.scoutanalyzer.desktop`, la carpeta `scout-analyzer`, la base
-`scoutanalyzer.db`, las claves históricas y `.scout.json`. Esto evita romper los
-datos de versiones anteriores aunque la marca pública sea Tactovia.
+La carpeta `release` contiene únicamente:
 
-Cada empaquetado limpia versiones y archivos intermedios de `release`. Solo
-deben permanecer:
+- `Tactovia-0.12.0-mac-arm64.dmg`
+- `Tactovia-0.12.0-win-x64.exe`
+- `Tactovia-0.12.0-win-x64.zip`
 
-- `Tactovia-0.11.0-mac-arm64.dmg`
-- `Tactovia-0.11.0-win-x64.exe`
-- `Tactovia-0.11.0-win-x64.zip`
+Cada empaquetado elimina versiones anteriores, blockmaps y carpetas
+intermedias.
 
-## Verificación de 0.11.0
+## Verificación de 0.12.0
 
-- 40/40 pruebas automáticas.
-- Base SQLite real en Electron:
-  `DATABASE_OK version=3 teams=2 players=1 matches=1 events=1 histories=1 video=excluded privacy=private`.
-- Vídeo real:
-  `VIDEO_SEEK_OK duration=12.00 seek=7.25 playback=8.46 rate=2x ranges=1`.
-- Compilación Vite de producción superada.
-- Acceso, etiquetado, estadísticas, biblioteca, informes, guía y Playbook
-  revisados visualmente sin errores de consola.
-- DMG validado mediante su suma interna; EXE y ZIP generados y revisados
-  estructuralmente. La ejecución física de Windows sigue pendiente.
+- 41/41 pruebas automáticas.
+- 9 componentes críticos renderizados.
+- SQLite Electron real:
+  `DATABASE_OK version=4 teams=2 players=1 matches=1 events=1 histories=1 video=excluded privacy=private`.
+- Vídeo y reel FFmpeg reales:
+  `VIDEO_SEEK_OK duration=12.00 seek=7.25 playback=8.46 rate=2x ranges=1 highlights=255346`.
+- Excel real generado correctamente.
+- Compilación Vite superada: 368.86 kB de JS y 127.11 kB de CSS antes de gzip.
+- Acceso, demo, etiquetado, estadísticas, biblioteca e informes revisados en
+  navegador sin errores ni avisos de consola.
+- DMG validado por `hdiutil`; EXE y ZIP revisados estructuralmente.
+- Windows sigue pendiente de prueba física y los instaladores no están firmados.
 
 ## Referencias activas
 
-- Resultado de esta versión: `TRASPASO-TACTOVIA-0.11.0.md`.
-- Guía de usuario: `docs/GUIA-USUARIO.md`.
+- Resultado: `TRASPASO-TACTOVIA-0.12.0.md`.
+- Guía: `docs/GUIA-USUARIO.md`.
 - Atajos: `docs/ATAJOS.md`.
 - Base de datos: `docs/BASE-DATOS-0.6.md`.
-- Playbook: `docs/PLAYBOOK-2.md`.
 - Sistema visual: `docs/SISTEMA-VISUAL-0.7.md`.
 - Marca: `BRAND_IMPLEMENTATION.md`.
 - Hoja de ruta: `docs/ROADMAP.md`.
@@ -97,15 +100,14 @@ deben permanecer:
 4. Actualizar este contexto cuando cambie el estado estable.
 5. Guardar y subir los cambios.
 
-Los vídeos, análisis `.scout.json`, datos locales, `node_modules`, `dist` y
-`release` no se suben al repositorio.
+Los vídeos, análisis, datos locales, `node_modules`, `dist` y `release` no se
+suben al repositorio.
 
 ## Siguientes prioridades
 
-1. Probar físicamente la versión 0.11.0 en Windows x64.
-2. Validar los flujos con dos o tres entrenadores reales.
-3. Conectar estadísticas históricas de varios partidos en un único dashboard.
-4. Decidir backend, cuentas, roles y sincronización entre ordenadores.
-5. Crear highlights como un único vídeo.
-6. Estudiar etiquetado asistido por IA con revisión humana obligatoria.
-7. Firmar y notarizar instaladores antes de distribución comercial.
+1. Probar físicamente 0.12.0 en Windows x64.
+2. Validar los flujos con entrenadores y corregir fricción real de uso.
+3. Definir backend, organizaciones, roles, privacidad y sincronización.
+4. Diseñar autenticación real para publicar la webapp.
+5. Investigar etiquetado asistido por IA con revisión humana obligatoria.
+6. Firmar y notarizar instaladores antes de distribución comercial.

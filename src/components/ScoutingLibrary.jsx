@@ -8,9 +8,11 @@ export function ScoutingLibrary({
   error,
   teams,
   competitions,
+  folders,
   freeAgents,
   onTeamsChange,
   onCompetitionsChange,
+  onFoldersChange,
   onFreeAgentsChange,
   onRefresh,
   onBackup,
@@ -49,6 +51,7 @@ export function ScoutingLibrary({
           snapshot={snapshot}
           teams={teams}
           competitions={competitions}
+          folders={folders}
           freeAgents={freeAgents}
           loading={loading}
           error={error}
@@ -56,15 +59,19 @@ export function ScoutingLibrary({
           onBackup={onBackup}
           onDeleteRecord={onDeleteRecord}
           onExportHistory={onExportHistory}
+          onCompetitionsChange={onCompetitionsChange}
+          onFoldersChange={onFoldersChange}
           onManageTeams={() => setWorkspace("manage")}
         />
       ) : (
         <RosterManager
           teams={teams}
           competitions={competitions}
+          folders={folders}
           freeAgents={freeAgents}
           onChange={onTeamsChange}
           onCompetitionsChange={onCompetitionsChange}
+          onFoldersChange={onFoldersChange}
           onFreeAgentsChange={onFreeAgentsChange}
         />
       )}

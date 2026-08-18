@@ -175,6 +175,7 @@ export function reportPayload(project, options = {}) {
     totalTags: stats.length,
     analyzedTime: formatTime(project.video?.duration || 0),
     options,
+    automaticAnalysis: options.automaticAnalysis || null,
     stats: stats.map((row) => ({
       ...row,
       duration: formatTime(row.duration)

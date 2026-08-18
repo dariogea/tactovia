@@ -16,6 +16,11 @@ const tagSizePresets = {
 };
 
 const liveModuleOptions = [
+  ["actions", "Acciones etiquetadas"],
+  ["tagTypes", "Tipos de etiqueta"],
+  ["players", "Jugadores implicados"],
+  ["taggedTime", "Tiempo de clips"],
+  ["zones", "Zonas utilizadas"],
   ["score", "Marcador estimado"],
   ["pace", "Ritmo de etiquetado"],
   ["shooting", "Acierto de tiro"],
@@ -263,7 +268,7 @@ export function SettingsPanel({
         <div className="settings-choice-row">
           <div>
             <strong>Mapa de zonas</strong>
-            <span>Activa la pista compacta y decide si muestra los nombres.</span>
+            <span>Está oculta por defecto. Actívala cuando quieras registrar o revisar zonas de tiro.</span>
           </div>
           <div className="settings-inline-toggles">
             <label className="switch-control">
@@ -303,7 +308,7 @@ export function SettingsPanel({
         <div className="settings-choice-row live-module-settings">
           <div>
             <strong>Módulos en tiempo real</strong>
-            <span>Elige qué indicadores aparecen bajo el reproductor.</span>
+            <span>Elige entre indicadores calculados únicamente con las acciones del partido actual.</span>
           </div>
           <div className="settings-inline-toggles">
             {liveModuleOptions.map(([id, label]) => (

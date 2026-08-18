@@ -1,6 +1,6 @@
 {
   "name": "scout-analyzer",
-  "version": "0.11.0",
+  "version": "0.12.0",
   "private": true,
   "author": "Tactovia",
   "description": "Tactovia · Plataforma de análisis deportivo",
@@ -9,6 +9,8 @@
   "type": "module",
   "scripts": {
     "dev": "concurrently -k \"vite\" \"wait-on http://127.0.0.1:5173 && electron .\"",
+    "web": "vite --host 0.0.0.0",
+    "preview:web": "vite preview --host 0.0.0.0",
     "build": "vite build",
     "start": "electron .",
     "test": "node --test",

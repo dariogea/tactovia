@@ -1,5 +1,3 @@
-import { createBlankPlaybook } from "./playbook.js";
-
 export const tagPalette = [
   "#FF6B35",
   "#2DD4BF",
@@ -173,10 +171,10 @@ export const defaultPreferences = {
     tagButtonHeight: 68,
     workspaceSize: "medium",
     tagButtonSize: "medium",
-    shotCourtVisible: true,
+    shotCourtVisible: false,
     shotCourtLabels: true,
     shotCourtPosition: "above",
-    liveModules: ["score", "pace", "shooting", "coverage", "latest"]
+    liveModules: ["actions", "tagTypes", "players", "shooting", "latest"]
   },
   playback: {
     smallStep: 1,
@@ -217,16 +215,10 @@ export const defaultPreferences = {
   }
 };
 
-export {
-  createBlankPlaybook,
-  createPlaybookPhase,
-  createPlaybookPlay
-} from "./playbook.js";
-
 export function createBlankProject(teams = defaultTeams) {
   const now = new Date().toISOString();
   return {
-    version: 9,
+    version: 10,
     id: crypto.randomUUID(),
     projectName: "Nuevo análisis",
     createdAt: now,
@@ -241,9 +233,9 @@ export function createBlankProject(teams = defaultTeams) {
       players: (team.players || []).map((player) => ({ ...player }))
     })),
     competitions: [],
+    libraryFolders: [],
     freeAgents: [],
     match: null,
-    playbook: createBlankPlaybook(),
     events: []
   };
 }

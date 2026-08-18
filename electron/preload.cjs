@@ -7,14 +7,16 @@ contextBridge.exposeInMainWorld("scoutDesktop", {
     ipcRenderer.invoke("database:sync-project", payload),
   getDatabaseSnapshot: (payload) =>
     ipcRenderer.invoke("database:snapshot", payload),
+  getUserLibrary: (payload) =>
+    ipcRenderer.invoke("database:user-library", payload),
+  saveUserLibrary: (payload) =>
+    ipcRenderer.invoke("database:save-user-library", payload),
   finalizeProject: (payload) =>
     ipcRenderer.invoke("database:finalize-project", payload),
   deleteGameRecord: (payload) =>
     ipcRenderer.invoke("database:delete-game-record", payload),
   backupDatabase: () => ipcRenderer.invoke("database:backup"),
   selectVideo: () => ipcRenderer.invoke("video:select"),
-  selectPlaybookAttachment: () =>
-    ipcRenderer.invoke("playbook:select-attachment"),
   authorizeVideo: (filePath) => ipcRenderer.invoke("video:authorize", filePath),
   openProject: () => ipcRenderer.invoke("project:open"),
   saveProject: (payload) => ipcRenderer.invoke("project:save", payload),
@@ -23,9 +25,5 @@ contextBridge.exposeInMainWorld("scoutDesktop", {
   exportPowerBi: (payload) => ipcRenderer.invoke("export:powerbi", payload),
   exportClips: (payload) => ipcRenderer.invoke("export:clips", payload),
   exportReportPdf: (payload) => ipcRenderer.invoke("export:report-pdf", payload),
-  exportPlaybookPng: (payload) => ipcRenderer.invoke("export:playbook-png", payload),
-  exportPlaybookPdf: (payload) => ipcRenderer.invoke("export:playbook-pdf", payload),
-  exportPlaybookVideo: (payload) =>
-    ipcRenderer.invoke("export:playbook-video", payload),
   revealFile: (filePath) => ipcRenderer.invoke("file:reveal", filePath)
 });

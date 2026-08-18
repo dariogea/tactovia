@@ -14,7 +14,6 @@ try {
     { StatsPanel },
     { RosterManager },
     { SettingsPanel },
-    { Playbook },
     { MatchSetup },
     { DatabaseLibrary },
     { ScoutingLibrary },
@@ -27,7 +26,6 @@ try {
       vite.ssrLoadModule("/src/components/StatsPanel.jsx"),
       vite.ssrLoadModule("/src/components/RosterManager.jsx"),
       vite.ssrLoadModule("/src/components/SettingsPanel.jsx"),
-      vite.ssrLoadModule("/src/components/Playbook.jsx"),
       vite.ssrLoadModule("/src/components/MatchSetup.jsx"),
       vite.ssrLoadModule("/src/components/DatabaseLibrary.jsx"),
       vite.ssrLoadModule("/src/components/ScoutingLibrary.jsx"),
@@ -50,12 +48,6 @@ try {
       onThemeModeChange() {},
       paletteMode: "tactovia",
       onPaletteModeChange() {}
-    }),
-    React.createElement(Playbook, {
-      playbook: project.playbook,
-      teams: project.teams,
-      onChange() {},
-      onExport() {}
     }),
     React.createElement(MatchSetup, {
       teams: project.teams,
@@ -129,7 +121,7 @@ try {
       onOpen() {}
     }),
     React.createElement(ProfilePanel, {
-      appVersion: "0.11.0",
+      appVersion: "0.12.0",
       account: {
         id: "local",
         name: "Analista",

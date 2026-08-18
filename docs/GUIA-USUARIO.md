@@ -1,124 +1,100 @@
-# Guía de usuario de Tactovia 0.11
+# Guía de usuario de Tactovia 0.12
 
 ## 1. Acceder
 
-Tactovia admite varios perfiles locales en un mismo ordenador. Cada perfil
-mantiene separados sus equipos, competiciones, proyectos recuperables e
-histórico de partidos.
+Puedes iniciar sesión con un perfil local, crear uno nuevo o pulsar **Entrar en
+la demo**. La demo no exige registro y utiliza un espacio temporal sin histórico
+de perfil. Después selecciona **Baloncesto** y elige entre una sesión nueva o un
+archivo `.scout.json` guardado.
 
-1. Elige **Iniciar sesión** para abrir un perfil existente o **Crear cuenta**.
-2. Introduce nombre, correo y una contraseña local de al menos seis caracteres.
-3. Selecciona **Baloncesto**.
-4. Crea una sesión, continúa el autoguardado o abre un archivo `.scout.json`.
+En navegador, Tactovia puede instalarse como webapp. Los datos siguen siendo
+locales; no existe todavía sincronización entre ordenadores.
 
-La demo efímera solo aparece al ejecutar la versión de desarrollo. No guarda
-cuentas, equipos, preferencias ni históricos.
+## 2. Biblioteca personal
 
-## 2. Crear la biblioteca
+**Competiciones y equipos** es independiente del análisis abierto. Funciona como
+un explorador de carpetas:
 
-En **Competiciones y equipos**:
+1. Crea carpetas con la organización que prefieras.
+2. Crea una competición y guárdala dentro de una carpeta.
+3. Añade equipos, colores, logo, ciudad, pabellón, cuerpo técnico y temporada.
+4. Completa cada plantilla manualmente o con una plantilla rápida.
+5. Abre la ficha de un jugador para consultar información, cambiarlo de equipo o
+   dejarlo como agente libre.
 
-1. Crea una competición e indica su temporada.
-2. Crea un equipo, asígnalo a la competición y completa colores, ciudad,
-   pabellón, cuerpo técnico y logo.
-3. Añade jugadores manualmente o usa una de las cuatro plantillas de 5, 8, 10
-   o 12 jugadores.
-4. Completa dorsal, nombre, posición, altura, nacionalidad, fotografía y notas.
-
-Un jugador conserva su identidad al cambiar de equipo. Desde su ficha puedes
-traspasarlo a otro equipo o dejarlo como agente libre. Los agentes libres pueden
-firmar posteriormente por cualquier equipo del perfil.
+Los partidos guardados aparecen en **Partidos analizados**; no se generan
+partidos predichos.
 
 ## 3. Preparar un partido
 
-1. Selecciona un vídeo local.
-2. Elige equipo local y visitante.
+1. Selecciona el vídeo local.
+2. Elige los dos equipos.
 3. Marca una convocatoria de entre 5 y 12 jugadores por equipo.
-4. Si un equipo no alcanza cinco jugadores, completa primero su plantilla.
+4. Si el equipo aún no existe, créalo desde el mismo configurador.
 
-La camiseta de cada jugador utiliza el color principal del equipo y el dorsal,
-el color secundario.
+La biblioteca se copia como referencia al nuevo análisis, pero sus carpetas y
+fichas continúan perteneciendo al perfil.
 
 ## 4. Etiquetar
 
-1. Sitúa el vídeo con los controles, la línea de reproducción o los atajos.
-2. Selecciona equipo y jugador mediante su camiseta.
-3. Para una acción de tiro, selecciona una de las diez zonas de la pista.
-4. Añade una nota rápida si necesitas contexto cualitativo.
-5. Pulsa una etiqueta:
-   - las etiquetas de instante crean la acción al momento;
-   - las etiquetas de intervalo comienzan con una pulsación y terminan con otra.
-6. Ordena la tabla pulsando el título de cualquier columna.
-7. Pulsa la información de una etiqueta, equipo o jugador para abrir su ficha.
+- De forma predeterminada se muestran −10 s, reproducir/pausar, +10 s y volumen.
+- Activa saltos, fotogramas, velocidades y navegación por eventos desde Ajustes.
+- El botón **Atajos** está junto al reproductor; la guía completa también está
+  en [ATAJOS.md](ATAJOS.md).
+- Selecciona equipo, jugador y una etiqueta. Para tiros, activa el mapa y pulsa
+  una zona.
+- El mapa se oculta por defecto. Ajustes permite mostrarlo, cambiar su posición y
+  ver sus nombres. Un doble clic elimina la zona seleccionada.
+- Las zonas muestran volumen y acierto del partido y forman el mapa caliente.
+- El resumen bajo el vídeo puede mostrar acciones, etiquetas, jugadores, tiempo
+  etiquetado, zonas, marcador, ritmo, tiro, cobertura y última acción.
+- Ordena la cronología pulsando cualquier cabecera y abre fichas desde sus datos.
 
-El mapa puede situarse encima o debajo de las etiquetas, ocultarse y mostrar u
-ocultar sus nombres. Un doble clic elimina la zona seleccionada.
+## 5. Guardar y recuperar
 
-## 5. Guardar e histórico
+**Guardar** crea un `.scout.json` con partido, convocatoria, etiquetas, zonas y
+acciones. Al abrirlo se reconstruyen automáticamente las estadísticas. En un
+perfil real, guardar un partido con acciones añade además una ficha histórica
+privada sin vídeo, ruta ni tiempos de clip.
 
-**Guardar** crea un proyecto `.scout.json` editable. Si ya existen partido y
-acciones, crea también una ficha histórica privada para el perfil.
+En la web se descarga el archivo al dispositivo. En escritorio se conserva su
+ruta y puede actualizarse directamente.
 
-La ficha histórica contiene:
+## 6. Estadísticas del partido
 
-- equipos y jugadores;
-- acciones estadísticas;
-- recuentos y zonas;
-- fecha y resumen del partido.
+El panel solo analiza el partido abierto. Si no hay dos equipos y acciones
+etiquetadas, muestra un estado vacío en lugar de mezclar datos de la biblioteca.
 
-No contiene vídeo, ruta local, inicio, final ni ancla temporal. Por tanto no
-permite abrir el vídeo ni exportar clips. Se puede consultar, exportar o borrar
-desde **Competiciones y equipos → Partidos analizados**.
+Puedes filtrar equipo, jugador y etiqueta; cambiar entre resumen, tiro y calidad
+del dato; activar visuales y consultar KPIs, evolución, rankings y zonas. Los
+colores se adaptan a los equipos del encuentro.
 
-## 6. Estadísticas
+## 7. Informe y exportación
 
-El panel funciona como un informe interactivo:
+El portal se divide en cuatro entregables:
 
-- filtra por partido, equipo, jugador y etiqueta;
-- cambia entre Resumen, Tiro y zonas y Calidad del dato;
-- activa u oculta evolución, etiquetas, equipos y jugadores;
-- consulta KPIs, tendencias, rankings y distribución espacial.
+1. **Análisis IA**: conclusiones locales de equipo y jugador basadas únicamente
+   en las etiquetas. Indica la calidad y límites de la muestra.
+2. **Visuales**: dossier PDF apaisado con KPIs y gráficos del partido, casi sin
+   texto.
+3. **Vídeo**: filtra por etiqueta, equipo o jugador; exporta una selección, todas
+   las acciones, clips separados o un único vídeo de highlights; elige calidad,
+   orden y carpetas.
+4. **Datos**: CSV, Excel y libro normalizado para Power BI.
 
-Los colores de equipos y visuales se aplican automáticamente cuando existe una
-selección compatible.
+PDF, Excel, Power BI y vídeo codificado requieren la app de escritorio. La
+webapp permite guardar el análisis y exportar CSV.
 
-## 7. Informes, datos y clips
+## 8. Perfil, apariencia y controles
 
-En **Informe y exportación**:
+Desde el avatar abre **Perfil y ajustes** para configurar:
 
-- elige las secciones del PDF: resumen, etiquetas, mapa de tiro, jugadores,
-  cronología y notas;
-- exporta CSV o Excel;
-- genera un Excel normalizado para cargarlo en Power BI;
-- selecciona acciones concretas para clips;
-- usa presets por jugador, equipo o cronología.
-
-El formato `.pbix` es propietario de Microsoft y no se genera. El libro
-preparado para Power BI contiene tablas normalizadas listas para importación.
-
-## 8. Playbook
-
-El flujo se divide en:
-
-1. **Diseñar**: pista, formación, jugadores, acciones y objetos.
-2. **Secuencia**: fases, tiempos y animación.
-3. **Explicar**: descripción y notas.
-4. **Compartir**: PNG, PDF, vídeo WebM o resumen.
-
-Los jugadores neutros del 1 al 5 permiten diseñar sin asociar una plantilla. Las
-fases mantienen la posición final de los jugadores y permiten continuar,
-duplicar, reflejar o reorganizar la jugada.
-
-## 9. Apariencia y controles
-
-Desde el menú del perfil abre **Perfil y ajustes** para elegir:
-
-- modo automático, claro u oscuro;
+- tema automático, claro u oscuro;
 - paletas Tactovia, Arena, Océano o Grafito;
-- posición y visibilidad del mapa;
+- visibilidad y posición del mapa;
 - módulos del resumen en directo;
-- botones visibles del reproductor;
-- saltos, fotogramas y atajos personalizados.
+- controles visibles del reproductor;
+- saltos, fotogramas y atajos personalizados;
+- datos del perfil y sesión.
 
-La lista completa de atajos está en [ATAJOS.md](ATAJOS.md) y también dentro de
-**Perfil → Guía de usuario**.
+Los ajustes de la demo se reinician al volver a entrar.

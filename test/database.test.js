@@ -11,7 +11,7 @@ const { createDatabaseService } = require("../electron/database.cjs");
 function sampleProject() {
   const now = new Date().toISOString();
   return {
-    version: 9,
+    version: 10,
     id: "analysis-test",
     projectName: "Partido de prueba",
     createdAt: now,
@@ -22,7 +22,6 @@ function sampleProject() {
       duration: 120
     },
     template: { name: "Prueba", tags: [] },
-    playbook: { version: 3, folders: [], plays: [] },
     competitions: [],
     freeAgents: [],
     teams: [
@@ -164,6 +163,20 @@ test("crea un histórico sin vídeo y lo aísla por perfil", () => {
     assert.equal(service.snapshot("profile-a").gameRecords.length, 1);
     service.deleteGameRecord(project.id, "profile-a");
     assert.equal(service.snapshot("profile-a").gameRecords.length, 0);
+  });
+});
+
+test("guarda la biblioteca de equipos y carpetas aislada por perfil", () => {
+  withDatabase((service) => {
+    const library = {
+      teams: [{ id: "team-library", name: "Equipo biblioteca", players: [] }],
+      competitions: [{ id: "competition-library", name: "Liga local", folderId: "folder-a" }],
+      freeAgents: [],
+      folders: [{ id: "folder-a", name: "Temporada 2026/27" }]
+    };
+    service.saveUserLibrary("profile-a", library);
+    assert.deepEqual(service.getUserLibrary("profile-a").library, library);
+    assert.equal(service.getUserLibrary("profile-b").library, null);
   });
 });
 

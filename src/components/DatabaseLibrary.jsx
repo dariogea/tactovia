@@ -147,6 +147,7 @@ export function DatabaseLibrary({
   snapshot,
   teams,
   competitions,
+  folders = [],
   freeAgents,
   loading,
   error,
@@ -154,18 +155,26 @@ export function DatabaseLibrary({
   onBackup,
   onManageTeams,
   onDeleteRecord,
-  onExportHistory
+  onExportHistory,
+  onCompetitionsChange,
+  onFoldersChange
 }) {
   const [section, setSection] = useState("competitions");
   const [search, setSearch] = useState("");
   const [selectedRecord, setSelectedRecord] = useState(null);
   const [selectedPlayer, setSelectedPlayer] = useState(null);
+  const [selectedFolderId, setSelectedFolderId] = useState("all");
   const normalizedSearch = search.trim().toLocaleLowerCase("es");
   const gameRecords = snapshot?.gameRecords || [];
 
   const competitionGroups = useMemo(() => {
+    const visibleCompetitions = (competitions || []).filter((competition) => {
+      if (selectedFolderId === "all") return true;
+      if (selectedFolderId === "unfiled") return !competition.folderId;
+      return competition.folderId === selectedFolderId;
+    });
     const base = [
-      ...(competitions || []),
+      ...visibleCompetitions,
       {
         id: "unassigned",
         name: "Sin competición",
@@ -177,8 +186,10 @@ export function DatabaseLibrary({
       .map((competition) => {
         const competitionTeams = teams.filter((team) =>
           competition.id === "unassigned"
-            ? !team.competitionId ||
+            ? (selectedFolderId === "all" || selectedFolderId === "unfiled") &&
+              (!team.competitionId ||
               !(competitions || []).some((item) => item.id === team.competitionId)
+              )
             : team.competitionId === competition.id
         );
         return {
@@ -195,8 +206,40 @@ export function DatabaseLibrary({
           )
         };
       })
-      .filter((competition) => competition.teams.length > 0);
-  }, [competitions, normalizedSearch, teams]);
+      .filter(
+        (competition) =>
+          competition.teams.length > 0 ||
+          (!normalizedSearch && competition.id !== "unassigned")
+      );
+  }, [competitions, normalizedSearch, selectedFolderId, teams]);
+
+  function createFolder() {
+    const name = window.prompt("Nombre de la carpeta")?.trim();
+    if (!name) return;
+    const folder = { id: crypto.randomUUID(), name, createdAt: new Date().toISOString() };
+    onFoldersChange?.([...folders, folder]);
+    setSelectedFolderId(folder.id);
+  }
+
+  function renameSelectedFolder() {
+    const folder = folders.find((item) => item.id === selectedFolderId);
+    if (!folder) return;
+    const name = window.prompt("Nuevo nombre de la carpeta", folder.name)?.trim();
+    if (!name) return;
+    onFoldersChange?.(folders.map((item) => item.id === folder.id ? { ...item, name } : item));
+  }
+
+  function deleteSelectedFolder() {
+    const folder = folders.find((item) => item.id === selectedFolderId);
+    if (!folder || !window.confirm(`¿Eliminar la carpeta “${folder.name}”? Las competiciones pasarán a Sin carpeta.`)) return;
+    onFoldersChange?.(folders.filter((item) => item.id !== folder.id));
+    onCompetitionsChange?.(
+      competitions.map((competition) =>
+        competition.folderId === folder.id ? { ...competition, folderId: "" } : competition
+      )
+    );
+    setSelectedFolderId("all");
+  }
 
   const playerRows = useMemo(() => {
     const teamPlayers = teams.flatMap((team) =>
@@ -292,7 +335,51 @@ export function DatabaseLibrary({
       {error && <div className="database-error">{error}</div>}
 
       {section === "competitions" && (
-        <div className="library-accordion">
+        <div className="library-folder-browser">
+          <aside className="library-folder-rail">
+            <header>
+              <div><span className="eyebrow">Organización</span><h2>Mis carpetas</h2></div>
+              <button className="mini-button" onClick={createFolder}>＋</button>
+            </header>
+            <button
+              className={selectedFolderId === "all" ? "active" : ""}
+              onClick={() => setSelectedFolderId("all")}
+            >
+              <i>▦</i><span><strong>Toda la biblioteca</strong><small>{competitions.length} competiciones</small></span>
+            </button>
+            {folders.map((folder) => {
+              const count = competitions.filter((competition) => competition.folderId === folder.id).length;
+              return (
+                <button
+                  className={selectedFolderId === folder.id ? "active" : ""}
+                  key={folder.id}
+                  onClick={() => setSelectedFolderId(folder.id)}
+                >
+                  <i>▰</i><span><strong>{folder.name}</strong><small>{count} competiciones</small></span>
+                </button>
+              );
+            })}
+            <button
+              className={selectedFolderId === "unfiled" ? "active" : ""}
+              onClick={() => setSelectedFolderId("unfiled")}
+            >
+              <i>□</i><span><strong>Sin carpeta</strong><small>Pendientes de ordenar</small></span>
+            </button>
+            {folders.some((folder) => folder.id === selectedFolderId) && (
+              <footer>
+                <button onClick={renameSelectedFolder}>Renombrar</button>
+                <button className="danger-text" onClick={deleteSelectedFolder}>Eliminar</button>
+              </footer>
+            )}
+          </aside>
+          <div className="library-accordion">
+          <header className="library-folder-heading">
+            <div>
+              <span className="eyebrow">Contenido</span>
+              <h2>{selectedFolderId === "all" ? "Toda la biblioteca" : selectedFolderId === "unfiled" ? "Sin carpeta" : folders.find((folder) => folder.id === selectedFolderId)?.name}</h2>
+            </div>
+            <button className="button primary" onClick={onManageTeams}>Crear o editar datos</button>
+          </header>
           {competitionGroups.map((competition, competitionIndex) => (
             <details className="library-competition" key={competition.id} open={competitionIndex === 0}>
               <summary>
@@ -356,9 +443,8 @@ export function DatabaseLibrary({
             </details>
           ))}
           <div className="competition-directory-actions">
-            <button className="button primary" onClick={onManageTeams}>
-              Crear o editar datos
-            </button>
+            {competitionGroups.length === 0 && <span>No hay competiciones o equipos en esta carpeta.</span>}
+          </div>
           </div>
         </div>
       )}

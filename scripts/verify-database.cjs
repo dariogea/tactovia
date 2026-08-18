@@ -17,7 +17,7 @@ async function run() {
   const now = new Date().toISOString();
 
   service.syncProject({
-    version: 9,
+    version: 10,
     id: "electron-database-test",
     projectName: "Validación de Electron",
     createdAt: now,
@@ -27,7 +27,6 @@ async function run() {
       duration: 90
     },
     template: { name: "Prueba", tags: [] },
-    playbook: { version: 3, folders: [], plays: [] },
     teams: [
       {
         id: "electron-home",
@@ -104,7 +103,7 @@ async function run() {
   }, "electron-profile");
 
   const snapshot = service.snapshot("electron-profile");
-  assert.equal(snapshot.databaseVersion, 3);
+  assert.equal(snapshot.databaseVersion, 4);
   assert.equal(snapshot.totals.teams, 2);
   assert.equal(snapshot.totals.players, 1);
   assert.equal(snapshot.totals.matches, 1);

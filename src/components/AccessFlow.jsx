@@ -13,7 +13,7 @@ const sports = [
   {
     id: "basketball",
     name: "Baloncesto",
-    description: "Etiquetado, mapa de tiro, estadísticas y Playbook",
+    description: "Etiquetado, mapa de tiro y estadísticas avanzadas",
     symbol: "◉",
     available: true
   },
@@ -238,15 +238,14 @@ function AccountStage({ account, onAuthenticated, onAccountChange, onDemo }) {
             {busy ? "Comprobando…" : creating ? "Crear perfil y continuar" : "Entrar a Tactovia"}
           </button>
         </form>
-        {import.meta.env.DEV && (
-          <>
-            <div className="demo-access-divider"><span>herramientas de desarrollo</span></div>
-            <button type="button" className="button demo-access-button" onClick={onDemo}>
-              <span>▶</span>
-              Saltar acceso con una demo efímera
-            </button>
-          </>
-        )}
+        <div className="demo-access-divider"><span>probar sin cuenta</span></div>
+        <button type="button" className="button demo-access-button" onClick={onDemo}>
+          <span>▶</span>
+          Entrar en la demo
+        </button>
+        <small className="demo-access-help">
+          Espacio temporal: al salir no conserva perfiles ni históricos.
+        </small>
         <small className="access-privacy-note">
           Los perfiles y sus históricos están separados en este dispositivo.
           Tactovia no envía credenciales, vídeos ni análisis a Internet.

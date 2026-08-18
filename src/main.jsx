@@ -29,3 +29,11 @@ ReactDOM.createRoot(document.getElementById("root")).render(
     <App />
   </React.StrictMode>
 );
+
+if (import.meta.env.PROD && "serviceWorker" in navigator && !window.scoutDesktop) {
+  window.addEventListener("load", () => {
+    navigator.serviceWorker.register("./sw.js").catch(() => {
+      // La web sigue funcionando aunque el navegador bloquee el modo sin conexión.
+    });
+  });
+}

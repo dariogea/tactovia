@@ -291,6 +291,29 @@ function reportHtml(report) {
     })
     .join("");
 
+  if (options.mode === "intelligence") {
+    const insight = report.automaticAnalysis || {};
+    const teamSections = (insight.teams || []).map((team) => `
+      <section class="team" style="--team:${escapeHtml(team.color || "#08756D")}">
+        <header><span>${escapeHtml(team.shortName || "EQ")}</span><div><h2>${escapeHtml(team.name)}</h2><p>${escapeHtml(team.actions)} acciones · ${escapeHtml(team.score)} puntos etiquetados · ${escapeHtml(team.shootingPercentage)}% en tiro</p></div></header>
+        <ul>${(team.conclusions || []).map((item) => `<li>${escapeHtml(item)}</li>`).join("")}</ul>
+      </section>`).join("");
+    const playerSections = (insight.players || []).slice(0, 16).map((player) => `
+      <div class="player"><strong>#${escapeHtml(player.number || "—")} ${escapeHtml(player.name)}</strong><span>${escapeHtml(player.teamName)}</span><p>${escapeHtml(player.conclusion)}</p></div>`).join("");
+    return `<!doctype html><html lang="es"><head><meta charset="utf-8"><style>
+      @page{size:A4;margin:14mm}*{box-sizing:border-box}body{margin:0;color:#101923;font:12px Arial,sans-serif}body>header{padding:20px 22px;background:#0b1218;color:#fff;border-radius:14px}h1{font-size:27px;margin:5px 0}.badge{color:#bdeb62;font-weight:700;text-transform:uppercase;letter-spacing:.08em}.quality{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin:15px 0}.quality div{padding:12px;border:1px solid #dbe3e8;border-radius:10px}.quality strong{display:block;color:#08756d;font-size:22px}.team{border:1px solid #dbe3e8;border-left:6px solid var(--team);border-radius:12px;padding:14px;margin:12px 0;break-inside:avoid}.team header{display:flex;gap:10px;align-items:center}.team header>span{display:grid;place-items:center;width:40px;height:40px;border-radius:10px;background:var(--team);color:#fff;font-weight:800}.team h2,.team p{margin:2px 0}.team li{margin:7px 0;line-height:1.45}.players{display:grid;grid-template-columns:1fr 1fr;gap:8px}.player{border:1px solid #dbe3e8;border-radius:9px;padding:10px;break-inside:avoid}.player strong,.player span{display:block}.player span,.player p,.caveat{color:#60707b}.player p{margin:6px 0 0;line-height:1.4}.caveat{margin-top:18px;padding:10px;background:#f2f5f6;border-radius:8px;font-size:10px}
+    </style></head><body><header><span class="badge">Tactovia Local Insights · IA basada en reglas</span><h1>${escapeHtml(report.projectName || "Análisis")}</h1><p>${escapeHtml(report.videoName || "Sin vídeo")} · ${escapeHtml(report.generatedAt)}</p></header><div class="quality"><div><strong>${escapeHtml(insight.dataQuality?.teamCoverage || 0)}%</strong>equipos identificados</div><div><strong>${escapeHtml(insight.dataQuality?.playerCoverage || 0)}%</strong>jugadores identificados</div><div><strong>${escapeHtml(insight.dataQuality?.zoneCoverage || 0)}%</strong>tiros con zona</div></div>${teamSections}<h2>Lectura individual</h2><div class="players">${playerSections || "<p>Sin jugadores identificados.</p>"}</div><p class="caveat">${escapeHtml(insight.caveat || "Conclusiones automáticas basadas únicamente en el etiquetado disponible.")}</p></body></html>`;
+  }
+
+  if (options.mode === "visual") {
+    const maximum = Math.max(...(report.stats || []).map((row) => Number(row.count) || 0), 1);
+    const bars = (report.stats || []).slice(0, 10).map((row) => `<div><span>${escapeHtml(row.name)}</span><i style="width:${Math.round((Number(row.count) / maximum) * 100)}%;background:${escapeHtml(row.color)}"></i><strong>${escapeHtml(row.count)}</strong></div>`).join("");
+    const playerBars = (report.players || []).slice(0, 10).map((player) => `<div><span>#${escapeHtml(player.number || "—")} ${escapeHtml(player.name)}</span><i style="width:${Math.round((Number(player.count) / Math.max(Number(report.players?.[0]?.count) || 1, 1)) * 100)}%"></i><strong>${escapeHtml(player.count)}</strong></div>`).join("");
+    return `<!doctype html><html lang="es"><head><meta charset="utf-8"><style>
+      @page{size:A4 landscape;margin:10mm}*{box-sizing:border-box}body{margin:0;background:#eef2f3;color:#101923;font:11px Arial,sans-serif}header{display:flex;justify-content:space-between;align-items:end;margin-bottom:10px}h1{font-size:24px;margin:3px 0}.brand{color:#08756d;font-weight:800;letter-spacing:.12em}.kpis{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:8px}.kpis div,.panel{background:#fff;border:1px solid #dce4e7;border-radius:12px;padding:12px}.kpis strong{display:block;font-size:25px;color:#08756d}.grid{display:grid;grid-template-columns:1.1fr .9fr 1fr;gap:8px}.panel h2{font-size:14px;margin:0 0 10px}.bars div{display:grid;grid-template-columns:105px 1fr 24px;gap:7px;align-items:center;margin:7px 0}.bars i{display:block;height:11px;border-radius:4px;background:#08756d}.shot-map{display:block;width:78%;max-height:400px;margin:auto;border-radius:10px}.note{text-align:right;color:#64717c;font-size:9px;margin-top:7px}
+    </style></head><body><header><div><span class="brand">TACTOVIA · VISUAL REPORT</span><h1>${escapeHtml(report.projectName || "Análisis")}</h1></div><span>${escapeHtml(report.generatedAt)}</span></header><div class="kpis"><div><span>Acciones</span><strong>${escapeHtml(report.totalEvents)}</strong></div><div><span>Etiquetas usadas</span><strong>${escapeHtml(report.totalTags)}</strong></div><div><span>Vídeo analizado</span><strong>${escapeHtml(report.analyzedTime)}</strong></div></div><div class="grid"><section class="panel"><h2>Acciones por etiqueta</h2><div class="bars">${bars}</div></section><section class="panel"><h2>Mapa de tiro</h2><svg class="shot-map" viewBox="0 0 500 470"><rect width="500" height="470" rx="10" fill="#d9a860"/>${shotMap}<g fill="none" stroke="#fff" stroke-width="4"><rect x="10" y="10" width="480" height="450"/><path d="M170 10V235H330V10M170 235A80 80 0 0 0 330 235M205 48A45 45 0 0 0 295 48"/><circle cx="250" cy="70" r="12"/><path d="M35 10V95M465 10V95M35 95A216 216 0 0 0 465 95"/></g></svg></section><section class="panel"><h2>Participación individual</h2><div class="bars">${playerBars || "Sin jugadores identificados"}</div></section></div><p class="note">Visuales generados exclusivamente con las acciones del partido actual.</p></body></html>`;
+  }
+
   return `<!doctype html>
     <html lang="es">
       <head>
@@ -355,152 +378,6 @@ function reportHtml(report) {
           <tbody>${events || '<tr><td colspan="6">Todavía no hay eventos.</td></tr>'}</tbody>
         </table>` : ""}
         <footer>Generado localmente con Tactovia · Plataforma de análisis deportivo.</footer>
-      </body>
-    </html>`;
-}
-
-function playbookHtml(play) {
-  const settings = {
-    mode: "classic",
-    layout: "large-grid",
-    showDescription: true,
-    showPhaseTitles: true,
-    showPhaseDescription: true,
-    showNotes: true,
-    showAttachments: true,
-    ...(play.outputSettings || {})
-  };
-  const noteBlocks = (play.noteBlocks || [])
-    .filter((block) => block.content)
-    .map(
-      (block) =>
-        `<p class="${escapeHtml(block.type || "paragraph")}">${
-          block.type === "check" ? (block.checked ? "☑ " : "☐ ") : ""
-        }${escapeHtml(block.content)}</p>`
-    )
-    .join("");
-  const attachments = (play.attachments || [])
-    .map(
-      (attachment) =>
-        `<li>${escapeHtml(attachment.name || "Recurso")}${
-          attachment.url ? ` · ${escapeHtml(attachment.url)}` : ""
-        }</li>`
-    )
-    .join("");
-  const phases = (play.images || [])
-    .filter((item) => /^data:image\/png;base64,/.test(item.dataUrl || ""))
-    .map((item, index) => {
-      const phaseNotes = (item.noteBlocks || [])
-        .filter((block) => block.content)
-        .map(
-          (block) =>
-            `<p class="${escapeHtml(block.type || "paragraph")}">${
-              block.type === "check" ? (block.checked ? "☑ " : "☐ ") : ""
-            }${escapeHtml(block.content)}</p>`
-        )
-        .join("");
-      const phaseAttachments = (item.attachments || [])
-        .map(
-          (attachment) =>
-            `<li>${escapeHtml(attachment.name || "Recurso")}${
-              attachment.url ? ` · ${escapeHtml(attachment.url)}` : ""
-            }</li>`
-        )
-        .join("");
-      return `
-        <section class="phase">
-          ${
-            settings.showPhaseTitles
-              ? `<h2>${index + 1}. ${escapeHtml(item.name || `Fase ${index + 1}`)}</h2>`
-              : ""
-          }
-          <img src="${item.dataUrl}" alt="">
-          ${
-            settings.showPhaseDescription && item.description
-              ? `<p class="phase-description">${escapeHtml(item.description)}</p>`
-              : ""
-          }
-          ${
-            settings.showNotes && phaseNotes
-              ? `<div class="phase-notes">${phaseNotes}</div>`
-              : ""
-          }
-          ${
-            settings.showAttachments && phaseAttachments
-              ? `<div class="phase-resources"><strong>Recursos</strong><ul>${phaseAttachments}</ul></div>`
-              : ""
-          }
-        </section>`
-    })
-    .join("");
-  const descriptionSection =
-    settings.showDescription && play.description
-      ? `<section class="text-card"><strong>Descripción</strong><p>${escapeHtml(play.description)}</p></section>`
-      : "";
-  const notesSection =
-    settings.showNotes && (play.notes || noteBlocks)
-      ? `<section class="text-card"><strong>Notas del entrenador</strong>${
-          play.notes ? `<p>${escapeHtml(play.notes)}</p>` : ""
-        }${noteBlocks}</section>`
-      : "";
-  const attachmentsSection =
-    settings.showAttachments && attachments
-      ? `<section class="text-card"><strong>Recursos adjuntos</strong><ul>${attachments}</ul></section>`
-      : "";
-  const phaseSection = `<section class="phases ${escapeHtml(settings.layout)}">${phases || "<p>No hay fases para exportar.</p>"}</section>`;
-  const classicBody = `${descriptionSection}${notesSection}${phaseSection}${attachmentsSection}`;
-  const advancedBody = (settings.blocks || [])
-    .map((block) => {
-      if (block.type === "description") return descriptionSection;
-      if (block.type === "phases") return phaseSection;
-      if (block.type === "notes") return notesSection;
-      if (block.type === "attachments") return attachmentsSection;
-      if (block.type === "custom") {
-        return `<section class="text-card"><strong>${escapeHtml(block.title || "Bloque")}</strong><p>${escapeHtml(block.content || "")}</p></section>`;
-      }
-      return "";
-    })
-    .join("");
-  return `<!doctype html>
-    <html lang="es">
-      <head>
-        <meta charset="utf-8">
-        <style>
-          @page { size: A4 landscape; margin: 12mm; }
-          * { box-sizing: border-box; }
-          body { margin: 0; color: #0B1218; font: 12px Arial, sans-serif; }
-          header { border-left: 7px solid ${escapeHtml(play.teamColor || "#08756D")}; padding: 4px 0 4px 14px; margin-bottom: 16px; }
-          h1 { margin: 0 0 4px; font-size: 26px; }
-          header p { margin: 2px 0; color: #647083; }
-          h2 { margin: 0 0 10px; font-size: 17px; }
-          .text-card { break-inside: avoid; margin: 0 0 12px; padding: 12px; border: 1px solid #d7dce5; border-radius: 8px; }
-          .text-card strong { display: block; margin-bottom: 6px; color: ${escapeHtml(play.teamColor || "#08756D")}; font-size: 10px; text-transform: uppercase; }
-          .text-card p { margin: 5px 0; white-space: pre-wrap; }
-          .text-card .heading { font-size: 16px; font-weight: 700; }
-          .phases { display: grid; gap: 12px; align-items: start; }
-          .phases.large-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
-          .phases.small-grid { grid-template-columns: repeat(3, minmax(0, 1fr)); }
-          .phases.rows { grid-template-columns: 1fr; }
-          .phase { break-inside: avoid; padding: 10px; border: 1px solid #d7dce5; border-radius: 8px; }
-          .phase h2 { margin-bottom: 8px; font-size: 14px; }
-          .phase img { display: block; width: 100%; max-height: 108mm; object-fit: contain; border-radius: 5px; }
-          .small-grid .phase img { max-height: 75mm; }
-          .rows .phase { display: grid; grid-template-columns: minmax(0, 2fr) minmax(180px, 1fr); gap: 12px; }
-          .rows .phase h2 { grid-column: 1 / -1; }
-          .phase-description { margin: 8px 0 0; color: #566274; white-space: pre-wrap; }
-          .phase-notes, .phase-resources { margin-top: 8px; padding-top: 7px; border-top: 1px solid #e5e8ee; }
-          .phase-notes p { margin: 4px 0; }
-          .phase-notes .heading { font-size: 14px; font-weight: 700; }
-          .phase-resources strong { display: block; margin-bottom: 4px; font-size: 10px; text-transform: uppercase; color: #647083; }
-          ul { margin: 0; padding-left: 18px; }
-        </style>
-      </head>
-      <body>
-        <header>
-          <h1>${escapeHtml(play.name || "Jugada")}</h1>
-          <p>${escapeHtml(play.teamName || "Sin equipo asociado")}</p>
-        </header>
-        ${settings.mode === "advanced" ? advancedBody || classicBody : classicBody}
       </body>
     </html>`;
 }
@@ -800,6 +677,26 @@ app.whenReady().then(() => {
     }
   });
 
+  ipcMain.handle("database:user-library", async (_event, payload = {}) => {
+    try {
+      return scoutingDatabase.getUserLibrary(payload.ownerProfileId || "");
+    } catch (error) {
+      return { ok: false, error: error.message };
+    }
+  });
+
+  ipcMain.handle("database:save-user-library", async (_event, payload = {}) => {
+    try {
+      if (payload.isDemo) return { ok: true, skipped: true };
+      return scoutingDatabase.saveUserLibrary(
+        payload.ownerProfileId || "",
+        payload.library
+      );
+    } catch (error) {
+      return { ok: false, error: error.message };
+    }
+  });
+
   ipcMain.handle("database:finalize-project", async (_event, payload) => {
     try {
       if (payload?.isDemo) return { ok: true, skipped: true };
@@ -860,51 +757,6 @@ app.whenReady().then(() => {
     } catch (error) {
       return { ok: false, error: error.message };
     }
-  });
-
-  ipcMain.handle("playbook:select-attachment", async () => {
-    const result = await dialog.showOpenDialog(mainWindow, {
-      title: "Añadir recurso al Playbook",
-      properties: ["openFile"],
-      filters: [
-        {
-          name: "Vídeo, imagen, audio o documento",
-          extensions: [
-            "mp4",
-            "m4v",
-            "mov",
-            "webm",
-            "png",
-            "jpg",
-            "jpeg",
-            "webp",
-            "gif",
-            "mp3",
-            "wav",
-            "m4a",
-            "pdf"
-          ]
-        }
-      ]
-    });
-    if (result.canceled || !result.filePaths[0]) return { canceled: true };
-    const filePath = result.filePaths[0];
-    const extension = path.extname(filePath).toLowerCase();
-    const type = [".mp4", ".m4v", ".mov", ".webm"].includes(extension)
-      ? "video"
-      : [".png", ".jpg", ".jpeg", ".webp", ".gif"].includes(extension)
-        ? "image"
-        : [".mp3", ".wav", ".m4a"].includes(extension)
-          ? "audio"
-          : "document";
-    return {
-      canceled: false,
-      item: {
-        name: path.basename(filePath),
-        path: filePath,
-        type
-      }
-    };
   });
 
   ipcMain.handle("project:open", async () => {
@@ -1006,15 +858,27 @@ app.whenReady().then(() => {
 
     const outputDirectory = result.filePaths[0];
     const created = [];
+    const quality = {
+      high: { preset: "slow", crf: "18" },
+      compact: { preset: "veryfast", crf: "26" },
+      balanced: { preset: "veryfast", crf: "20" }
+    }[payload.quality] || { preset: "veryfast", crf: "20" };
+    const highlights = payload.outputMode === "highlights";
+    const temporaryDirectory = highlights
+      ? path.join(outputDirectory, `.tactovia-export-${Date.now()}`)
+      : "";
     try {
+      if (temporaryDirectory) fs.mkdirSync(temporaryDirectory, { recursive: true });
       for (let index = 0; index < payload.events.length; index += 1) {
         const item = payload.events[index];
         const start = Math.max(0, Number(item.start) || 0);
         const duration = Math.max(0.1, (Number(item.end) || start + 0.1) - start);
-        const itemDirectory = path.join(
-          outputDirectory,
-          ...(Array.isArray(item.folders) ? item.folders.map(safeFilePart).filter(Boolean) : [])
-        );
+        const itemDirectory = highlights
+          ? temporaryDirectory
+          : path.join(
+              outputDirectory,
+              ...(Array.isArray(item.folders) ? item.folders.map(safeFilePart).filter(Boolean) : [])
+            );
         fs.mkdirSync(itemDirectory, { recursive: true });
         const fileName = `${String(index + 1).padStart(3, "0")}-${safeFilePart(item.tagName)}-${safeFilePart(item.timeLabel)}.mp4`;
         const outputPath = path.join(itemDirectory, fileName);
@@ -1035,9 +899,9 @@ app.whenReady().then(() => {
           "-c:v",
           "libx264",
           "-preset",
-          "veryfast",
+          quality.preset,
           "-crf",
-          "20",
+          quality.crf,
           "-c:a",
           "aac",
           "-movflags",
@@ -1045,18 +909,50 @@ app.whenReady().then(() => {
           "-y",
           outputPath
         ]);
+        if (!highlights) created.push(outputPath);
+      }
+      if (highlights) {
+        const temporaryClips = fs.readdirSync(temporaryDirectory)
+          .filter((fileName) => fileName.endsWith(".mp4"))
+          .sort()
+          .map((fileName) => path.join(temporaryDirectory, fileName));
+        const concatList = path.join(temporaryDirectory, "clips.txt");
+        fs.writeFileSync(
+          concatList,
+          temporaryClips
+            .map((filePath) => `file '${filePath.replaceAll("'", "'\\''")}'`)
+            .join("\n"),
+          "utf8"
+        );
+        const outputPath = path.join(
+          outputDirectory,
+          `${safeFilePart(payload.projectName || "Tactovia")}-highlights.mp4`
+        );
+        await runFfmpeg([
+          "-hide_banner", "-loglevel", "error", "-f", "concat", "-safe", "0",
+          "-i", concatList, "-c", "copy", "-movflags", "+faststart", "-y", outputPath
+        ]);
         created.push(outputPath);
       }
       return { canceled: false, directory: outputDirectory, files: created };
     } catch (error) {
       return { canceled: false, error: error.message, files: created };
+    } finally {
+      if (temporaryDirectory && fs.existsSync(temporaryDirectory)) {
+        fs.rmSync(temporaryDirectory, { recursive: true, force: true });
+      }
     }
   });
 
   ipcMain.handle("export:report-pdf", async (_event, report) => {
+    const reportSuffix = report.options?.mode === "intelligence"
+      ? "analisis-ia"
+      : report.options?.mode === "visual"
+        ? "graficos"
+        : "informe";
     const result = await dialog.showSaveDialog(mainWindow, {
       title: "Exportar informe PDF",
-      defaultPath: `${safeFilePart(report.projectName)}-informe.pdf`,
+      defaultPath: `${safeFilePart(report.projectName)}-${reportSuffix}.pdf`,
       filters: [{ name: "PDF", extensions: ["pdf"] }]
     });
     if (result.canceled || !result.filePath) return { canceled: true };
@@ -1072,73 +968,14 @@ app.whenReady().then(() => {
       );
       const pdf = await reportWindow.webContents.printToPDF({
         printBackground: true,
-        pageSize: "A4"
+        pageSize: "A4",
+        landscape: report.options?.mode === "visual",
+        preferCSSPageSize: true
       });
       fs.writeFileSync(result.filePath, pdf);
       return { canceled: false, filePath: result.filePath };
     } finally {
       reportWindow.destroy();
-    }
-  });
-
-  ipcMain.handle("export:playbook-png", async (_event, payload) => {
-    const result = await dialog.showSaveDialog(mainWindow, {
-      title: "Exportar jugada",
-      defaultPath: `${safeFilePart(payload.name)}.png`,
-      filters: [{ name: "Imagen PNG", extensions: ["png"] }]
-    });
-    if (result.canceled || !result.filePath) return { canceled: true };
-    const match = /^data:image\/png;base64,(.+)$/.exec(payload.dataUrl || "");
-    if (!match) return { canceled: false, error: "La imagen de la jugada no es válida." };
-    fs.writeFileSync(result.filePath, Buffer.from(match[1], "base64"));
-    return { canceled: false, filePath: result.filePath };
-  });
-
-  ipcMain.handle("export:playbook-pdf", async (_event, payload) => {
-    const result = await dialog.showSaveDialog(mainWindow, {
-      title: "Exportar playbook",
-      defaultPath: `${safeFilePart(payload.name)}.pdf`,
-      filters: [{ name: "Documento PDF", extensions: ["pdf"] }]
-    });
-    if (result.canceled || !result.filePath) return { canceled: true };
-    const exportWindow = new BrowserWindow({
-      show: false,
-      webPreferences: { sandbox: true }
-    });
-    try {
-      await exportWindow.loadURL(
-        `data:text/html;charset=utf-8,${encodeURIComponent(playbookHtml(payload))}`
-      );
-      const pdf = await exportWindow.webContents.printToPDF({
-        printBackground: true,
-        pageSize: "A4",
-        landscape: true
-      });
-      fs.writeFileSync(result.filePath, pdf);
-      return { canceled: false, filePath: result.filePath };
-    } catch (error) {
-      return { canceled: false, error: error.message };
-    } finally {
-      exportWindow.destroy();
-    }
-  });
-
-  ipcMain.handle("export:playbook-video", async (_event, payload) => {
-    const result = await dialog.showSaveDialog(mainWindow, {
-      title: "Exportar animación del Playbook",
-      defaultPath: `${safeFilePart(payload.name)}.webm`,
-      filters: [{ name: "Vídeo WebM", extensions: ["webm"] }]
-    });
-    if (result.canceled || !result.filePath) return { canceled: true };
-    try {
-      const buffer = Buffer.from(payload.buffer || []);
-      if (buffer.length === 0) {
-        throw new Error("La animación no contiene datos de vídeo.");
-      }
-      fs.writeFileSync(result.filePath, buffer);
-      return { canceled: false, filePath: result.filePath };
-    } catch (error) {
-      return { canceled: false, error: error.message };
     }
   });
 

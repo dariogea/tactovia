@@ -2,7 +2,7 @@
 
 ## Modelo actual
 
-Tactovia 0.11 utiliza SQLite como biblioteca local y separa los datos por
+Tactovia 0.12 utiliza SQLite como biblioteca local y separa los datos por
 perfil. La interfaz ya no incluye un catálogo oficial precargado, importación
 masiva, calendarios ni partidos predichos.
 
@@ -14,11 +14,12 @@ La biblioteca contiene exclusivamente:
 - relación del jugador con su equipo o estado de agente libre;
 - proyectos editables y sus eventos;
 - fichas históricas estadísticas de partidos finalizados.
+- biblioteca personal de competiciones, equipos, agentes libres y carpetas.
 
 ## Dos niveles de guardado
 
 El archivo `.scout.json` es el proyecto de trabajo. Conserva la referencia al
-vídeo, la plantilla de etiquetas, el partido, las acciones y el Playbook.
+vídeo, la plantilla de etiquetas, el partido y las acciones.
 
 Al guardar un proyecto con partido y acciones, SQLite crea además una ficha
 histórica. Esa ficha elimina:
@@ -34,20 +35,22 @@ vídeo ni convertir la biblioteca en una fuente de clips.
 
 - Cada ficha histórica incluye `owner_profile_id`.
 - La aplicación consulta únicamente las fichas del perfil activo.
-- La demo de desarrollo no escribe datos persistentes.
+- La demo accesible sin registro no escribe históricos persistentes.
 - Los datos no salen del ordenador.
 - El archivo técnico conserva el nombre `scoutanalyzer.db` y la carpeta
   histórica `scout-analyzer` para no romper instalaciones existentes.
 
 ## Migración
 
-El esquema actual es la versión 3. La actualización:
+El esquema actual es la versión 4. La actualización:
 
 1. añade propiedad de perfil a los análisis;
 2. crea la tabla `game_records`;
 3. elimina únicamente el catálogo FBRM precargado que no esté relacionado con
    datos reales;
-4. conserva cualquier equipo, jugador, partido o evento ya utilizado.
+4. conserva cualquier equipo, jugador, partido o evento ya utilizado;
+5. añade `user_libraries` para guardar, por perfil, carpetas, competiciones,
+   equipos y agentes libres sin mezclarlos con el análisis abierto.
 
 ## Futuro online
 

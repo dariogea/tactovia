@@ -159,7 +159,7 @@ function FilterRail({
   );
 }
 
-export function StatsPanel({ project }) {
+function MatchStatsPanel({ project }) {
   const matchTeamIds = [project.match?.homeTeamId, project.match?.awayTeamId].filter(Boolean);
   const [scope, setScope] = useState("all");
   const [teamId, setTeamId] = useState(matchTeamIds[0] || "");
@@ -459,5 +459,40 @@ export function StatsPanel({ project }) {
         </footer>
       </div>
     </section>
+  );
+}
+
+export function StatsPanel({ project }) {
+  const teamIds = [project.match?.homeTeamId, project.match?.awayTeamId].filter(Boolean);
+  const matchTeams = teamIds
+    .map((id) => project.teams.find((team) => team.id === id))
+    .filter(Boolean);
+  const hasMatch = matchTeams.length === 2 && matchTeams[0].id !== matchTeams[1].id;
+  if (!hasMatch || project.events.length === 0) {
+    return (
+      <section className="stats-empty-state">
+        <div className="stats-empty-visual" aria-hidden="true">
+          <i /><i /><i /><span>0</span>
+        </div>
+        <span className="eyebrow">Estadísticas del partido</span>
+        <h1>Todavía no hay un partido analizado</h1>
+        <p>
+          Las estadísticas aparecen únicamente al vincular dos equipos y
+          registrar acciones. Al abrir un análisis guardado, sus etiquetas y
+          todos sus visuales se reconstruyen automáticamente.
+        </p>
+        <div>
+          <span><b>1</b> Selecciona el vídeo</span>
+          <span><b>2</b> Vincula el partido</span>
+          <span><b>3</b> Empieza a etiquetar</span>
+        </div>
+      </section>
+    );
+  }
+  return (
+    <MatchStatsPanel
+      key={project.id}
+      project={{ ...project, teams: matchTeams }}
+    />
   );
 }
