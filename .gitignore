@@ -8,6 +8,7 @@ qa-artifacts/
 
 # Vídeos y análisis personales
 *.scout.json
+*.library.json
 *.mp4
 *.m4v
 *.mov
@@ -20,4 +21,3 @@ qa-artifacts/
 !.env.example
 *.key
 *.pem
-

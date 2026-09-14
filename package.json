@@ -1,6 +1,6 @@
 {
   "name": "scout-analyzer",
-  "version": "0.12.0",
+  "version": "0.13.0",
   "private": true,
   "author": "Tactovia",
   "description": "Tactovia · Plataforma de análisis deportivo",
@@ -15,6 +15,7 @@
     "start": "electron .",
     "test": "node --test",
     "test:database": "electron scripts/verify-database.cjs",
+    "test:studio": "electron scripts/verify-studio.cjs",
     "test:video": "electron scripts/verify-video-seek.cjs",
     "clean:release": "node scripts/clean-release.cjs",
     "dist": "pnpm build && node scripts/build-release.cjs",
@@ -28,6 +29,7 @@
     "files": [
       "dist/**/*",
       "electron/**/*",
+      "shared/**/*",
       "build/icons/tactovia-app-icon-512.png",
       "package.json"
     ],

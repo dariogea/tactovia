@@ -39,7 +39,7 @@ function openDatabase(filePath) {
   fs.mkdirSync(path.dirname(filePath), { recursive: true });
   const database = new DatabaseSync(filePath, {
     enableForeignKeyConstraints: true,
-    timeout: 5000
+    timeout: 5000,
   });
   database.exec(`
     PRAGMA journal_mode = WAL;
@@ -295,41 +295,63 @@ function schemaSql() {
 
 function migrateSchema(database) {
   const eventColumns = new Set(
-    database.prepare("PRAGMA table_info(events)").all().map((column) => column.name)
+    database
+      .prepare("PRAGMA table_info(events)")
+      .all()
+      .map((column) => column.name),
   );
   if (!eventColumns.has("shot_zone_id")) {
-    database.exec("ALTER TABLE events ADD COLUMN shot_zone_id TEXT NOT NULL DEFAULT ''");
+    database.exec(
+      "ALTER TABLE events ADD COLUMN shot_zone_id TEXT NOT NULL DEFAULT ''",
+    );
   }
   if (!eventColumns.has("shot_zone_name")) {
-    database.exec("ALTER TABLE events ADD COLUMN shot_zone_name TEXT NOT NULL DEFAULT ''");
+    database.exec(
+      "ALTER TABLE events ADD COLUMN shot_zone_name TEXT NOT NULL DEFAULT ''",
+    );
   }
   if (!eventColumns.has("shot_points")) {
-    database.exec("ALTER TABLE events ADD COLUMN shot_points INTEGER NOT NULL DEFAULT 0");
+    database.exec(
+      "ALTER TABLE events ADD COLUMN shot_points INTEGER NOT NULL DEFAULT 0",
+    );
   }
   const analysisColumns = new Set(
-    database.prepare("PRAGMA table_info(analyses)").all().map((column) => column.name)
+    database
+      .prepare("PRAGMA table_info(analyses)")
+      .all()
+      .map((column) => column.name),
   );
   if (!analysisColumns.has("owner_profile_id")) {
     database.exec(
-      "ALTER TABLE analyses ADD COLUMN owner_profile_id TEXT NOT NULL DEFAULT 'legacy-local'"
+      "ALTER TABLE analyses ADD COLUMN owner_profile_id TEXT NOT NULL DEFAULT 'legacy-local'",
     );
   }
 }
 
 function seedDatabase(database) {
   const now = nowIso();
-  database.prepare(`
+  database
+    .prepare(
+      `
     INSERT INTO workspaces (id, name, visibility, created_at, updated_at)
     VALUES (?, ?, 'private', ?, ?)
     ON CONFLICT(id) DO NOTHING
-  `).run(LOCAL_WORKSPACE_ID, "Mi espacio de scouting", now, now);
+  `,
+    )
+    .run(LOCAL_WORKSPACE_ID, "Mi espacio de scouting", now, now);
 
-  database.prepare(`
+  database
+    .prepare(
+      `
     INSERT INTO metadata(key, value) VALUES ('schema_version', ?)
     ON CONFLICT(key) DO UPDATE SET value = excluded.value
-  `).run(String(DATABASE_VERSION));
+  `,
+    )
+    .run(String(DATABASE_VERSION));
 
-  database.prepare(`
+  database
+    .prepare(
+      `
     DELETE FROM teams
     WHERE id IN ('team-own', 'team-rival')
       AND source = 'local-user'
@@ -343,7 +365,9 @@ function seedDatabase(database) {
       AND NOT EXISTS (
         SELECT 1 FROM events e WHERE e.team_id = teams.id
       )
-  `).run();
+  `,
+    )
+    .run();
 }
 
 function mapTeamRow(row) {
@@ -360,7 +384,7 @@ function mapTeamRow(row) {
     source: row.source,
     externalId: row.external_id || "",
     players: [],
-    ...parseJson(row.profile_json, {})
+    ...parseJson(row.profile_json, {}),
   };
 }
 
@@ -372,7 +396,9 @@ function createDatabaseService(filePath, options = {}) {
 
   function cleanupUnusedLegacyCatalog() {
     return transaction(() => {
-      const removedTeams = database.prepare(`
+      const removedTeams = database
+        .prepare(
+          `
         DELETE FROM teams
         WHERE source = 'official-fbrm-2026-27'
           AND NOT EXISTS (
@@ -382,8 +408,12 @@ function createDatabaseService(filePath, options = {}) {
           AND NOT EXISTS (
             SELECT 1 FROM events e WHERE e.team_id = teams.id
           )
-      `).run().changes;
-      database.prepare(`
+      `,
+        )
+        .run().changes;
+      database
+        .prepare(
+          `
         DELETE FROM competition_seasons
         WHERE id = ?
           AND NOT EXISTS (
@@ -394,23 +424,33 @@ function createDatabaseService(filePath, options = {}) {
             SELECT 1 FROM matches m
             WHERE m.competition_season_id = competition_seasons.id
           )
-      `).run(LEGACY_COMPETITION_SEASON_ID);
-      database.prepare(`
+      `,
+        )
+        .run(LEGACY_COMPETITION_SEASON_ID);
+      database
+        .prepare(
+          `
         DELETE FROM competitions
         WHERE id = ?
           AND NOT EXISTS (
             SELECT 1 FROM competition_seasons cs
             WHERE cs.competition_id = competitions.id
           )
-      `).run(LEGACY_COMPETITION_ID);
-      database.prepare(`
+      `,
+        )
+        .run(LEGACY_COMPETITION_ID);
+      database
+        .prepare(
+          `
         DELETE FROM seasons
         WHERE id = ?
           AND NOT EXISTS (
             SELECT 1 FROM competition_seasons cs
             WHERE cs.season_id = seasons.id
           )
-      `).run(LEGACY_SEASON_ID);
+      `,
+        )
+        .run(LEGACY_SEASON_ID);
       return removedTeams;
     });
   }
@@ -491,8 +531,10 @@ function createDatabaseService(filePath, options = {}) {
       logoStatus: team.logoStatus || "",
       officialLogoUrl: team.officialLogoUrl || "",
       colorStatus: team.colorStatus || "",
-      detailSources: Array.isArray(team.detailSources) ? team.detailSources : [],
-      notes: team.notes || ""
+      detailSources: Array.isArray(team.detailSources)
+        ? team.detailSources
+        : [],
+      notes: team.notes || "",
     };
     upsertTeam.run({
       id: team.id,
@@ -509,17 +551,22 @@ function createDatabaseService(filePath, options = {}) {
       externalId: options.externalId || team.externalId || null,
       profileJson: json(profile),
       createdAt: team.createdAt || now,
-      updatedAt: now
+      updatedAt: now,
     });
 
     for (const player of team.players || []) {
       savePlayer(player, team.id, options.competitionSeasonId || null, {
-        source: player.source || source
+        source: player.source || source,
       });
     }
   }
 
-  function savePlayer(player, teamId, competitionSeasonId = null, options = {}) {
+  function savePlayer(
+    player,
+    teamId,
+    competitionSeasonId = null,
+    options = {},
+  ) {
     const now = nowIso();
     const source = options.source || player.source || "local-user";
     const profile = {
@@ -537,7 +584,7 @@ function createDatabaseService(filePath, options = {}) {
       dataStatus: player.dataStatus || "",
       sourceUrl: player.sourceUrl || "",
       verifiedAt: player.verifiedAt || "",
-      notes: player.notes || ""
+      notes: player.notes || "",
     };
     upsertPlayer.run({
       id: player.id,
@@ -547,13 +594,15 @@ function createDatabaseService(filePath, options = {}) {
       externalId: options.externalId || player.externalId || null,
       profileJson: json(profile),
       createdAt: player.createdAt || now,
-      updatedAt: now
+      updatedAt: now,
     });
 
     const rosterId =
       options.rosterId ||
       `roster-${competitionSeasonId || "unassigned"}-${teamId}-${player.id}`;
-    database.prepare(`
+    database
+      .prepare(
+        `
       INSERT INTO roster_memberships (
         id, competition_season_id, team_id, player_id, jersey_number,
         position, status, created_at, updated_at
@@ -564,21 +613,24 @@ function createDatabaseService(filePath, options = {}) {
         position = excluded.position,
         status = excluded.status,
         updated_at = excluded.updated_at
-    `).run(
-      rosterId,
-      competitionSeasonId,
-      teamId,
-      player.id,
-      String(player.number || ""),
-      player.position || "",
-      player.status || "Activo",
-      now,
-      now
-    );
+    `,
+      )
+      .run(
+        rosterId,
+        competitionSeasonId,
+        teamId,
+        player.id,
+        String(player.number || ""),
+        player.position || "",
+        player.status || "Activo",
+        now,
+        now,
+      );
   }
 
   function syncProject(project, ownerProfileId = "legacy-local") {
-    if (!project?.id) throw new Error("El análisis no tiene un identificador válido.");
+    if (!project?.id)
+      throw new Error("El análisis no tiene un identificador válido.");
     return transaction(() => {
       const requestedCompetitionSeasonId =
         project.match?.competitionSeasonId || null;
@@ -592,13 +644,17 @@ function createDatabaseService(filePath, options = {}) {
       for (const team of project.teams || []) {
         saveTeam(team, { competitionSeasonId });
         if (competitionSeasonId) {
-          database.prepare(`
+          database
+            .prepare(
+              `
             INSERT INTO competition_teams (
               competition_season_id, team_id, group_name, seed
             )
             VALUES (?, ?, '', NULL)
             ON CONFLICT(competition_season_id, team_id) DO NOTHING
-          `).run(competitionSeasonId, team.id);
+          `,
+            )
+            .run(competitionSeasonId, team.id);
         }
       }
 
@@ -610,7 +666,9 @@ function createDatabaseService(filePath, options = {}) {
       ) {
         matchId = project.match.id || `local-match-${project.id}`;
         const now = nowIso();
-        database.prepare(`
+        database
+          .prepare(
+            `
           INSERT INTO matches (
             id, competition_season_id, round_name, scheduled_at, venue,
             home_team_id, away_team_id, home_score, away_score, status,
@@ -628,22 +686,24 @@ function createDatabaseService(filePath, options = {}) {
             away_score = excluded.away_score,
             status = excluded.status,
             updated_at = excluded.updated_at
-        `).run(
-          matchId,
-          competitionSeasonId,
-          project.match.roundName || "",
-          project.match.scheduledAt || null,
-          project.match.venue || "",
-          project.match.homeTeamId,
-          project.match.awayTeamId,
-          nullableNumber(project.match.homeScore),
-          nullableNumber(project.match.awayScore),
-          project.match.status || "scheduled",
-          project.match.source || "local-user",
-          project.match.externalId || null,
-          project.createdAt || now,
-          now
-        );
+        `,
+          )
+          .run(
+            matchId,
+            competitionSeasonId,
+            project.match.roundName || "",
+            project.match.scheduledAt || null,
+            project.match.venue || "",
+            project.match.homeTeamId,
+            project.match.awayTeamId,
+            nullableNumber(project.match.homeScore),
+            nullableNumber(project.match.awayScore),
+            project.match.status || "scheduled",
+            project.match.source || "local-user",
+            project.match.externalId || null,
+            project.createdAt || now,
+            now,
+          );
       }
 
       const now = nowIso();
@@ -653,11 +713,13 @@ function createDatabaseService(filePath, options = {}) {
         teams: (project.teams || []).map((team) => ({
           id: team.id,
           name: team.name,
-          playerIds: (team.players || []).map((player) => player.id)
+          playerIds: (team.players || []).map((player) => player.id),
         })),
-        match: project.match
+        match: project.match,
       };
-      database.prepare(`
+      database
+        .prepare(
+          `
         INSERT INTO analyses (
           id, workspace_id, match_id, project_name, video_name,
           video_path_local, video_duration, visibility, project_json,
@@ -673,21 +735,25 @@ function createDatabaseService(filePath, options = {}) {
           project_json = excluded.project_json,
           owner_profile_id = excluded.owner_profile_id,
           updated_at = excluded.updated_at
-      `).run(
-        project.id,
-        LOCAL_WORKSPACE_ID,
-        matchId,
-        project.projectName || "Análisis",
-        project.video?.name || "",
-        project.video?.path || "",
-        Number(project.video?.duration) || 0,
-        json(projectArchive),
-        project.createdAt || now,
-        now,
-        ownerProfileId || "legacy-local"
-      );
+      `,
+        )
+        .run(
+          project.id,
+          LOCAL_WORKSPACE_ID,
+          matchId,
+          project.projectName || "Análisis",
+          project.video?.name || "",
+          project.video?.path || "",
+          Number(project.video?.duration) || 0,
+          json(projectArchive),
+          project.createdAt || now,
+          now,
+          ownerProfileId || "legacy-local",
+        );
 
-      database.prepare("DELETE FROM events WHERE analysis_id = ?").run(project.id);
+      database
+        .prepare("DELETE FROM events WHERE analysis_id = ?")
+        .run(project.id);
       const insertEvent = database.prepare(`
         INSERT INTO events (
           id, analysis_id, tag_id, tag_name, color, mode, anchor, start, end,
@@ -716,11 +782,13 @@ function createDatabaseService(filePath, options = {}) {
           Number(event.shotPoints) || 0,
           event.notes || "",
           event.createdAt || now,
-          now
+          now,
         );
       }
 
-      database.prepare(`
+      database
+        .prepare(
+          `
         INSERT INTO sync_queue (
           entity_type, entity_id, operation, payload_json,
           attempts, last_error, created_at, updated_at
@@ -729,7 +797,9 @@ function createDatabaseService(filePath, options = {}) {
         ON CONFLICT(entity_type, entity_id, operation) DO UPDATE SET
           payload_json = excluded.payload_json,
           updated_at = excluded.updated_at
-      `).run(project.id, json({ id: project.id, updatedAt: now }), now, now);
+      `,
+        )
+        .run(project.id, json({ id: project.id, updatedAt: now }), now, now);
 
       return { ok: true, analysisId: project.id };
     });
@@ -755,13 +825,16 @@ function createDatabaseService(filePath, options = {}) {
         name: player.name,
         number: player.number || "",
         position: player.position || "",
-        photo: player.photo || ""
-      }))
+        photo: player.photo || "",
+      })),
     }));
     const events = (project.events || []).map((event) => ({
       id: event.id,
       tagId: event.tagId || "",
       tagName: event.tagName || "Acción",
+      metric: event.metric || "",
+      period: event.period || "",
+      favorite: Boolean(event.favorite),
       color: event.color || "",
       mode: event.mode === "interval" ? "interval" : "point",
       teamId: event.teamId || "",
@@ -771,7 +844,7 @@ function createDatabaseService(filePath, options = {}) {
       shotZoneId: event.shotZoneId || "",
       shotZoneName: event.shotZoneName || "",
       shotPoints: Number(event.shotPoints) || 0,
-      notes: event.notes || ""
+      notes: event.notes || "",
     }));
     const byTag = new Map();
     const byTeam = new Map();
@@ -790,13 +863,15 @@ function createDatabaseService(filePath, options = {}) {
       uniquePlayers: byPlayer.size,
       byTag: Object.fromEntries(byTag),
       byTeam: Object.fromEntries(byTeam),
-      byPlayer: Object.fromEntries(byPlayer)
+      byPlayer: Object.fromEntries(byPlayer),
     };
     const match = {
       ...(project.match || {}),
-      videoDuration: Number(project.video?.duration) || 0
+      videoDuration: Number(project.video?.duration) || 0,
     };
-    database.prepare(`
+    database
+      .prepare(
+        `
       INSERT INTO game_records (
         id, owner_profile_id, project_name, match_json, teams_json,
         events_json, summary_json, created_at, updated_at
@@ -810,25 +885,31 @@ function createDatabaseService(filePath, options = {}) {
         events_json = excluded.events_json,
         summary_json = excluded.summary_json,
         updated_at = excluded.updated_at
-    `).run(
-      project.id,
-      ownerProfileId,
-      project.projectName || "Partido analizado",
-      json(match),
-      json(teams, []),
-      json(events, []),
-      json(summary),
-      project.createdAt || now,
-      now
-    );
+    `,
+      )
+      .run(
+        project.id,
+        ownerProfileId,
+        project.projectName || "Partido analizado",
+        json(match),
+        json(teams, []),
+        json(events, []),
+        json(summary),
+        project.createdAt || now,
+        now,
+      );
     return { ok: true, recordId: project.id };
   }
 
   function deleteGameRecord(recordId, ownerProfileId) {
-    const result = database.prepare(`
+    const result = database
+      .prepare(
+        `
       DELETE FROM game_records
       WHERE id = ? AND owner_profile_id = ?
-    `).run(recordId, ownerProfileId);
+    `,
+      )
+      .run(recordId, ownerProfileId);
     return { ok: true, deleted: result.changes > 0 };
   }
 
@@ -837,31 +918,46 @@ function createDatabaseService(filePath, options = {}) {
     const now = nowIso();
     const safeLibrary = {
       teams: Array.isArray(library?.teams) ? library.teams : [],
-      competitions: Array.isArray(library?.competitions) ? library.competitions : [],
+      competitions: Array.isArray(library?.competitions)
+        ? library.competitions
+        : [],
       freeAgents: Array.isArray(library?.freeAgents) ? library.freeAgents : [],
-      folders: Array.isArray(library?.folders) ? library.folders : []
+      folders: Array.isArray(library?.folders) ? library.folders : [],
     };
-    database.prepare(`
+    database
+      .prepare(
+        `
       INSERT INTO user_libraries (
         owner_profile_id, library_json, created_at, updated_at
       ) VALUES (?, ?, ?, ?)
       ON CONFLICT(owner_profile_id) DO UPDATE SET
         library_json = excluded.library_json,
         updated_at = excluded.updated_at
-    `).run(ownerProfileId, json(safeLibrary), now, now);
+    `,
+      )
+      .run(ownerProfileId, json(safeLibrary), now, now);
     return { ok: true, library: safeLibrary };
   }
 
   function getUserLibrary(ownerProfileId) {
     if (!ownerProfileId) return { ok: true, library: null };
-    const row = database.prepare(`
+    const row = database
+      .prepare(
+        `
       SELECT library_json FROM user_libraries WHERE owner_profile_id = ?
-    `).get(ownerProfileId);
-    return { ok: true, library: row ? parseJson(row.library_json, null) : null };
+    `,
+      )
+      .get(ownerProfileId);
+    return {
+      ok: true,
+      library: row ? parseJson(row.library_json, null) : null,
+    };
   }
 
   function snapshot(ownerProfileId = "") {
-    const competitions = database.prepare(`
+    const competitions = database
+      .prepare(
+        `
       SELECT
         cs.id,
         c.id AS competition_id,
@@ -880,20 +976,25 @@ function createDatabaseService(filePath, options = {}) {
       LEFT JOIN matches m ON m.competition_season_id = cs.id
       GROUP BY cs.id
       ORDER BY s.starts_on DESC, c.name
-    `).all().map((row) => ({
-      id: row.id,
-      competitionId: row.competition_id,
-      name: row.competition_name,
-      shortName: row.short_name,
-      governingBody: row.governing_body,
-      seasonId: row.season_id,
-      seasonLabel: row.season_label,
-      status: row.status,
-      teamCount: Number(row.team_count),
-      matchCount: Number(row.match_count)
-    }));
+    `,
+      )
+      .all()
+      .map((row) => ({
+        id: row.id,
+        competitionId: row.competition_id,
+        name: row.competition_name,
+        shortName: row.short_name,
+        governingBody: row.governing_body,
+        seasonId: row.season_id,
+        seasonLabel: row.season_label,
+        status: row.status,
+        teamCount: Number(row.team_count),
+        matchCount: Number(row.match_count),
+      }));
 
-    const teamRows = database.prepare(`
+    const teamRows = database
+      .prepare(
+        `
       SELECT
         t.*,
         COUNT(DISTINCT rm.player_id) AS player_count,
@@ -903,14 +1004,18 @@ function createDatabaseService(filePath, options = {}) {
       LEFT JOIN events e ON e.team_id = t.id
       GROUP BY t.id
       ORDER BY t.name COLLATE NOCASE
-    `).all();
+    `,
+      )
+      .all();
     const teams = teamRows.map((row) => ({
       ...mapTeamRow(row),
       playerCount: Number(row.player_count),
-      eventCount: Number(row.event_count)
+      eventCount: Number(row.event_count),
     }));
 
-    const players = database.prepare(`
+    const players = database
+      .prepare(
+        `
       WITH event_totals AS (
         SELECT
           player_id,
@@ -957,25 +1062,30 @@ function createDatabaseService(filePath, options = {}) {
         ON pr.player_id = p.id AND pr.roster_rank = 1
       LEFT JOIN event_totals et ON et.player_id = p.id
       ORDER BY p.full_name COLLATE NOCASE
-    `).all().map((row) => ({
-      id: row.id,
-      name: row.full_name,
-      photo: row.photo,
-      source: row.source,
-      externalId: row.external_id || "",
-      rosterId: row.roster_id || "",
-      competitionSeasonId: row.competition_season_id || "",
-      number: row.jersey_number || "",
-      position: row.position || "",
-      status: row.status || "",
-      teamId: row.team_id || "",
-      teamName: row.team_name || "",
-      eventCount: Number(row.event_count),
-      analysisCount: Number(row.analysis_count),
-      ...parseJson(row.profile_json, {})
-    }));
+    `,
+      )
+      .all()
+      .map((row) => ({
+        id: row.id,
+        name: row.full_name,
+        photo: row.photo,
+        source: row.source,
+        externalId: row.external_id || "",
+        rosterId: row.roster_id || "",
+        competitionSeasonId: row.competition_season_id || "",
+        number: row.jersey_number || "",
+        position: row.position || "",
+        status: row.status || "",
+        teamId: row.team_id || "",
+        teamName: row.team_name || "",
+        eventCount: Number(row.event_count),
+        analysisCount: Number(row.analysis_count),
+        ...parseJson(row.profile_json, {}),
+      }));
 
-    const rosters = database.prepare(`
+    const rosters = database
+      .prepare(
+        `
       SELECT
         rm.id,
         rm.competition_season_id,
@@ -986,17 +1096,22 @@ function createDatabaseService(filePath, options = {}) {
         rm.status
       FROM roster_memberships rm
       ORDER BY rm.updated_at DESC
-    `).all().map((row) => ({
-      id: row.id,
-      competitionSeasonId: row.competition_season_id || "",
-      teamId: row.team_id,
-      playerId: row.player_id,
-      number: row.jersey_number || "",
-      position: row.position || "",
-      status: row.status || ""
-    }));
+    `,
+      )
+      .all()
+      .map((row) => ({
+        id: row.id,
+        competitionSeasonId: row.competition_season_id || "",
+        teamId: row.team_id,
+        playerId: row.player_id,
+        number: row.jersey_number || "",
+        position: row.position || "",
+        status: row.status || "",
+      }));
 
-    const competitionTeams = database.prepare(`
+    const competitionTeams = database
+      .prepare(
+        `
       SELECT
         competition_season_id,
         team_id,
@@ -1004,14 +1119,19 @@ function createDatabaseService(filePath, options = {}) {
         seed
       FROM competition_teams
       ORDER BY competition_season_id, COALESCE(seed, 9999), team_id
-    `).all().map((row) => ({
-      competitionSeasonId: row.competition_season_id,
-      teamId: row.team_id,
-      groupName: row.group_name || "",
-      seed: row.seed
-    }));
+    `,
+      )
+      .all()
+      .map((row) => ({
+        competitionSeasonId: row.competition_season_id,
+        teamId: row.team_id,
+        groupName: row.group_name || "",
+        seed: row.seed,
+      }));
 
-    const matches = database.prepare(`
+    const matches = database
+      .prepare(
+        `
       SELECT
         m.*,
         home.name AS home_team_name,
@@ -1039,34 +1159,39 @@ function createDatabaseService(filePath, options = {}) {
         CASE WHEN m.scheduled_at IS NULL THEN 1 ELSE 0 END,
         m.scheduled_at DESC,
         m.created_at DESC
-    `).all().map((row) => ({
-      id: row.id,
-      competitionSeasonId: row.competition_season_id || "",
-      competitionName: row.competition_name || "Partido local",
-      seasonLabel: row.season_label || "",
-      roundName: row.round_name,
-      scheduledAt: row.scheduled_at || "",
-      venue: row.venue,
-      homeTeamId: row.home_team_id,
-      awayTeamId: row.away_team_id,
-      homeTeamName: row.home_team_name,
-      awayTeamName: row.away_team_name,
-      homeShortName: row.home_short_name,
-      awayShortName: row.away_short_name,
-      homeColor: row.home_color,
-      awayColor: row.away_color,
-      homeLogo: row.home_logo,
-      awayLogo: row.away_logo,
-      homeScore: row.home_score,
-      awayScore: row.away_score,
-      status: row.status,
-      source: row.source,
-      externalId: row.external_id || "",
-      analysisCount: Number(row.analysis_count),
-      eventCount: Number(row.event_count)
-    }));
+    `,
+      )
+      .all()
+      .map((row) => ({
+        id: row.id,
+        competitionSeasonId: row.competition_season_id || "",
+        competitionName: row.competition_name || "Partido local",
+        seasonLabel: row.season_label || "",
+        roundName: row.round_name,
+        scheduledAt: row.scheduled_at || "",
+        venue: row.venue,
+        homeTeamId: row.home_team_id,
+        awayTeamId: row.away_team_id,
+        homeTeamName: row.home_team_name,
+        awayTeamName: row.away_team_name,
+        homeShortName: row.home_short_name,
+        awayShortName: row.away_short_name,
+        homeColor: row.home_color,
+        awayColor: row.away_color,
+        homeLogo: row.home_logo,
+        awayLogo: row.away_logo,
+        homeScore: row.home_score,
+        awayScore: row.away_score,
+        status: row.status,
+        source: row.source,
+        externalId: row.external_id || "",
+        analysisCount: Number(row.analysis_count),
+        eventCount: Number(row.event_count),
+      }));
 
-    const analyses = database.prepare(`
+    const analyses = database
+      .prepare(
+        `
       SELECT
         a.id,
         a.project_name,
@@ -1080,18 +1205,23 @@ function createDatabaseService(filePath, options = {}) {
       LEFT JOIN events e ON e.analysis_id = a.id
       GROUP BY a.id
       ORDER BY a.updated_at DESC
-    `).all().map((row) => ({
-      id: row.id,
-      projectName: row.project_name,
-      videoName: row.video_name,
-      videoDuration: row.video_duration,
-      visibility: row.visibility,
-      updatedAt: row.updated_at,
-      matchId: row.match_id || "",
-      eventCount: Number(row.event_count)
-    }));
+    `,
+      )
+      .all()
+      .map((row) => ({
+        id: row.id,
+        projectName: row.project_name,
+        videoName: row.video_name,
+        videoDuration: row.video_duration,
+        visibility: row.visibility,
+        updatedAt: row.updated_at,
+        matchId: row.match_id || "",
+        eventCount: Number(row.event_count),
+      }));
 
-    const totals = database.prepare(`
+    const totals = database
+      .prepare(
+        `
       SELECT
         (SELECT COUNT(*) FROM teams) AS teams,
         (SELECT COUNT(*) FROM players) AS players,
@@ -1099,20 +1229,30 @@ function createDatabaseService(filePath, options = {}) {
         (SELECT COUNT(*) FROM analyses) AS analyses,
         (SELECT COUNT(*) FROM events) AS events,
         (SELECT COUNT(*) FROM sync_queue) AS pending_sync
-    `).get();
+    `,
+      )
+      .get();
 
     const gameRecords = ownerProfileId
-      ? database.prepare(`
+      ? database
+          .prepare(
+            `
           SELECT *
           FROM game_records
           WHERE owner_profile_id = ?
           ORDER BY updated_at DESC
-        `).all(ownerProfileId)
-      : database.prepare(`
+        `,
+          )
+          .all(ownerProfileId)
+      : database
+          .prepare(
+            `
           SELECT *
           FROM game_records
           ORDER BY updated_at DESC
-        `).all();
+        `,
+          )
+          .all();
     const mappedGameRecords = gameRecords.map((row) => ({
       id: row.id,
       ownerProfileId: row.owner_profile_id,
@@ -1122,7 +1262,7 @@ function createDatabaseService(filePath, options = {}) {
       events: parseJson(row.events_json, []),
       summary: parseJson(row.summary_json, {}),
       createdAt: row.created_at,
-      updatedAt: row.updated_at
+      updatedAt: row.updated_at,
     }));
 
     return {
@@ -1133,7 +1273,7 @@ function createDatabaseService(filePath, options = {}) {
         matches: Number(totals.matches),
         analyses: Number(totals.analyses),
         events: Number(totals.events),
-        pendingSync: Number(totals.pending_sync)
+        pendingSync: Number(totals.pending_sync),
       },
       competitions,
       teams,
@@ -1142,7 +1282,7 @@ function createDatabaseService(filePath, options = {}) {
       competitionTeams,
       matches,
       analyses,
-      gameRecords: mappedGameRecords
+      gameRecords: mappedGameRecords,
     };
   }
 
@@ -1169,7 +1309,7 @@ function createDatabaseService(filePath, options = {}) {
     deleteGameRecord,
     saveUserLibrary,
     getUserLibrary,
-    cleanupUnusedLegacyCatalog
+    cleanupUnusedLegacyCatalog,
   };
 }
 
@@ -1186,5 +1326,5 @@ module.exports = {
   DATABASE_VERSION,
   LOCAL_WORKSPACE_ID,
   createDatabaseService,
-  deterministicId
+  deterministicId,
 };

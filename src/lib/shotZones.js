@@ -1,3 +1,4 @@
+import { eventMetric } from "./basketball.js";
 export const shotZones = [
   {
     id: "restricted",
@@ -6,7 +7,7 @@ export const shotZones = [
     points: 2,
     path: "M205 48 Q250 116 295 48 L295 126 L205 126 Z",
     labelX: 250,
-    labelY: 91
+    labelY: 91,
   },
   {
     id: "paint",
@@ -15,7 +16,7 @@ export const shotZones = [
     points: 2,
     path: "M170 10 H205 V126 H295 V10 H330 V235 H170 Z",
     labelX: 250,
-    labelY: 177
+    labelY: 177,
   },
   {
     id: "mid-left",
@@ -24,7 +25,7 @@ export const shotZones = [
     points: 2,
     path: "M35 95 Q49 184 136 262 L170 235 V10 H35 Z",
     labelX: 108,
-    labelY: 154
+    labelY: 154,
   },
   {
     id: "mid-right",
@@ -33,7 +34,7 @@ export const shotZones = [
     points: 2,
     path: "M330 10 V235 L364 262 Q451 184 465 95 V10 Z",
     labelX: 392,
-    labelY: 154
+    labelY: 154,
   },
   {
     id: "mid-center",
@@ -42,7 +43,7 @@ export const shotZones = [
     points: 2,
     path: "M170 235 H330 L364 262 Q250 318 136 262 Z",
     labelX: 250,
-    labelY: 270
+    labelY: 270,
   },
   {
     id: "corner-left",
@@ -51,7 +52,7 @@ export const shotZones = [
     points: 3,
     path: "M10 10 H35 V95 H10 Z",
     labelX: 22,
-    labelY: 58
+    labelY: 58,
   },
   {
     id: "corner-right",
@@ -60,7 +61,7 @@ export const shotZones = [
     points: 3,
     path: "M465 10 H490 V95 H465 Z",
     labelX: 478,
-    labelY: 58
+    labelY: 58,
   },
   {
     id: "wing-left",
@@ -69,7 +70,7 @@ export const shotZones = [
     points: 3,
     path: "M10 95 H35 Q49 184 136 262 L91 460 H10 Z",
     labelX: 62,
-    labelY: 304
+    labelY: 304,
   },
   {
     id: "wing-right",
@@ -78,7 +79,7 @@ export const shotZones = [
     points: 3,
     path: "M465 95 H490 V460 H409 L364 262 Q451 184 465 95 Z",
     labelX: 438,
-    labelY: 304
+    labelY: 304,
   },
   {
     id: "top",
@@ -87,8 +88,8 @@ export const shotZones = [
     points: 3,
     path: "M136 262 Q250 318 364 262 L409 460 H91 Z",
     labelX: 250,
-    labelY: 370
-  }
+    labelY: 370,
+  },
 ];
 
 export function shotZoneById(id) {
@@ -96,8 +97,17 @@ export function shotZoneById(id) {
 }
 
 export function isShotTag(tagOrEvent) {
+  const metric = eventMetric(tagOrEvent || {});
+  if (/^(made|missed)[23]$/.test(metric)) return true;
+  if (
+    /^(made|missed)1$/.test(metric) ||
+    (tagOrEvent?.metric && metric === "custom")
+  )
+    return false;
   const id = String(tagOrEvent?.tagId || tagOrEvent?.id || "").toLowerCase();
-  const name = String(tagOrEvent?.tagName || tagOrEvent?.name || "").toLowerCase();
+  const name = String(
+    tagOrEvent?.tagName || tagOrEvent?.name || "",
+  ).toLowerCase();
   return (
     id.includes("shot") ||
     id.includes("basket") ||
@@ -107,28 +117,36 @@ export function isShotTag(tagOrEvent) {
 }
 
 export function shotTagPoints(tagOrEvent) {
+  const metric = eventMetric(tagOrEvent || {});
+  if (/^(made|missed)[23]$/.test(metric)) return Number(metric.at(-1));
   if (!isShotTag(tagOrEvent)) return 0;
   const id = String(tagOrEvent?.tagId || tagOrEvent?.id || "").toLowerCase();
-  const name = String(tagOrEvent?.tagName || tagOrEvent?.name || "").toLowerCase();
-  if (id.endsWith("-3") || name.includes("3p") || name.includes("3 p")) return 3;
-  if (id.endsWith("-2") || name.includes("2p") || name.includes("2 p")) return 2;
+  const name = String(
+    tagOrEvent?.tagName || tagOrEvent?.name || "",
+  ).toLowerCase();
+  if (id.endsWith("-3") || name.includes("3p") || name.includes("3 p"))
+    return 3;
+  if (id.endsWith("-2") || name.includes("2p") || name.includes("2 p"))
+    return 2;
   return 0;
 }
 
 export function zoneStats(events) {
   return shotZones.map((zone) => {
     const attempts = events.filter(
-      (event) => event.shotZoneId === zone.id && isShotTag(event)
+      (event) => event.shotZoneId === zone.id && isShotTag(event),
     );
     const made = attempts.filter((event) =>
-      String(event.tagName || "").toLowerCase().includes("canasta")
+      /^made[23]$/.test(eventMetric(event)),
     );
     return {
       ...zone,
       attempts: attempts.length,
       made: made.length,
       percentage:
-        attempts.length > 0 ? Math.round((made.length / attempts.length) * 100) : 0
+        attempts.length > 0
+          ? Math.round((made.length / attempts.length) * 100)
+          : 0,
     };
   });
 }

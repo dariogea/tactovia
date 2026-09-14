@@ -1,18 +1,22 @@
 import { useMemo, useState } from "react";
 import { defaultPreferences } from "../lib/defaults.js";
-import { playbackControls, shortcutActions, eventToShortcut } from "../lib/playback.js";
+import {
+  playbackControls,
+  shortcutActions,
+  eventToShortcut,
+} from "../lib/playback.js";
 import { paletteOptions, themeOptions } from "../lib/theme.js";
 
 const workspacePresets = {
   compact: { tagPanelWidth: 360, videoHeight: 430 },
   medium: { tagPanelWidth: 430, videoHeight: 520 },
-  large: { tagPanelWidth: 540, videoHeight: 660 }
+  large: { tagPanelWidth: 540, videoHeight: 660 },
 };
 
 const tagSizePresets = {
   compact: 52,
   medium: 68,
-  large: 88
+  large: 88,
 };
 
 const liveModuleOptions = [
@@ -25,7 +29,7 @@ const liveModuleOptions = [
   ["pace", "Ritmo de etiquetado"],
   ["shooting", "Acierto de tiro"],
   ["coverage", "Cobertura de jugadores"],
-  ["latest", "Última acción"]
+  ["latest", "Última acción"],
 ];
 
 function ShortcutButton({ value, onChange }) {
@@ -68,7 +72,7 @@ export function SettingsPanel({
   resolvedTheme,
   onThemeModeChange,
   paletteMode,
-  onPaletteModeChange
+  onPaletteModeChange,
 }) {
   const shortcutConflicts = useMemo(() => {
     const owners = new Map();
@@ -78,9 +82,16 @@ export function SettingsPanel({
     });
     tags.forEach((tag) => {
       if (!tag.shortcut) return;
-      owners.set(tag.shortcut, [...(owners.get(tag.shortcut) || []), `tag:${tag.id}`]);
+      owners.set(tag.shortcut, [
+        ...(owners.get(tag.shortcut) || []),
+        `tag:${tag.id}`,
+      ]);
     });
-    return new Set([...owners.entries()].filter(([, ids]) => ids.length > 1).map(([key]) => key));
+    return new Set(
+      [...owners.entries()]
+        .filter(([, ids]) => ids.length > 1)
+        .map(([key]) => key),
+    );
   }, [preferences.shortcuts, tags]);
 
   function updateLayout(patch) {
@@ -88,13 +99,16 @@ export function SettingsPanel({
   }
 
   function updatePlayback(patch) {
-    onChange({ ...preferences, playback: { ...preferences.playback, ...patch } });
+    onChange({
+      ...preferences,
+      playback: { ...preferences.playback, ...patch },
+    });
   }
 
   function updateShortcut(id, value) {
     onChange({
       ...preferences,
-      shortcuts: { ...preferences.shortcuts, [id]: value }
+      shortcuts: { ...preferences.shortcuts, [id]: value },
     });
   }
 
@@ -103,7 +117,7 @@ export function SettingsPanel({
     updatePlayback({
       visibleControls: current.includes(id)
         ? current.filter((item) => item !== id)
-        : [...current, id]
+        : [...current, id],
     });
   }
 
@@ -112,7 +126,10 @@ export function SettingsPanel({
   }
 
   function setTagButtonSize(size) {
-    updateLayout({ tagButtonSize: size, tagButtonHeight: tagSizePresets[size] });
+    updateLayout({
+      tagButtonSize: size,
+      tagButtonHeight: tagSizePresets[size],
+    });
   }
 
   function toggleLiveModule(id) {
@@ -120,13 +137,34 @@ export function SettingsPanel({
     updateLayout({
       liveModules: current.includes(id)
         ? current.filter((item) => item !== id)
-        : [...current, id]
+        : [...current, id],
     });
   }
 
+  const [section, setSection] = useState("appearance");
+
   return (
     <section className="settings-view">
-      <article className="settings-section appearance-settings">
+      <nav className="settings-tabs" aria-label="Secciones de ajustes">
+        {[
+          ["appearance", "Apariencia"],
+          ["workspace", "Etiquetado"],
+          ["playback", "Reproductor"],
+          ["shortcuts", "Atajos"],
+        ].map(([id, label]) => (
+          <button
+            key={id}
+            className={section === id ? "active" : ""}
+            onClick={() => setSection(id)}
+          >
+            {label}
+          </button>
+        ))}
+      </nav>
+      <article
+        hidden={section !== "appearance"}
+        className="settings-section appearance-settings"
+      >
         <div className="section-heading">
           <div>
             <span className="eyebrow">Apariencia</span>
@@ -174,8 +212,8 @@ export function SettingsPanel({
           <div>
             <strong>Paleta de marca</strong>
             <span>
-              La interfaz mantiene la identidad Tactovia en ambos modos. El
-              lima se reserva para selección, reproducción y atención.
+              Elige la paleta de tu espacio. Los colores de cada club se
+              mantienen en sus datos y gráficos.
             </span>
           </div>
         </div>
@@ -202,7 +240,7 @@ export function SettingsPanel({
         </div>
       </article>
 
-      <article className="settings-section">
+      <article hidden={section !== "workspace"} className="settings-section">
         <div className="section-heading">
           <div>
             <span className="eyebrow">Interfaz</span>
@@ -212,17 +250,22 @@ export function SettingsPanel({
         <div className="settings-choice-row">
           <div>
             <strong>Vídeo y panel lateral</strong>
-            <span>Elige una proporción inicial; también puedes arrastrar los separadores.</span>
+            <span>
+              Elige una proporción inicial; también puedes arrastrar los
+              separadores.
+            </span>
           </div>
           <div className="segmented-control">
             {[
               ["compact", "Compacto"],
               ["medium", "Equilibrado"],
-              ["large", "Amplio"]
+              ["large", "Amplio"],
             ].map(([value, label]) => (
               <button
                 key={value}
-                className={preferences.layout.workspaceSize === value ? "active" : ""}
+                className={
+                  preferences.layout.workspaceSize === value ? "active" : ""
+                }
                 onClick={() => setWorkspaceSize(value)}
               >
                 {label}
@@ -233,17 +276,21 @@ export function SettingsPanel({
         <div className="settings-choice-row">
           <div>
             <strong>Tamaño de las etiquetas</strong>
-            <span>Ajusta la altura visual de los botones sin trabajar con píxeles.</span>
+            <span>
+              Ajusta la altura visual de los botones sin trabajar con píxeles.
+            </span>
           </div>
           <div className="segmented-control">
             {[
               ["compact", "Pequeñas"],
               ["medium", "Medianas"],
-              ["large", "Grandes"]
+              ["large", "Grandes"],
             ].map(([value, label]) => (
               <button
                 key={value}
-                className={preferences.layout.tagButtonSize === value ? "active" : ""}
+                className={
+                  preferences.layout.tagButtonSize === value ? "active" : ""
+                }
                 onClick={() => setTagButtonSize(value)}
               >
                 {label}
@@ -252,12 +299,17 @@ export function SettingsPanel({
           </div>
         </div>
         <div className="settings-choice-row">
-          <div><strong>Columnas de etiquetas</strong><span>Distribución de la botonera de etiquetado.</span></div>
+          <div>
+            <strong>Columnas de etiquetas</strong>
+            <span>Distribución de la botonera de etiquetado.</span>
+          </div>
           <div className="segmented-control">
             {[1, 2, 3].map((columns) => (
               <button
                 key={columns}
-                className={preferences.layout.tagColumns === columns ? "active" : ""}
+                className={
+                  preferences.layout.tagColumns === columns ? "active" : ""
+                }
                 onClick={() => updateLayout({ tagColumns: columns })}
               >
                 {columns}
@@ -268,7 +320,10 @@ export function SettingsPanel({
         <div className="settings-choice-row">
           <div>
             <strong>Mapa de zonas</strong>
-            <span>Está oculta por defecto. Actívala cuando quieras registrar o revisar zonas de tiro.</span>
+            <span>
+              Está oculta por defecto. Actívala cuando quieras registrar o
+              revisar zonas de tiro.
+            </span>
           </div>
           <div className="settings-inline-toggles">
             <label className="switch-control">
@@ -308,7 +363,10 @@ export function SettingsPanel({
         <div className="settings-choice-row live-module-settings">
           <div>
             <strong>Módulos en tiempo real</strong>
-            <span>Elige entre indicadores calculados únicamente con las acciones del partido actual.</span>
+            <span>
+              Elige entre indicadores calculados únicamente con las acciones del
+              partido actual.
+            </span>
           </div>
           <div className="settings-inline-toggles">
             {liveModuleOptions.map(([id, label]) => (
@@ -325,20 +383,24 @@ export function SettingsPanel({
         </div>
       </article>
 
-      <article className="settings-section">
+      <article hidden={section !== "playback"} className="settings-section">
         <div className="section-heading">
           <div>
             <span className="eyebrow">Reproductor</span>
             <h2>Botones visibles</h2>
           </div>
-          <span className="counter">{preferences.playback.visibleControls.length} activos</span>
+          <span className="counter">
+            {preferences.playback.visibleControls.length} activos
+          </span>
         </div>
         <div className="control-toggle-grid">
           {playbackControls.map((control) => (
             <label className="control-toggle" key={control.id}>
               <input
                 type="checkbox"
-                checked={preferences.playback.visibleControls.includes(control.id)}
+                checked={preferences.playback.visibleControls.includes(
+                  control.id,
+                )}
                 onChange={() => toggleControl(control.id)}
               />
               <span>{control.label}</span>
@@ -346,27 +408,76 @@ export function SettingsPanel({
           ))}
         </div>
         <div className="settings-grid compact">
-          <label className="field"><span>Salto corto (s)</span><input type="number" min="0.25" max="30" step="0.25" value={preferences.playback.smallStep} onChange={(event) => updatePlayback({ smallStep: Number(event.target.value) })} /></label>
-          <label className="field"><span>Salto principal (s)</span><input type="number" min="1" max="120" value={preferences.playback.mediumStep} onChange={(event) => updatePlayback({ mediumStep: Number(event.target.value) })} /></label>
-          <label className="field"><span>Salto largo (s)</span><input type="number" min="1" max="600" value={preferences.playback.largeStep} onChange={(event) => updatePlayback({ largeStep: Number(event.target.value) })} /></label>
-          <label className="field"><span>Fotogramas por segundo</span><input type="number" min="1" max="120" value={preferences.playback.frameRate} onChange={(event) => updatePlayback({ frameRate: Number(event.target.value) })} /></label>
+          <label className="field">
+            <span>Salto corto (s)</span>
+            <input
+              type="number"
+              min="0.25"
+              max="30"
+              step="0.25"
+              value={preferences.playback.smallStep}
+              onChange={(event) =>
+                updatePlayback({ smallStep: Number(event.target.value) })
+              }
+            />
+          </label>
+          <label className="field">
+            <span>Salto principal (s)</span>
+            <input
+              type="number"
+              min="1"
+              max="120"
+              value={preferences.playback.mediumStep}
+              onChange={(event) =>
+                updatePlayback({ mediumStep: Number(event.target.value) })
+              }
+            />
+          </label>
+          <label className="field">
+            <span>Salto largo (s)</span>
+            <input
+              type="number"
+              min="1"
+              max="600"
+              value={preferences.playback.largeStep}
+              onChange={(event) =>
+                updatePlayback({ largeStep: Number(event.target.value) })
+              }
+            />
+          </label>
+          <label className="field">
+            <span>Fotogramas por segundo</span>
+            <input
+              type="number"
+              min="1"
+              max="120"
+              value={preferences.playback.frameRate}
+              onChange={(event) =>
+                updatePlayback({ frameRate: Number(event.target.value) })
+              }
+            />
+          </label>
         </div>
       </article>
 
-      <article className="settings-section">
+      <article hidden={section !== "shortcuts"} className="settings-section">
         <div className="section-heading">
           <div>
             <span className="eyebrow">Teclado</span>
             <h2>Atajos</h2>
           </div>
           <div className="settings-heading-actions">
-            {shortcutConflicts.size > 0 && <span className="conflict-badge">Hay atajos repetidos</span>}
+            {shortcutConflicts.size > 0 && (
+              <span className="conflict-badge">Hay atajos repetidos</span>
+            )}
             <button
               className="mini-button"
-              onClick={() => onChange({
-                ...preferences,
-                shortcuts: { ...defaultPreferences.shortcuts }
-              })}
+              onClick={() =>
+                onChange({
+                  ...preferences,
+                  shortcuts: { ...defaultPreferences.shortcuts },
+                })
+              }
             >
               Restaurar
             </button>
@@ -376,9 +487,15 @@ export function SettingsPanel({
           {shortcutActions.map((action) => {
             const shortcut = preferences.shortcuts[action.id] || "";
             return (
-              <div className={`shortcut-card ${shortcutConflicts.has(shortcut) ? "conflict" : ""}`} key={action.id}>
+              <div
+                className={`shortcut-card ${shortcutConflicts.has(shortcut) ? "conflict" : ""}`}
+                key={action.id}
+              >
                 <span>{action.label}</span>
-                <ShortcutButton value={shortcut} onChange={(value) => updateShortcut(action.id, value)} />
+                <ShortcutButton
+                  value={shortcut}
+                  onChange={(value) => updateShortcut(action.id, value)}
+                />
               </div>
             );
           })}

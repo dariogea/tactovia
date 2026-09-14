@@ -8,7 +8,7 @@ export const tagPalette = [
   "#34D399",
   "#FB7185",
   "#38BDF8",
-  "#C084FC"
+  "#C084FC",
 ];
 
 export const defaultTags = [
@@ -19,7 +19,7 @@ export const defaultTags = [
     mode: "point",
     shortcut: "1",
     before: 5,
-    after: 3
+    after: 3,
   },
   {
     id: "tag-shot-made-3",
@@ -28,7 +28,7 @@ export const defaultTags = [
     mode: "point",
     shortcut: "2",
     before: 5,
-    after: 3
+    after: 3,
   },
   {
     id: "tag-shot-missed-2",
@@ -37,7 +37,7 @@ export const defaultTags = [
     mode: "point",
     shortcut: "3",
     before: 5,
-    after: 3
+    after: 3,
   },
   {
     id: "tag-shot-missed-3",
@@ -46,7 +46,7 @@ export const defaultTags = [
     mode: "point",
     shortcut: "4",
     before: 5,
-    after: 3
+    after: 3,
   },
   {
     id: "tag-off-rebound",
@@ -55,7 +55,7 @@ export const defaultTags = [
     mode: "point",
     shortcut: "5",
     before: 4,
-    after: 3
+    after: 3,
   },
   {
     id: "tag-def-rebound",
@@ -64,7 +64,7 @@ export const defaultTags = [
     mode: "point",
     shortcut: "6",
     before: 4,
-    after: 3
+    after: 3,
   },
   {
     id: "tag-turnover",
@@ -73,7 +73,7 @@ export const defaultTags = [
     mode: "point",
     shortcut: "7",
     before: 6,
-    after: 3
+    after: 3,
   },
   {
     id: "tag-steal",
@@ -82,8 +82,24 @@ export const defaultTags = [
     mode: "point",
     shortcut: "8",
     before: 5,
-    after: 3
+    after: 3,
   },
+  ...[
+    ["tag-free-made", "Tiro libre anotado", "#168b7b", "made1"],
+    ["tag-free-missed", "Tiro libre fallado", "#df8544", "missed1"],
+    ["tag-assist", "Asistencia", "#518bdd", "assist"],
+    ["tag-block", "Tapón", "#8172cb", "block"],
+    ["tag-foul", "Falta personal", "#bd7083", "foul"],
+  ].map(([id, name, color, metric]) => ({
+    id,
+    name,
+    color,
+    metric,
+    mode: "point",
+    shortcut: "",
+    before: 5,
+    after: 3,
+  })),
   {
     id: "tag-pick-roll",
     name: "Pick & Roll",
@@ -91,7 +107,7 @@ export const defaultTags = [
     mode: "interval",
     shortcut: "9",
     before: 1,
-    after: 1
+    after: 1,
   },
   {
     id: "tag-transition",
@@ -100,7 +116,7 @@ export const defaultTags = [
     mode: "interval",
     shortcut: "0",
     before: 1,
-    after: 1
+    after: 1,
   },
   {
     id: "tag-possession",
@@ -109,15 +125,16 @@ export const defaultTags = [
     mode: "interval",
     shortcut: "P",
     before: 0,
-    after: 0
-  }
+    after: 0,
+  },
 ];
 
 export const emptyContext = {
   teamId: "",
   playerId: "",
   notes: "",
-  shotZoneId: ""
+  shotZoneId: "",
+  period: "1",
 };
 
 export const defaultTeams = [
@@ -139,7 +156,7 @@ export const defaultTeams = [
     website: "",
     founded: "",
     notes: "",
-    players: []
+    players: [],
   },
   {
     id: "team-rival",
@@ -159,33 +176,29 @@ export const defaultTeams = [
     website: "",
     founded: "",
     notes: "",
-    players: []
-  }
+    players: [],
+  },
 ];
 
 export const defaultPreferences = {
   layout: {
-    tagPanelWidth: 430,
-    videoHeight: 520,
+    tagPanelWidth: 340,
+    videoHeight: 430,
     tagColumns: 2,
-    tagButtonHeight: 68,
+    tagButtonHeight: 58,
     workspaceSize: "medium",
     tagButtonSize: "medium",
     shotCourtVisible: false,
     shotCourtLabels: true,
     shotCourtPosition: "above",
-    liveModules: ["actions", "tagTypes", "players", "shooting", "latest"]
+    liveModules: ["actions", "tagTypes", "players", "shooting", "latest"],
   },
   playback: {
     smallStep: 1,
     mediumStep: 10,
     largeStep: 15,
     frameRate: 25,
-    visibleControls: [
-      "backMedium",
-      "playPause",
-      "forwardMedium"
-    ]
+    visibleControls: ["backMedium", "playPause", "forwardMedium"],
   },
   shortcuts: {
     playPause: "Space",
@@ -211,14 +224,16 @@ export const defaultPreferences = {
     previousEvent: "PageUp",
     nextEvent: "PageDown",
     videoStart: "Home",
-    videoEnd: "End"
-  }
+    videoEnd: "End",
+  },
 };
 
 export function createBlankProject(teams = defaultTeams) {
   const now = new Date().toISOString();
   return {
-    version: 10,
+    version: 11,
+    analysisNotes: "",
+    playlists: [],
     id: crypto.randomUUID(),
     projectName: "Nuevo análisis",
     createdAt: now,
@@ -226,16 +241,16 @@ export function createBlankProject(teams = defaultTeams) {
     video: null,
     template: {
       name: "Plantilla de baloncesto",
-      tags: defaultTags.map((tag) => ({ ...tag }))
+      tags: defaultTags.map((tag) => ({ ...tag })),
     },
     teams: teams.map((team) => ({
       ...team,
-      players: (team.players || []).map((player) => ({ ...player }))
+      players: (team.players || []).map((player) => ({ ...player })),
     })),
     competitions: [],
     libraryFolders: [],
     freeAgents: [],
     match: null,
-    events: []
+    events: [],
   };
 }

@@ -1,4 +1,4 @@
-# Tactovia 0.12.0
+# Tactovia 0.13.0 · Studio
 
 **Plataforma privada de análisis deportivo en vídeo.**
 
@@ -9,6 +9,18 @@ instalable.
 
 ## Novedades principales
 
+- Nuevo espacio de trabajo con navegación lateral, inicio del partido, diseño
+  claro/oscuro/automático y cuatro paletas.
+- Sala de revisión con favoritos, filtros, reproducción continua, bucle y listas
+  guardadas que se pueden ordenar y exportar como clips o highlights.
+- Cuaderno del analista, períodos reales y deshacer/rehacer las acciones.
+- Buscador de comandos con `Cmd/Ctrl + K` y cronología paginada y buscable.
+- Estadísticas unificadas: tiros libres, asistencias, tapones, faltas, eFG% y
+  tabla individual, incluso cuando los tiros se etiquetan sin zona.
+- Importación y exportación de biblioteca con vista previa y fusión por identidad.
+- Excel con tabla individual y notas; Power BI con dimensiones e identificadores
+  relacionados; conclusiones PDF con el cuaderno del analista.
+- PWA comprobada sin conexión después de su primera carga completa.
 - Demo siempre accesible sin crear una cuenta.
 - Base web instalable (PWA), adaptable y con funcionamiento local.
 - El mapa de tiro se oculta por defecto y muestra zonas calientes calculadas con
@@ -25,7 +37,8 @@ instalable.
 - Exportación de clips individuales o de un único vídeo de highlights, con
   filtros, orden, agrupación y calidad.
 - Playbook retirado de esta versión para centrar el producto en scouting.
-- Limpieza de componentes obsoletos y reducción del JavaScript de producción.
+- Cálculos y exportaciones extraídos a módulos compartidos, validación de
+  proyectos, recuperación ante errores y limpieza de estilos obsoletos.
 
 ## Flujo de trabajo
 
@@ -36,6 +49,10 @@ instalable.
 5. Guarda el archivo `.scout.json`: al volver a abrirlo se recuperan acciones,
    partido y estadísticas.
 6. Genera conclusiones, gráficos, datos o clips desde **Informe y exportación**.
+
+También puedes abrir **Explorar ejemplo** para recorrer el producto
+con 64 acciones ficticias. No incluye un vídeo: la reproducción y los clips
+requieren elegir un archivo propio.
 
 La guía completa está en [docs/GUIA-USUARIO.md](docs/GUIA-USUARIO.md) y la
 referencia de teclado en [docs/ATAJOS.md](docs/ATAJOS.md).
@@ -63,15 +80,16 @@ autenticación remota y sincronización; no se simula en esta versión.
 
 ## Instalación
 
-macOS Apple Silicon: `release/Tactovia-0.12.0-mac-arm64.dmg`
+macOS Apple Silicon: `release/Tactovia-0.13.0-mac-arm64.dmg`
 
-Windows x64: `release/Tactovia-0.12.0-win-x64.exe`
+Windows x64: `release/Tactovia-0.13.0-win-x64.exe`
 
-Windows portable: `release/Tactovia-0.12.0-win-x64.zip`
+Windows portable: `release/Tactovia-0.13.0-win-x64.zip`
 
 Los instaladores aún no están firmados. macOS puede requerir
 **Control + clic → Abrir** y Windows puede mostrar SmartScreen. El empaquetado
-elimina entregables anteriores y conserva solo la versión actual.
+elimina entregables anteriores únicamente después de generar correctamente
+la nueva versión. No elimina vídeos, bibliotecas ni análisis personales.
 
 ## Desarrollo
 
@@ -85,9 +103,14 @@ pnpm test
 pnpm test:database
 pnpm test:video
 pnpm build
+pnpm test:studio
 pnpm dist
 ```
 
 El instalador de Windows generado desde macOS debe probarse físicamente en
 Windows. Antes de una distribución comercial también son necesarias la firma,
 la notarización y una revisión de licencias.
+
+Verificación de esta entrega: 51 pruebas automatizadas, 20 comprobaciones del
+flujo de interfaz en Electron, navegación real de vídeo, SQLite, Excel/PDF y PWA
+sin conexión. Consulta `TRASPASO-TACTOVIA-0.13.0.md` para el alcance y los límites.

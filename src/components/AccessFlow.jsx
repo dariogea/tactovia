@@ -5,7 +5,7 @@ import {
   passwordDigest,
   readLocalAccounts,
   setActiveLocalAccount,
-  saveLocalAccount
+  saveLocalAccount,
 } from "../lib/account.js";
 import { BrandLogo } from "./Brand.jsx";
 
@@ -15,22 +15,22 @@ const sports = [
     name: "Baloncesto",
     description: "Etiquetado, mapa de tiro y estadísticas avanzadas",
     symbol: "◉",
-    available: true
+    available: true,
   },
   {
     id: "handball",
     name: "Balonmano",
     description: "Plantillas y campos específicos próximamente",
     symbol: "◆",
-    available: false
+    available: false,
   },
   {
     id: "football",
     name: "Fútbol",
     description: "Plantillas y campos específicos próximamente",
     symbol: "⬡",
-    available: false
-  }
+    available: false,
+  },
 ];
 
 function AccessBrand({ inverse = false }) {
@@ -51,7 +51,7 @@ function AccountStage({ account, onAuthenticated, onAccountChange, onDemo }) {
   const [mode, setMode] = useState(accounts.length ? "login" : "register");
   const creating = mode === "register";
   const [selectedAccountId, setSelectedAccountId] = useState(
-    account?.id || accounts[0]?.id || ""
+    account?.id || accounts[0]?.id || "",
   );
   const selectedAccount =
     accounts.find((candidate) => candidate.id === selectedAccountId) ||
@@ -71,59 +71,66 @@ function AccountStage({ account, onAuthenticated, onAccountChange, onDemo }) {
       setError(
         creating
           ? "Indica tu nombre, un correo y una contraseña de al menos 6 caracteres."
-          : "Introduce el correo y la contraseña de este perfil."
+          : "Introduce el correo y la contraseña de este perfil.",
       );
       return;
     }
     setBusy(true);
-    if (creating) {
-      if (
-        accounts.some(
-          (candidate) =>
-            candidate.email.toLowerCase() === email.trim().toLowerCase()
-        )
-      ) {
-        setError("Ya existe un perfil local con ese correo.");
-        setBusy(false);
-        return;
-      }
-      const passwordSalt = createPasswordSalt();
-      const passwordHash = await passwordDigest(password, passwordSalt);
-      const next = saveLocalAccount({
-        id: crypto.randomUUID(),
-        name: name.trim(),
-        email: email.trim().toLowerCase(),
-        club: club.trim(),
-        role: "Analista",
-        avatar: "",
-        passwordHash,
-        passwordSalt,
-        createdAt: new Date().toISOString()
-      });
-      onAccountChange(next);
-      onAuthenticated(next);
-    } else {
-      if (!selectedAccount) {
-        setError("Selecciona un perfil o crea uno nuevo.");
-        setBusy(false);
-        return;
-      }
-      const passwordHash = await passwordDigest(
-        password,
-        selectedAccount.passwordSalt || ""
-      );
-      if (
-        email.trim().toLowerCase() === selectedAccount.email.toLowerCase() &&
-        passwordHash === selectedAccount.passwordHash
-      ) {
-        const next = setActiveLocalAccount(selectedAccount.id);
+    try {
+      if (creating) {
+        if (
+          accounts.some(
+            (candidate) =>
+              candidate.email.toLowerCase() === email.trim().toLowerCase(),
+          )
+        ) {
+          setError("Ya existe un perfil local con ese correo.");
+          setBusy(false);
+          return;
+        }
+        const passwordSalt = createPasswordSalt();
+        const passwordHash = await passwordDigest(password, passwordSalt);
+        const next = saveLocalAccount({
+          id: crypto.randomUUID(),
+          name: name.trim(),
+          email: email.trim().toLowerCase(),
+          club: club.trim(),
+          role: "Analista",
+          avatar: "",
+          passwordHash,
+          passwordSalt,
+          createdAt: new Date().toISOString(),
+        });
         onAccountChange(next);
         onAuthenticated(next);
       } else {
-        setError("El correo o la contraseña no son correctos.");
+        if (!selectedAccount) {
+          setError("Selecciona un perfil o crea uno nuevo.");
+          setBusy(false);
+          return;
+        }
+        const passwordHash = await passwordDigest(
+          password,
+          selectedAccount.passwordSalt || "",
+        );
+        if (
+          email.trim().toLowerCase() === selectedAccount.email.toLowerCase() &&
+          passwordHash === selectedAccount.passwordHash
+        ) {
+          const next = setActiveLocalAccount(selectedAccount.id);
+          onAccountChange(next);
+          onAuthenticated(next);
+        } else {
+          setError("El correo o la contraseña no son correctos.");
+        }
       }
+    } catch {
+      setError(
+        "No se pudo guardar el perfil. Comprueba el espacio disponible y vuelve a intentarlo.",
+      );
+    } finally {
+      setBusy(false);
     }
-    setBusy(false);
   }
 
   return (
@@ -132,7 +139,11 @@ function AccountStage({ account, onAuthenticated, onAccountChange, onDemo }) {
         <AccessBrand inverse />
         <div className="access-story-copy">
           <span className="eyebrow">Del vídeo a la decisión</span>
-          <h1>Ve el juego.<br />Decide mejor.</h1>
+          <h1>
+            Ve el juego.
+            <br />
+            Decide mejor.
+          </h1>
           <p>
             Etiqueta cada posesión, conecta jugadores y equipos y convierte el
             partido en una biblioteca de conocimiento.
@@ -144,18 +155,22 @@ function AccountStage({ account, onAuthenticated, onAccountChange, onDemo }) {
           </div>
         </div>
         <div className="access-court-art" aria-hidden="true">
-          <i /><i /><i />
+          <i />
+          <i />
+          <i />
         </div>
       </section>
       <section className="access-card">
         <div className="access-card-heading">
           <span className="access-step">01</span>
           <div>
-            <span className="eyebrow">{creating ? "Primer acceso" : "Bienvenido de nuevo"}</span>
+            <span className="eyebrow">
+              {creating ? "Primer acceso" : "Bienvenido de nuevo"}
+            </span>
             <h2>{creating ? "Crea tu espacio" : "Accede a tu espacio"}</h2>
             <p>
               {creating
-                ? "Este perfil protege la entrada y permanece únicamente en este ordenador."
+                ? "Organiza tu trabajo con un perfil que permanece únicamente en este ordenador."
                 : "Inicia sesión para abrir tu espacio de scouting."}
             </p>
           </div>
@@ -217,29 +232,59 @@ function AccountStage({ account, onAuthenticated, onAccountChange, onDemo }) {
             <>
               <label className="field">
                 <span>Nombre</span>
-                <input value={name} onChange={(event) => setName(event.target.value)} autoFocus placeholder="Tu nombre completo" />
+                <input
+                  value={name}
+                  onChange={(event) => setName(event.target.value)}
+                  autoFocus
+                  placeholder="Tu nombre completo"
+                />
               </label>
               <label className="field">
                 <span>Club u organización</span>
-                <input value={club} onChange={(event) => setClub(event.target.value)} placeholder="Opcional" />
+                <input
+                  value={club}
+                  onChange={(event) => setClub(event.target.value)}
+                  placeholder="Opcional"
+                />
               </label>
             </>
           )}
           <label className="field">
             <span>Correo</span>
-            <input type="email" value={email} onChange={(event) => setEmail(event.target.value)} autoFocus={!creating} placeholder="nombre@club.com" />
+            <input
+              type="email"
+              value={email}
+              onChange={(event) => setEmail(event.target.value)}
+              autoFocus={!creating}
+              placeholder="nombre@club.com"
+            />
           </label>
           <label className="field">
             <span>Contraseña local</span>
-            <input type="password" value={password} onChange={(event) => setPassword(event.target.value)} placeholder="Mínimo 6 caracteres" />
+            <input
+              type="password"
+              value={password}
+              onChange={(event) => setPassword(event.target.value)}
+              placeholder="Mínimo 6 caracteres"
+            />
           </label>
           {error && <p className="form-error">{error}</p>}
           <button className="button primary access-submit" disabled={busy}>
-            {busy ? "Comprobando…" : creating ? "Crear perfil y continuar" : "Entrar a Tactovia"}
+            {busy
+              ? "Comprobando…"
+              : creating
+                ? "Crear perfil y continuar"
+                : "Entrar a Tactovia"}
           </button>
         </form>
-        <div className="demo-access-divider"><span>probar sin cuenta</span></div>
-        <button type="button" className="button demo-access-button" onClick={onDemo}>
+        <div className="demo-access-divider">
+          <span>probar sin cuenta</span>
+        </div>
+        <button
+          type="button"
+          className="button demo-access-button"
+          onClick={onDemo}
+        >
           <span>▶</span>
           Entrar en la demo
         </button>
@@ -265,7 +310,9 @@ function SportStage({ account, onSelect }) {
           <div>
             <span className="eyebrow">Configurar espacio</span>
             <h1>¿Qué deporte vas a analizar?</h1>
-            <p>Prepararemos las etiquetas, la pista y las métricas adecuadas.</p>
+            <p>
+              Prepararemos las etiquetas, la pista y las métricas adecuadas.
+            </p>
           </div>
         </div>
         <div className="sport-grid">
@@ -294,7 +341,14 @@ function SportStage({ account, onSelect }) {
   );
 }
 
-function SessionStage({ project, canContinue, onNew, onContinue, onOpen }) {
+function SessionStage({
+  project,
+  canContinue,
+  onNew,
+  onContinue,
+  onOpen,
+  onExample,
+}) {
   return (
     <div className="access-centered">
       <AccessBrand />
@@ -304,7 +358,9 @@ function SessionStage({ project, canContinue, onNew, onContinue, onOpen }) {
           <div>
             <span className="eyebrow">Sesión de trabajo</span>
             <h1>¿Cómo quieres empezar?</h1>
-            <p>Crea un análisis o retoma exactamente el punto donde lo dejaste.</p>
+            <p>
+              Crea un análisis o retoma exactamente el punto donde lo dejaste.
+            </p>
           </div>
         </div>
         <div className="session-choice-grid">
@@ -312,11 +368,17 @@ function SessionStage({ project, canContinue, onNew, onContinue, onOpen }) {
             <span>＋</span>
             <div>
               <strong>Nueva sesión</strong>
-              <small>Empieza con un análisis limpio y selecciona el vídeo.</small>
+              <small>
+                Empieza con un análisis limpio y selecciona el vídeo.
+              </small>
             </div>
             <em>Crear análisis</em>
           </button>
-          <button className="session-choice" disabled={!canContinue} onClick={onContinue}>
+          <button
+            className="session-choice"
+            disabled={!canContinue}
+            onClick={onContinue}
+          >
             <span>↗</span>
             <div>
               <strong>Continuar sesión</strong>
@@ -332,9 +394,21 @@ function SessionStage({ project, canContinue, onNew, onContinue, onOpen }) {
             <span>⌁</span>
             <div>
               <strong>Abrir archivo guardado</strong>
-              <small>Selecciona un análisis .scout guardado en este u otro equipo.</small>
+              <small>
+                Selecciona un análisis .scout guardado en este u otro equipo.
+              </small>
             </div>
             <em>Buscar archivo</em>
+          </button>
+          <button className="session-choice" onClick={onExample}>
+            <span>◇</span>
+            <div>
+              <strong>Explorar ejemplo</strong>
+              <small>
+                Un partido ficticio con 64 acciones, gráficos y listas de clips.
+              </small>
+            </div>
+            <em>Conocer Tactovia</em>
           </button>
         </div>
       </section>
@@ -352,9 +426,10 @@ export function AccessFlow({
   onAuthenticated,
   onSelectSport,
   onDemo,
+  onExample,
   onNew,
   onContinue,
-  onOpen
+  onOpen,
 }) {
   if (!authenticated) {
     return (
@@ -383,6 +458,7 @@ export function AccessFlow({
         onNew={onNew}
         onContinue={onContinue}
         onOpen={onOpen}
+        onExample={onExample}
       />
     </main>
   );

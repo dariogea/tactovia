@@ -6,13 +6,13 @@ const brandAssets = {
   stackedNegative: "brand/tactovia-stacked-negative.svg",
   symbolPrimary: "brand/tactovia-symbol-primary.svg",
   symbolNegative: "brand/tactovia-symbol-negative.svg",
-  animated: "brand/tactovia-logo-animated.svg"
+  animated: "brand/tactovia-logo-animated.svg",
 };
 
 export function BrandLogo({
   layout = "horizontal",
   surface = "adaptive",
-  className = ""
+  className = "",
 }) {
   const primary =
     layout === "stacked"
@@ -25,7 +25,7 @@ export function BrandLogo({
       ? brandAssets.stackedNegative
       : layout === "symbol"
         ? brandAssets.symbolNegative
-        : surface === "ink" || surface === "adaptive"
+        : surface === "ink"
           ? brandAssets.horizontalOnInk
           : brandAssets.horizontalNegative;
 

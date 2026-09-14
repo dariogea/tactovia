@@ -1,7 +1,7 @@
 # Contexto permanente de Tactovia
 
-Última actualización: 18 de agosto de 2026
-Versión estable: 0.12.0
+Última actualización: 14 de septiembre de 2026
+Versión entregada: 0.13.0 · Studio
 
 ## Producto
 
@@ -12,7 +12,25 @@ estadísticas, conclusiones, datos y vídeo.
 
 ## Estado funcional
 
+- Rediseño Studio con navegación lateral, inicio del partido y modo de
+  concentración. Pantallas verificadas en claro, oscuro y tamaños reducidos.
+- Sala de revisión: filtros, favoritos, clips acotados, reproducción continua,
+  bucle, listas guardadas y reordenación para exportación.
+- Cuaderno del analista en Inicio, guardado con el proyecto y exportado en
+  Excel y PDF interpretativo.
+- Buscador de comandos Cmd/Ctrl+K y deshacer/rehacer hasta 50 estados de acciones.
+- Período real por acción (1–4 y dos prórrogas), nunca estimado por duración del
+  vídeo. Los análisis antiguos conservan períodos sin asignar.
+- Métricas semánticas editables por etiqueta; cálculo compartido entre interfaz
+  y exportaciones. Tiros libres, asistencias, faltas y tapones disponibles.
+- Tabla individual; tiros sin zona incluidos en FG/eFG, libres excluidos de
+  tiros de campo. La cobertura combina intervalos solapados.
+- Cronología con búsqueda, favoritos y paginación de 50 acciones.
+- Biblioteca importable/exportable con vista previa, validación y fusión por
+  identidad; admite traspasos sin duplicar jugadores.
 - Perfiles locales separados y acceso demo sin registro.
+- Ejemplo explícitamente ficticio con 64 acciones, 10 jugadores, notas y lista;
+  no incluye un vídeo y no escribe el histórico de un perfil.
 - Baloncesto activo; otros deportes quedan para fases posteriores.
 - Sesión nueva, continuación del autoguardado o apertura de `.scout.json`.
 - Proyecto con partido, convocatoria, vídeo, etiquetas, zonas y acciones.
@@ -29,16 +47,24 @@ estadísticas, conclusiones, datos y vídeo.
   datos.
 - Conclusiones locales de equipo y jugador, sin inventar acciones ni enviar
   información a servicios externos.
-- PDF interpretativo, PDF visual apaisado, CSV, Excel y modelo para Power BI.
+- PDF interpretativo con todos los jugadores etiquetados, PDF visual apaisado,
+  CSV, Excel con tabla individual y notas, y Power BI con dimensiones,
+  identificadores y guía de relaciones. No se genera un PBIX.
 - Portal de vídeo con filtros, selección, agrupación, orden, tres calidades,
   clips independientes y reel único de highlights.
 - Cuatro paletas; tema automático, claro y oscuro.
 - El Playbook se retiró deliberadamente de 0.12 para concentrar el MVP en
   scouting y análisis.
+- Protección ante errores de interfaz/IPC, validación de archivos de análisis,
+  foco de diálogos, confirmación al cerrar sin guardar y recuperación diferida.
+- El cambio de pantalla conserva la posición del vídeo; volver a seleccionar
+  su archivo no borra el partido; el mapa oculto no impide etiquetar tiros.
 
 ## Webapp
 
-- Manifiesto PWA, metadatos de instalación y service worker de shell offline.
+- Manifiesto PWA, icono PNG, metadatos de instalación y service worker con
+  precaché real de HTML, JS, CSS y marca. Arranque offline verificado después de
+  la primera carga. Vídeos, peticiones por rangos y análisis no se cachean.
 - En navegador: vídeo local, etiquetado, apertura/descarga de proyecto JSON y
   CSV.
 - En escritorio: SQLite, copias, Excel, PDF, Power BI y codificación FFmpeg.
@@ -55,36 +81,54 @@ estadísticas, conclusiones, datos y vídeo.
   `scoutanalyzer.db` y las claves antiguas para no romper instalaciones.
 - La migración de proyectos elimina la propiedad obsoleta `playbook` y conserva
   el resto de los datos compatibles.
+- El formato de proyecto pasa a versión 11 e incluye `playlists`,
+  `analysisNotes`, `period`, `favorite` y `metric`. Se rechazan archivos inválidos,
+  identidades duplicadas y versiones futuras, sin sobrescribir el trabajo abierto.
+- La biblioteca SQLite se hidrata antes de guardar para evitar sobrescrituras
+  en el inicio de sesión. Los identificadores y rutas de almacenamiento previos
+  se conservan.
 
-## Entregables 0.12.0
+## Entregables 0.13.0
 
 La carpeta `release` contiene únicamente:
 
-- `Tactovia-0.12.0-mac-arm64.dmg`
-- `Tactovia-0.12.0-win-x64.exe`
-- `Tactovia-0.12.0-win-x64.zip`
+- `Tactovia-0.13.0-mac-arm64.dmg` (aprox. 139 MB)
+- `Tactovia-0.13.0-win-x64.exe` (aprox. 120 MB)
+- `Tactovia-0.13.0-win-x64.zip` (aprox. 167 MB)
 
-Cada empaquetado elimina versiones anteriores, blockmaps y carpetas
-intermedias.
+La limpieza elimina versiones generadas anteriores, blockmaps y carpetas
+intermedias únicamente tras terminar correctamente el empaquetado.
 
-## Verificación de 0.12.0
+## Verificación de 0.13.0
 
-- 41/41 pruebas automáticas.
+- 51/51 pruebas automáticas.
+- 20 comprobaciones integradas en Electron: acceso, ejemplo, pantallas,
+  filtros, vídeo real, tiro sin mapa, período, guardado/apertura, deshacer,
+  favoritos, listas, orden de exportación, comandos y tamaños de pantalla.
 - 9 componentes críticos renderizados.
 - SQLite Electron real:
   `DATABASE_OK version=4 teams=2 players=1 matches=1 events=1 histories=1 video=excluded privacy=private`.
 - Vídeo y reel FFmpeg reales:
-  `VIDEO_SEEK_OK duration=12.00 seek=7.25 playback=8.46 rate=2x ranges=1 highlights=255346`.
-- Excel real generado correctamente.
-- Compilación Vite superada: 368.86 kB de JS y 127.11 kB de CSS antes de gzip.
-- Acceso, demo, etiquetado, estadísticas, biblioteca e informes revisados en
-  navegador sin errores ni avisos de consola.
-- DMG validado por `hdiutil`; EXE y ZIP revisados estructuralmente.
+  `VIDEO_SEEK_OK duration=12.00 seek=7.25 playback=8.45 rate=2x ranges=1 highlights=255346`.
+- Excel real: 6 hojas; verificados período, favoritos, puntos y notas. Power BI
+  comprobado con dimensiones e identificadores relacionados.
+- PDF real generado en las dos modalidades, con comprobación de contenido.
+- `PWA_OK offline=true assets=17 demo=true`.
+- Compilación Vite superada: 412.93 kB de JS (118.74 gzip) y 167.23 kB de CSS
+  (31.17 gzip). Se retiraron 39 reglas de estilos obsoletos.
+- Pantallas principales revisadas visualmente en claro y oscuro; Etiquetado a
+  1000 px e Inicio a 640 px; sin errores de consola en el recorrido integrado.
+- DMG validado por `hdiutil`; ZIP íntegro y EXE identificado como instalador NSIS.
+- Versión interna 0.13.0 verificada en los paquetes Mac y Windows; ambos
+  contienen el módulo estadístico compartido y el nuevo módulo de informes.
 - Windows sigue pendiente de prueba física y los instaladores no están firmados.
+- `/Applications/Tactovia.app` actualizado a 0.13.0 y abierto físicamente:
+  acceso demo, selección de baloncesto y ejemplo comprobados desde el paquete
+  instalado. El perfil existente sigue disponible. No se modificaron sus datos.
 
 ## Referencias activas
 
-- Resultado: `TRASPASO-TACTOVIA-0.12.0.md`.
+- Resultado: `TRASPASO-TACTOVIA-0.13.0.md`.
 - Guía: `docs/GUIA-USUARIO.md`.
 - Atajos: `docs/ATAJOS.md`.
 - Base de datos: `docs/BASE-DATOS-0.6.md`.
@@ -105,7 +149,7 @@ suben al repositorio.
 
 ## Siguientes prioridades
 
-1. Probar físicamente 0.12.0 en Windows x64.
+1. Probar físicamente 0.13.0 en Windows x64.
 2. Validar los flujos con entrenadores y corregir fricción real de uso.
 3. Definir backend, organizaciones, roles, privacidad y sincronización.
 4. Diseñar autenticación real para publicar la webapp.

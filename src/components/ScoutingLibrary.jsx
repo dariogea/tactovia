@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { LibraryTransfer } from "./LibraryTransfer.jsx";
 import { DatabaseLibrary } from "./DatabaseLibrary.jsx";
 import { RosterManager } from "./RosterManager.jsx";
 
@@ -17,7 +18,7 @@ export function ScoutingLibrary({
   onRefresh,
   onBackup,
   onDeleteRecord,
-  onExportHistory
+  onExportHistory,
 }) {
   const [workspace, setWorkspace] = useState("directory");
   return (
@@ -46,6 +47,15 @@ export function ScoutingLibrary({
           </button>
         </div>
       </header>
+      <LibraryTransfer
+        library={{ teams, competitions, freeAgents, libraryFolders: folders }}
+        onChange={(next) => {
+          onTeamsChange(next.teams);
+          onCompetitionsChange(next.competitions);
+          onFreeAgentsChange(next.freeAgents);
+          onFoldersChange(next.libraryFolders);
+        }}
+      />
       {workspace === "directory" ? (
         <DatabaseLibrary
           snapshot={snapshot}

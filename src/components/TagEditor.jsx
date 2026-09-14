@@ -1,3 +1,4 @@
+import { eventMetric } from "../lib/basketball.js";
 import { useMemo, useState } from "react";
 import { tagPalette } from "../lib/defaults.js";
 
@@ -6,7 +7,7 @@ export function TagEditor({ tags, courtOptions, onClose, onSave }) {
   const [courtDraft, setCourtDraft] = useState({
     visible: courtOptions?.visible !== false,
     showLabels: courtOptions?.showLabels !== false,
-    position: courtOptions?.position === "below" ? "below" : "above"
+    position: courtOptions?.position === "below" ? "below" : "above",
   });
   const [error, setError] = useState("");
 
@@ -16,12 +17,14 @@ export function TagEditor({ tags, courtOptions, onClose, onSave }) {
       if (!tag.shortcut) return;
       used.set(tag.shortcut, (used.get(tag.shortcut) || 0) + 1);
     });
-    return new Set([...used.entries()].filter(([, count]) => count > 1).map(([key]) => key));
+    return new Set(
+      [...used.entries()].filter(([, count]) => count > 1).map(([key]) => key),
+    );
   }, [draft]);
 
   function updateTag(id, patch) {
     setDraft((current) =>
-      current.map((tag) => (tag.id === id ? { ...tag, ...patch } : tag))
+      current.map((tag) => (tag.id === id ? { ...tag, ...patch } : tag)),
     );
   }
 
@@ -36,8 +39,8 @@ export function TagEditor({ tags, courtOptions, onClose, onSave }) {
         mode: "point",
         shortcut: "",
         before: 5,
-        after: 3
-      }
+        after: 3,
+      },
     ]);
   }
 
@@ -59,9 +62,9 @@ export function TagEditor({ tags, courtOptions, onClose, onSave }) {
         ...tag,
         name: tag.name.trim(),
         before: Math.max(0, Number(tag.before) || 0),
-        after: Math.max(0, Number(tag.after) || 0)
+        after: Math.max(0, Number(tag.after) || 0),
       })),
-      courtDraft
+      courtDraft,
     );
   }
 
@@ -79,8 +82,8 @@ export function TagEditor({ tags, courtOptions, onClose, onSave }) {
         </div>
 
         <p className="subtle">
-          Los márgenes añaden tiempo antes y después de cada acción. En los intervalos
-          se aplican al inicio y al final.
+          Los márgenes añaden tiempo antes y después de cada acción. En los
+          intervalos se aplican al inicio y al final.
         </p>
 
         <article className="court-editor-card">
@@ -99,7 +102,7 @@ export function TagEditor({ tags, courtOptions, onClose, onSave }) {
               onChange={(event) =>
                 setCourtDraft((current) => ({
                   ...current,
-                  visible: event.target.checked
+                  visible: event.target.checked,
                 }))
               }
             />
@@ -113,7 +116,7 @@ export function TagEditor({ tags, courtOptions, onClose, onSave }) {
               onChange={(event) =>
                 setCourtDraft((current) => ({
                   ...current,
-                  showLabels: event.target.checked
+                  showLabels: event.target.checked,
                 }))
               }
             />
@@ -127,7 +130,7 @@ export function TagEditor({ tags, courtOptions, onClose, onSave }) {
               onChange={(event) =>
                 setCourtDraft((current) => ({
                   ...current,
-                  position: event.target.value
+                  position: event.target.value,
                 }))
               }
             >
@@ -144,24 +147,60 @@ export function TagEditor({ tags, courtOptions, onClose, onSave }) {
                 className="color-input"
                 type="color"
                 value={tag.color}
-                onChange={(event) => updateTag(tag.id, { color: event.target.value })}
+                onChange={(event) =>
+                  updateTag(tag.id, { color: event.target.value })
+                }
                 aria-label={`Color de ${tag.name}`}
               />
               <label className="field grow">
                 <span>Nombre</span>
                 <input
                   value={tag.name}
-                  onChange={(event) => updateTag(tag.id, { name: event.target.value })}
+                  onChange={(event) =>
+                    updateTag(tag.id, { name: event.target.value })
+                  }
                 />
               </label>
               <label className="field">
                 <span>Comportamiento</span>
                 <select
                   value={tag.mode}
-                  onChange={(event) => updateTag(tag.id, { mode: event.target.value })}
+                  onChange={(event) =>
+                    updateTag(tag.id, { mode: event.target.value })
+                  }
                 >
                   <option value="point">Instante</option>
                   <option value="interval">Intervalo</option>
+                </select>
+              </label>
+              <label className="field metric-field">
+                <span>Estadística</span>
+                <select
+                  value={tag.metric || eventMetric(tag)}
+                  onChange={(e) =>
+                    updateTag(tag.id, { metric: e.target.value })
+                  }
+                >
+                  {[
+                    ["custom", "Personalizada"],
+                    ["made2", "Canasta 2P"],
+                    ["made3", "Canasta 3P"],
+                    ["missed2", "Fallo 2P"],
+                    ["missed3", "Fallo 3P"],
+                    ["made1", "Libre anotado"],
+                    ["missed1", "Libre fallado"],
+                    ["oreb", "Rebote ofensivo"],
+                    ["dreb", "Rebote defensivo"],
+                    ["assist", "Asistencia"],
+                    ["turnover", "Pérdida"],
+                    ["steal", "Recuperación"],
+                    ["block", "Tapón"],
+                    ["foul", "Falta"],
+                  ].map(([id, label]) => (
+                    <option key={id} value={id}>
+                      {label}
+                    </option>
+                  ))}
                 </select>
               </label>
               <label className="field compact-field">
@@ -172,7 +211,9 @@ export function TagEditor({ tags, courtOptions, onClose, onSave }) {
                   max="120"
                   step="0.5"
                   value={tag.before}
-                  onChange={(event) => updateTag(tag.id, { before: event.target.value })}
+                  onChange={(event) =>
+                    updateTag(tag.id, { before: event.target.value })
+                  }
                 />
               </label>
               <label className="field compact-field">
@@ -183,24 +224,32 @@ export function TagEditor({ tags, courtOptions, onClose, onSave }) {
                   max="120"
                   step="0.5"
                   value={tag.after}
-                  onChange={(event) => updateTag(tag.id, { after: event.target.value })}
+                  onChange={(event) =>
+                    updateTag(tag.id, { after: event.target.value })
+                  }
                 />
               </label>
               <label className="field shortcut-field">
                 <span>Atajo</span>
                 <input
-                  className={duplicateShortcuts.has(tag.shortcut) ? "invalid" : ""}
+                  className={
+                    duplicateShortcuts.has(tag.shortcut) ? "invalid" : ""
+                  }
                   maxLength="1"
                   value={tag.shortcut}
                   onChange={(event) =>
-                    updateTag(tag.id, { shortcut: event.target.value.toUpperCase() })
+                    updateTag(tag.id, {
+                      shortcut: event.target.value.toUpperCase(),
+                    })
                   }
                 />
               </label>
               <button
                 className="icon-button danger"
                 onClick={() =>
-                  setDraft((current) => current.filter((item) => item.id !== tag.id))
+                  setDraft((current) =>
+                    current.filter((item) => item.id !== tag.id),
+                  )
                 }
                 aria-label={`Eliminar ${tag.name}`}
               >

@@ -1,5 +1,38 @@
 # Hoja de ruta de Tactovia
 
+## Estado actual — 0.13 Studio (14 de septiembre de 2026)
+
+Producto local funcional con perfiles, demo, etiquetado por períodos,
+estadísticas del partido, biblioteca privada, sala de revisión, listas,
+favoritos, cuaderno, PDF, Excel, Power BI y vídeo. PWA con arranque sin conexión
+comprobado tras la primera carga.
+
+Las secciones históricas siguientes mezclan entregas y propuestas originales.
+En particular, las antiguas propuestas «0.7 — Colaboración activa» y «0.8 —
+Asistencia mediante IA» **no se han implementado**. La numeración real continuó
+por otras prioridades. El Playbook se retiró en 0.12 a petición del usuario.
+
+### Entregado en 0.13
+
+- Rediseño integral de navegación y pantallas con tema claro/oscuro. ✓
+- Inicio del partido y cuaderno persistente del analista. ✓
+- Revisión, favoritos y listas ordenadas para exportación. ✓
+- Períodos reales y deshacer/rehacer acciones. ✓
+- Métricas compartidas, tiros libres y tabla individual. ✓
+- Importación/fusión de bibliotecas con vista previa. ✓
+- Excel ampliado y dimensiones relacionadas para Power BI. ✓
+- Validación de archivos, avisos de cierre y diálogos accesibles. ✓
+- Pruebas integradas sobre vídeo real y web offline. ✓
+
+### Próximas prioridades, sin promesa de fechas
+
+1. Validación física en Windows y sesiones de uso con entrenadores.
+2. Firma y notarización para distribución comercial.
+3. Accesibilidad con lector de pantalla y pruebas con partidos largos reales.
+4. Backend, autenticación real, permisos y sincronización optativa.
+5. Comparación entre partidos y colaboración sobre análisis.
+6. IA asistida y revisable, tras definir proveedor, privacidad y coste.
+
 ## Versión 0.1 — MVP local
 
 - Reproductor local.

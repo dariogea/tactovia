@@ -1,20 +1,25 @@
 import React from "react";
 import ReactDOM from "react-dom/client";
+import { ErrorBoundary } from "./components/ErrorBoundary.jsx";
 import App from "./App.jsx";
 import {
   normalizePaletteMode,
   normalizeThemeMode,
   paletteStorageKey,
   resolveThemeMode,
-  themeStorageKey
+  themeStorageKey,
 } from "./lib/theme.js";
 import "./styles.css";
+import "./studio.css";
 
 try {
   const themeMode = normalizeThemeMode(localStorage.getItem(themeStorageKey));
-  const prefersDark = window.matchMedia?.("(prefers-color-scheme: dark)")?.matches ?? true;
+  const prefersDark =
+    window.matchMedia?.("(prefers-color-scheme: dark)")?.matches ?? true;
   const resolvedTheme = resolveThemeMode(themeMode, prefersDark);
-  const paletteMode = normalizePaletteMode(localStorage.getItem(paletteStorageKey));
+  const paletteMode = normalizePaletteMode(
+    localStorage.getItem(paletteStorageKey),
+  );
   document.documentElement.dataset.theme = resolvedTheme;
   document.documentElement.dataset.themePreference = themeMode;
   document.documentElement.dataset.palette = paletteMode;
@@ -26,11 +31,17 @@ try {
 
 ReactDOM.createRoot(document.getElementById("root")).render(
   <React.StrictMode>
-    <App />
-  </React.StrictMode>
+    <ErrorBoundary>
+      <App />
+    </ErrorBoundary>
+  </React.StrictMode>,
 );
 
-if (import.meta.env.PROD && "serviceWorker" in navigator && !window.scoutDesktop) {
+if (
+  import.meta.env.PROD &&
+  "serviceWorker" in navigator &&
+  !window.scoutDesktop
+) {
   window.addEventListener("load", () => {
     navigator.serviceWorker.register("./sw.js").catch(() => {
       // La web sigue funcionando aunque el navegador bloquee el modo sin conexión.
