@@ -18,13 +18,6 @@ const sports = [
     available: true,
   },
   {
-    id: "handball",
-    name: "Balonmano",
-    description: "Plantillas y campos específicos próximamente",
-    symbol: "◆",
-    available: false,
-  },
-  {
     id: "football",
     name: "Fútbol",
     description: "Plantillas y campos específicos próximamente",

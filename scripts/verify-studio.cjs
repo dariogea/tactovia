@@ -139,6 +139,11 @@ async function run() {
   await click("▶Entrar en la demo").catch(() =>
     selectorClick(".demo-access-button"),
   );
+  await check(
+    `!document.body.innerText.includes('Balonmano')`,
+    "Balonmano retirado",
+  );
+  await screenshot("sports-light");
   await selectorClick(".sport-card:not([disabled])");
   await selectorClick(".session-choice:last-child");
   await check(
@@ -277,6 +282,125 @@ async function run() {
   await selectorClick(".studio-sidebar nav button:nth-child(1)");
   await screenshot("overview-mobile");
   await check(`document.body.scrollWidth<=innerWidth+2`, "Inicio responsive");
+  if (process.argv.includes("--visual")) {
+    const audit = [];
+    const inspect = async (name) => {
+      await screenshot(name);
+      const issues = await js(`(()=>{
+        return [...document.querySelectorAll('button,h1,h2,h3,label,p,small,strong,input,select')].filter(e=>e.getClientRects().length).flatMap(e=>{
+          const r=e.getBoundingClientRect(), s=getComputedStyle(e);
+          const text=(e.innerText||e.getAttribute('aria-label')||'').trim().slice(0,100);
+          if(!text || r.width===0) return [];
+          const scrollContainer=e.closest('.table-scroll,.event-table-wrap');
+          const overflow=!scrollContainer&&(r.right>innerWidth+2||r.left< -2);
+          const clipped=e.scrollWidth>e.clientWidth+3&&['hidden','clip'].includes(s.overflowX)&&s.textOverflow!=='ellipsis';
+          return overflow||clipped?[{tag:e.tagName,cls:e.className,text,overflow,clipped,width:Math.round(r.width)}]:[];
+        });
+      })()`);
+      audit.push({ name, issues });
+      fs.writeFileSync(
+        path.join(dir, "visual-audit.json"),
+        JSON.stringify(audit, null, 2),
+      );
+    };
+    for (const width of process.argv.includes('--details') ? [] : [1440, 1000, 640]) {
+      win.setSize(width, 940);
+      for (const theme of ["light", "dark"]) {
+        await js(`document.documentElement.dataset.theme='${theme}'`);
+        for (let index = 1; index <= 6; index++) {
+          await selectorClick(`.studio-sidebar nav button:nth-child(${index})`);
+          await inspect(`audit-${width}-${theme}-${index}`);
+        }
+        await selectorClick(".sidebar-bottom>button:nth-child(2)");
+        for (let tab = 1; tab <= 4; tab++) {
+          await selectorClick(`.settings-tabs button:nth-child(${tab})`);
+          await inspect(`audit-${width}-${theme}-settings-${tab}`);
+        }
+      }
+    }
+    win.setSize(1440, 1000);
+    await selectorClick(".studio-sidebar nav button:nth-child(4)");
+    for (const palette of process.argv.includes('--details') ? [] : ["tactovia", "arena", "ocean", "graphite"]) {
+      for (const theme of ["light", "dark"]) {
+        await js(
+          `document.documentElement.dataset.theme='${theme}';document.documentElement.dataset.palette='${palette}';`,
+        );
+        await inspect(`palette-${palette}-${theme}`);
+      }
+    }
+    for (const width of [1000, 640]) {
+      win.setSize(width, 940);
+      for (const theme of ["light", "dark"]) {
+        await js(
+          `document.documentElement.dataset.theme='${theme}';document.documentElement.dataset.palette='tactovia'`,
+        );
+        await selectorClick(".studio-sidebar nav button:nth-child(4)");
+        for (let tab = 2; tab <= 4; tab++) {
+          await selectorClick(`.bi-page-tabs button:nth-child(${tab})`);
+          await inspect(`detail-${width}-${theme}-stats-${tab}`);
+        }
+        await selectorClick(".studio-sidebar nav button:nth-child(6)");
+        for (let tab = 2; tab <= 4; tab++) {
+          await selectorClick(`.report-section-tabs button:nth-child(${tab})`);
+          await inspect(`detail-${width}-${theme}-report-${tab}`);
+        }
+        await selectorClick(".studio-sidebar nav button:nth-child(2)");
+        await click("Configurar");
+        await inspect(`dialog-${width}-${theme}-tags`);
+        await selectorClick('[role="dialog"] button[aria-label="Cerrar"]');
+        await selectorClick(".shortcut-help-button");
+        await inspect(`dialog-${width}-${theme}-guide`);
+        await selectorClick('[role="dialog"] button[aria-label="Cerrar"]');
+        await selectorClick(".studio-sidebar nav button:nth-child(3)");
+        await selectorClick(".playlist-panel > button:nth-of-type(2)");
+        await click("Exportar lista");
+        await inspect(`dialog-${width}-${theme}-export`);
+        await selectorClick('[role="dialog"] button[aria-label="Cerrar"]');
+      }
+    }
+    saved.teams[0].name =
+      "Club de Baloncesto Universidad Regional de la Costa Mediterránea";
+    saved.projectName =
+      "Análisis de la final del campeonato regional sénior — temporada 2026/2027";
+    await click("Abrir").catch(() =>
+      selectorClick('button[title="Abrir análisis"]'),
+    );
+    for (let index = 1; index <= 6; index++) {
+      await selectorClick(`.studio-sidebar nav button:nth-child(${index})`);
+      await inspect(`long-names-${index}`);
+      await js(
+        `window.scrollTo(0,document.body.scrollHeight);document.querySelector('.main-area')?.scrollTo(0,99999);`,
+      );
+      await inspect(`bottom-${index}`);
+      await js(
+        `window.scrollTo(0,0);document.querySelector('.main-area')?.scrollTo(0,0);`,
+      );
+    }
+    saved.events = [];
+    saved.match = null;
+    await click("Abrir").catch(() => selectorClick('button[title="Abrir análisis"]'));
+    await selectorClick('.studio-sidebar nav button:nth-child(2)');
+    await check(`Boolean(document.querySelector('.match-setup'))`, 'Configurador de partido visible');
+    for(const width of [1000,640]) {
+      win.setSize(width,940);
+      for(const theme of ['light','dark']) {
+        await js(`document.documentElement.dataset.theme='${theme}'`);
+        await inspect(`dialog-${width}-${theme}-match`);
+      }
+    }
+    fs.writeFileSync(
+      path.join(dir, "visual-audit.json"),
+      JSON.stringify(audit, null, 2),
+    );
+    console.log(
+      "VISUAL_AUDIT " +
+        dir +
+        " cases=" +
+        audit.length +
+        " flagged=" +
+        audit.filter((x) => x.issues.length).length,
+    );
+  }
   assert.deepEqual(errors, [], "Sin errores de consola");
   console.log(
     `STUDIO_OK checks=${count} screenshots=${dir} actions=${saved.events.length} playlists=${saved.playlists.length}`,

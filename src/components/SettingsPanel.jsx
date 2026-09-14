@@ -4,6 +4,7 @@ import {
   playbackControls,
   shortcutActions,
   eventToShortcut,
+  displayShortcut,
 } from "../lib/playback.js";
 import { paletteOptions, themeOptions } from "../lib/theme.js";
 
@@ -59,7 +60,7 @@ function ShortcutButton({ value, onChange }) {
         }
       }}
     >
-      {recording ? "Pulsa…" : value || "Añadir"}
+      {recording ? "Pulsa…" : displayShortcut(value) || "Añadir"}
     </button>
   );
 }

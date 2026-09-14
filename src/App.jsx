@@ -1922,8 +1922,10 @@ function App() {
             <span className="sidebar-label">ANÁLISIS ACTIVO</span>
             <strong>{project.projectName}</strong>
             <small>
-              {project.events.length} acciones ·{" "}
-              {(project.playlists || []).length} listas
+              {project.events.length}{" "}
+              {project.events.length === 1 ? "acción" : "acciones"} ·{" "}
+              {(project.playlists || []).length}{" "}
+              {(project.playlists || []).length === 1 ? "lista" : "listas"}
             </small>
             <div>
               <i className="status-dot" />
@@ -1970,6 +1972,7 @@ function App() {
             <span>/</span>
             <input
               className="project-title"
+              title={project.projectName}
               value={project.projectName}
               onChange={(event) =>
                 updateProject((current) => ({
@@ -2257,13 +2260,10 @@ function App() {
                           }
                           title={muted ? "Activar sonido" : "Silenciar sonido"}
                         >
-                          <span aria-hidden="true">
-                            {muted || volume === 0
-                              ? "🔇"
-                              : volume < 0.5
-                                ? "🔉"
-                                : "🔊"}
-                          </span>
+                          <Icon
+                            name={muted || volume === 0 ? "muted" : "volume"}
+                            size={18}
+                          />
                         </button>
                         <input
                           type="range"
@@ -2379,7 +2379,7 @@ function App() {
                         <span>Acierto de tiro</span>
                         <strong>{liveTaggingSummary.shotPercentage}%</strong>
                         <small>
-                          {liveTaggingSummary.shots} intentos localizados
+                          {liveTaggingSummary.shots} intentos registrados
                         </small>
                       </div>
                     )}

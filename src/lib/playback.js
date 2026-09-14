@@ -22,15 +22,39 @@ export const playbackControls = [
   { id: "previousEvent", label: "Evento anterior" },
   { id: "nextEvent", label: "Evento siguiente" },
   { id: "videoStart", label: "Inicio del vídeo" },
-  { id: "videoEnd", label: "Final del vídeo" }
+  { id: "videoEnd", label: "Final del vídeo" },
 ];
 
 export const shortcutActions = playbackControls.map((control) => ({
   id: control.id,
-  label: control.label
+  label: control.label,
 }));
 
 export const playbackSpeeds = [0.25, 0.5, 0.75, 1, 1.5, 2, 4, 8, 16];
+
+export function displayShortcut(value = "") {
+  const names = {
+    Meta: "⌘",
+    Ctrl: "Ctrl",
+    Shift: "Mayús",
+    Alt: "Alt",
+    ArrowLeft: "←",
+    ArrowRight: "→",
+    ArrowUp: "↑",
+    ArrowDown: "↓",
+    Space: "Espacio",
+    PageUp: "Re Pág",
+    PageDown: "Av Pág",
+    Home: "Inicio",
+    End: "Fin",
+    Escape: "Esc",
+    Enter: "Intro",
+  };
+  return value
+    .split("+")
+    .map((key) => names[key] || key)
+    .join(" + ");
+}
 
 export function eventToShortcut(event) {
   const modifiers = [];

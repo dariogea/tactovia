@@ -2,8 +2,9 @@ import test from "node:test";
 import assert from "node:assert/strict";
 import {
   eventToShortcut,
+  displayShortcut,
   nextPlaybackSpeed,
-  shortcutMatches
+  shortcutMatches,
 } from "../src/lib/playback.js";
 
 function keyboardEvent(key, modifiers = {}) {
@@ -13,24 +14,37 @@ function keyboardEvent(key, modifiers = {}) {
     metaKey: false,
     altKey: false,
     shiftKey: false,
-    ...modifiers
+    ...modifiers,
   };
 }
+
+test("presenta atajos legibles sin alterar la combinación guardada", () => {
+  assert.equal(displayShortcut("Shift+ArrowLeft"), "Mayús + ←");
+  assert.equal(displayShortcut("Meta+K"), "⌘ + K");
+  assert.equal(displayShortcut("Space"), "Espacio");
+  assert.equal(displayShortcut(""), "");
+});
 
 test("normaliza atajos con modificadores", () => {
   assert.equal(
     eventToShortcut(keyboardEvent("ArrowLeft", { shiftKey: true })),
-    "Shift+ArrowLeft"
+    "Shift+ArrowLeft",
   );
   assert.equal(eventToShortcut(keyboardEvent(" ")), "Space");
   assert.equal(eventToShortcut(keyboardEvent("q")), "Q");
 });
 
 test("compara atajos exactos", () => {
-  assert.equal(shortcutMatches(keyboardEvent("ArrowRight"), "ArrowRight"), true);
   assert.equal(
-    shortcutMatches(keyboardEvent("ArrowRight", { shiftKey: true }), "ArrowRight"),
-    false
+    shortcutMatches(keyboardEvent("ArrowRight"), "ArrowRight"),
+    true,
+  );
+  assert.equal(
+    shortcutMatches(
+      keyboardEvent("ArrowRight", { shiftKey: true }),
+      "ArrowRight",
+    ),
+    false,
   );
 });
 

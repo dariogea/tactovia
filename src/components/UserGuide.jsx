@@ -1,4 +1,4 @@
-import { playbackControls } from "../lib/playback.js";
+import { playbackControls, displayShortcut } from "../lib/playback.js";
 
 const guideSections = [
   {
@@ -109,7 +109,9 @@ export function UserGuide({ shortcuts, onClose }) {
               {playbackControls.map((control) => (
                 <span key={control.id}>
                   <strong>{control.label}</strong>
-                  <kbd>{shortcuts?.[control.id] || "Sin asignar"}</kbd>
+                  <kbd>
+                    {displayShortcut(shortcuts?.[control.id]) || "Sin asignar"}
+                  </kbd>
                 </span>
               ))}
             </div>

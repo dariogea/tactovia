@@ -21,6 +21,7 @@ const paths = {
   shield: "m12 3 8 3v6c0 5-8 9-8 9s-8-4-8-9V6Z",
   court: "M3 3h18v18H3ZM8 3v6h8V3M8 9a4 4 0 0 0 8 0M3 7a9 9 0 0 0 18 0",
   volume: "M4 9h4l5-4v14l-5-4H4Zm13-2a7 7 0 0 1 0 10",
+  muted: "M4 9h4l5-4v14l-5-4H4Zm13 0 5 6m0-6-5 6",
 };
 export function Icon({ name, size = 20, ...props }) {
   return (

@@ -1,7 +1,28 @@
 # Contexto permanente de Tactovia
 
 Última actualización: 14 de septiembre de 2026
-Versión entregada: 0.13.0 · Studio
+Versión actual: 0.13.1 · Studio
+
+## Revisión estética 0.13.1
+
+- Balonmano retirado; selector redistribuido en dos columnas.
+- Contrastes de texto y acentos corregidos en claro y en las cuatro paletas
+  oscuras. Atajos legibles y sin texto lima sobre blanco en la guía.
+- Reproductor compacto, volumen con iconos SVG, resumen adaptable sin recortes,
+  última acción a ancho completo y avisos detrás de los diálogos.
+- Contadores en singular/plural y textos de tiro aclarados.
+- Revisión automatizada con capturas a 1440, 1000 y 640 px, temas claro/oscuro,
+  cuatro paletas, pestañas, diálogos, nombres largos y final de las pantallas.
+- 52 pruebas de lógica; vídeo real y exportación de highlights superados.
+- Tema automático comprobado con cambios de preferencia del sistema a claro y
+  oscuro; PWA comprobada sin conexión (17 recursos).
+- Detalle: `docs/REVISION-VISUAL-0.13.1.md`.
+- Instaladores Mac/Windows regenerados; DMG verificado y versión interna
+  Windows comprobada. Mac instalado en `/Applications/Tactovia.app`, arranque
+  y selector sin Balonmano comprobados. Copia 0.13.0 recuperable en la Papelera.
+
+Las verificaciones y entregables 0.13.0 descritos más abajo son el registro
+histórico de la entrega Studio; los instaladores actuales usan 0.13.1.
 
 ## Producto
 

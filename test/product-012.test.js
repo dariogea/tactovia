@@ -32,6 +32,6 @@ test("la compilación web declara una PWA instalable y su caché sin conexión",
   );
   assert.equal(manifest.display, "standalone");
   assert.equal(manifest.short_name, "Tactovia");
-  assert.match(worker, /tactovia-shell-v0\.13\.0/);
+  assert.match(worker, /tactovia-shell-v0\.13\.1/);
   assert.match(worker, /caches\.match/);
 });

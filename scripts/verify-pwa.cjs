@@ -43,11 +43,31 @@ async function run() {
   const cached = await win.webContents.executeJavaScript(`(async()=>{
     await navigator.serviceWorker.ready;
     if(!navigator.serviceWorker.controller)await new Promise(resolve=>navigator.serviceWorker.addEventListener("controllerchange",resolve,{once:true}));
-    const cache=await caches.open("tactovia-shell-v0.13.0");return (await cache.keys()).map(r=>r.url);
+    const cache=await caches.open((await caches.keys()).find(key=>key.startsWith("tactovia-shell-")));return (await cache.keys()).map(r=>r.url);
   })()`);
   assert.ok(cached.some((url) => url.endsWith(".js")));
   assert.ok(cached.some((url) => url.endsWith(".css")));
   assert.ok(cached.some((url) => url.includes("tactovia-horizontal")));
+  await new Promise((resolve) => setTimeout(resolve, 2200));
+  win.webContents.debugger.attach("1.3");
+  for (const theme of ["dark", "light"]) {
+    await win.webContents.debugger.sendCommand("Emulation.setEmulatedMedia", {
+      features: [{ name: "prefers-color-scheme", value: theme }],
+    });
+    await new Promise((resolve) => setTimeout(resolve, 150));
+    assert.equal(
+      await win.webContents.executeJavaScript(
+        "document.documentElement.dataset.theme",
+      ),
+      theme,
+    );
+    fs.writeFileSync(
+      path.join(temporary, `system-${theme}.png`),
+      (await win.webContents.capturePage()).toPNG(),
+    );
+  }
+  win.webContents.debugger.detach();
+  console.log("THEME_SYSTEM_OK light=true dark=true");
   win.webContents.session.enableNetworkEmulation({ offline: true });
   const loaded = new Promise((resolve) =>
     win.webContents.once("did-finish-load", resolve),

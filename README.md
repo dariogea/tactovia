@@ -1,4 +1,4 @@
-# Tactovia 0.13.0 · Studio
+# Tactovia 0.13.1 · Studio
 
 **Plataforma privada de análisis deportivo en vídeo.**
 
@@ -9,6 +9,8 @@ instalable.
 
 ## Novedades principales
 
+- Acabado visual revisado en claro/oscuro y distintas anchuras, mejor contraste,
+  controles compactos, atajos legibles y retirada de Balonmano.
 - Nuevo espacio de trabajo con navegación lateral, inicio del partido, diseño
   claro/oscuro/automático y cuatro paletas.
 - Sala de revisión con favoritos, filtros, reproducción continua, bucle y listas
@@ -80,11 +82,11 @@ autenticación remota y sincronización; no se simula en esta versión.
 
 ## Instalación
 
-macOS Apple Silicon: `release/Tactovia-0.13.0-mac-arm64.dmg`
+macOS Apple Silicon: `release/Tactovia-0.13.1-mac-arm64.dmg`
 
-Windows x64: `release/Tactovia-0.13.0-win-x64.exe`
+Windows x64: `release/Tactovia-0.13.1-win-x64.exe`
 
-Windows portable: `release/Tactovia-0.13.0-win-x64.zip`
+Windows portable: `release/Tactovia-0.13.1-win-x64.zip`
 
 Los instaladores aún no están firmados. macOS puede requerir
 **Control + clic → Abrir** y Windows puede mostrar SmartScreen. El empaquetado

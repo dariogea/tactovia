@@ -1,4 +1,4 @@
-const CACHE_NAME = "tactovia-shell-v0.13.0";
+const CACHE_NAME = "tactovia-shell-v0.13.1";
 const APP_SHELL = ["./", "./index.html", "./manifest.webmanifest"];
 
 self.addEventListener("install", (event) => {

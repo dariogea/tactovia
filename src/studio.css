@@ -1,4 +1,28 @@
 /* Tactovia Studio: shared surfaces, typography and workspace geometry. */
+.studio-shell .project-title {
+  text-overflow: ellipsis;
+}
+.match-setup .match-selectors {
+  grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr);
+}
+.match-setup .match-selector,
+.match-setup .match-selector select,
+.match-setup .match-team-option {
+  min-width: 0;
+  max-width: 100%;
+}
+.match-setup .match-team-option strong {
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+@media (max-width: 760px) {
+  .match-setup .match-selectors {
+    grid-template-columns: minmax(0, 1fr);
+  }
+  .match-setup .match-versus {
+    text-align: center;
+  }
+}
 html {
   --bg: #f4f5f7;
   --panel: #fff;
@@ -10,7 +34,7 @@ html {
   --surface-hover: #edf2f2;
   --text: #202b35;
   --text-soft: #46535f;
-  --muted: #73808d;
+  --muted: #637180;
   --line: #e3e7eb;
   --control-bg: #fff;
   --shadow-sm: 0 2px 5px #15253603;
@@ -54,6 +78,15 @@ html[data-palette="tactovia"] {
 html[data-theme="dark"][data-palette="tactovia"] {
   --accent: #258e7f;
   --teal: #50bbab;
+}
+html[data-theme="dark"][data-palette="arena"] {
+  --teal: #f5ae70;
+}
+html[data-theme="dark"][data-palette="ocean"] {
+  --teal: #64c9ed;
+}
+html[data-theme="dark"][data-palette="graphite"] {
+  --teal: #bdc9d6;
 }
 body {
   color: var(--text);
@@ -916,6 +949,9 @@ input[type="range"] {
   padding: 0 18px;
 }
 .audio-control {
+  width: auto;
+  min-width: 156px;
+  grid-template-columns: 30px 72px 32px;
   border: 0;
   margin-left: auto;
   background: none;
@@ -969,11 +1005,28 @@ input[type="range"] {
 .live-tagging-strip small {
   font-size: 9px;
 }
-.live-tagging-strip .live-latest-action {
+.live-tagging-strip .live-last-event {
+  width: 100%;
   flex-basis: 100%;
   padding: 12px 16px;
   border-top: 1px solid var(--line);
   border-right: 0;
+  border-left: 0;
+  border-bottom: 0;
+  border-radius: 0;
+  background: var(--surface-soft);
+  text-align: left;
+}
+.studio-shell .live-tagging-strip small,
+.studio-shell .live-tagging-strip strong {
+  white-space: normal;
+  overflow-wrap: anywhere;
+  overflow: visible;
+  text-overflow: clip;
+}
+.studio-shell .live-tagging-strip .live-last-event strong {
+  font-size: 15px;
+  letter-spacing: -0.02em;
 }
 .active-match-strip {
   min-height: 50px;
@@ -1985,6 +2038,9 @@ input[type="range"] {
   grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: 15px;
 }
+.sport-grid {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
 .session-choice {
   padding: 24px;
   min-height: 170px;
@@ -2093,6 +2149,8 @@ input[type="range"] {
   width: min(1000px, 95vw);
 }
 .toast {
+  overflow-wrap: anywhere;
+  pointer-events: none;
   z-index: 250;
   display: flex;
   align-items: center;
@@ -2109,6 +2167,9 @@ input[type="range"] {
   box-shadow: var(--shadow-md);
   max-width: min(500px, 90vw);
   font-size: 12px;
+}
+body:has([role="dialog"]) .toast {
+  z-index: 90;
 }
 .toast svg {
   color: var(--teal);
@@ -2359,6 +2420,19 @@ input[type="range"] {
   }
 }
 @media (max-width: 760px) {
+  .studio-shell .live-tagging-strip > div {
+    flex-basis: 45%;
+  }
+  .studio-shell .playback-button-row {
+    row-gap: 8px;
+  }
+  .studio-shell .audio-control {
+    width: auto;
+    margin-left: 0;
+  }
+  .studio-shell .shortcut-help-button {
+    margin-left: auto;
+  }
   .studio-shell .main-area {
     padding: 20px 14px;
   }
@@ -2755,6 +2829,15 @@ html[data-palette] .studio-shell .report-section-tabs button.active {
   background: var(--surface-hover);
   color: var(--teal);
   font-weight: 650;
+}
+.shortcut-reference kbd,
+.shortcut-key-button {
+  color: var(--text);
+  background: var(--control-bg);
+  border: 1px solid var(--line);
+  white-space: normal;
+  overflow-wrap: anywhere;
+  line-height: 1.5;
 }
 .visual-report-preview .shot-court-shell {
   max-height: 240px;
