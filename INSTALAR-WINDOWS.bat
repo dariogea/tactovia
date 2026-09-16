@@ -20,7 +20,7 @@ if %TACTOVIA_NODE_MAJOR% LSS 22 (
 
 call corepack enable
 if errorlevel 1 goto :error
-call corepack prepare pnpm@12.4.2 --activate
+call corepack prepare pnpm@9.12.3 --activate
 if errorlevel 1 goto :error
 call pnpm install --frozen-lockfile
 if errorlevel 1 goto :error

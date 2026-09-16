@@ -17,8 +17,8 @@ Versión actual: 0.13.1 · Studio
 - Plan y límites en `docs/WEBAPP-BETA.md`.
 - Repositorio público renombrado a `dariogea/tactovia`. Añadidos lanzadores y
   guía para continuar el desarrollo desde Windows sin subir datos privados.
-- Gestor de paquetes alineado con Hostinger en pnpm 12.4.2 para evitar el fallo
-  de instalación detectado en el primer despliegue.
+- Gestor de paquetes fijado en pnpm 9.12.3, disponible en Corepack y compatible
+  con Node.js 24, tras descartar la versión inexistente sugerida inicialmente.
 
 ## Revisión estética 0.13.1
 

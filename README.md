@@ -95,7 +95,7 @@ la nueva versión. No elimina vídeos, bibliotecas ni análisis personales.
 
 ## Desarrollo
 
-Requisitos: Node.js 24 y pnpm 12.
+Requisitos: Node.js 24 y pnpm 9.12.3.
 
 En Windows también puedes usar los lanzadores incluidos:
 
