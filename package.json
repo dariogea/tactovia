@@ -4,7 +4,7 @@
   "private": true,
   "author": "Tactovia",
   "description": "Tactovia · Plataforma de análisis deportivo",
-  "packageManager": "pnpm@11.9.0",
+  "packageManager": "pnpm@12.4.2",
   "main": "electron/main.cjs",
   "type": "module",
   "scripts": {
