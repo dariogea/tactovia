@@ -97,6 +97,12 @@ la nueva versión. No elimina vídeos, bibliotecas ni análisis personales.
 
 Requisitos: Node.js 24 y pnpm 11.
 
+En Windows también puedes usar los lanzadores incluidos:
+
+- Primera vez: `INSTALAR-WINDOWS.bat`
+- Uso diario: `INICIAR-WINDOWS.bat`
+- Guía completa: `docs/INICIO-WINDOWS.md`
+
 ```text
 pnpm install
 pnpm dev

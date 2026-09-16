@@ -5,7 +5,7 @@ const guideSections = [
     id: "start",
     title: "1. Preparar un análisis",
     steps: [
-      "Crea o abre tu perfil local y selecciona Baloncesto.",
+      "Crea o abre tu perfil local de baloncesto.",
       "Pulsa Nueva sesión y selecciona un vídeo guardado en el equipo.",
       "Elige dos equipos y una convocatoria de entre 5 y 12 jugadores por equipo.",
       "Guarda el archivo .scout.json para conservar el proyecto editable y crear su histórico estadístico.",

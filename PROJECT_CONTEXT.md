@@ -1,7 +1,22 @@
 # Contexto permanente de Tactovia
 
-Última actualización: 14 de septiembre de 2026
+Última actualización: 16 de septiembre de 2026
 Versión actual: 0.13.1 · Studio
+
+## Desarrollo web (sin nuevo instalador)
+
+- Eliminado selector de deportes: acceso directo a sesiones de baloncesto.
+- Mapa SVG reajustado a proporciones FIBA; IDs históricos conservados.
+- Superficies neutras negro/blanco, acento frío en paleta principal.
+- Usuario confirma espacios privados y vídeos locales. Preparada migración
+  Supabase con RLS para análisis y biblioteca; todavía sin aplicar ni conectar.
+- Acceso web condicional por `.env.local`: registro, login, recuperación y
+  guardado/apertura privada con control de revisión. Tokens solo en memoria.
+  No conectado a un proyecto real ni desplegado. Sin configuración y en Electron
+  sigue el acceso local. Biblioteca sincronizable con copia local y conflictos.
+- Plan y límites en `docs/WEBAPP-BETA.md`.
+- Repositorio público renombrado a `dariogea/tactovia`. Añadidos lanzadores y
+  guía para continuar el desarrollo desde Windows sin subir datos privados.
 
 ## Revisión estética 0.13.1
 
@@ -89,7 +104,10 @@ estadísticas, conclusiones, datos y vídeo.
 - En navegador: vídeo local, etiquetado, apertura/descarga de proyecto JSON y
   CSV.
 - En escritorio: SQLite, copias, Excel, PDF, Power BI y codificación FFmpeg.
-- No existe aún backend, cuenta remota ni sincronización entre dispositivos.
+- Backend Supabase preparado pero sin provisionar. El acceso remoto y análisis
+  requieren configurar variables públicas y aplicar la migración; no validados
+  aún contra servidor real. La biblioteca textual puede sincronizarse; vídeos,
+  imágenes, logos y datos de contacto permanecen locales.
 
 ## Datos y privacidad
 

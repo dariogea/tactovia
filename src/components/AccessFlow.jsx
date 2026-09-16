@@ -8,23 +8,8 @@ import {
   saveLocalAccount,
 } from "../lib/account.js";
 import { BrandLogo } from "./Brand.jsx";
-
-const sports = [
-  {
-    id: "basketball",
-    name: "Baloncesto",
-    description: "Etiquetado, mapa de tiro y estadísticas avanzadas",
-    symbol: "◉",
-    available: true,
-  },
-  {
-    id: "football",
-    name: "Fútbol",
-    description: "Plantillas y campos específicos próximamente",
-    symbol: "⬡",
-    available: false,
-  },
-];
+import { CloudAccess } from "./CloudAccess.jsx";
+import { cloudEnabled } from "../lib/cloud.js";
 
 function AccessBrand({ inverse = false }) {
   return (
@@ -293,47 +278,6 @@ function AccountStage({ account, onAuthenticated, onAccountChange, onDemo }) {
   );
 }
 
-function SportStage({ account, onSelect }) {
-  return (
-    <div className="access-centered">
-      <AccessBrand />
-      <section className="sport-stage">
-        <div className="access-card-heading centered">
-          <span className="access-step">02</span>
-          <div>
-            <span className="eyebrow">Configurar espacio</span>
-            <h1>¿Qué deporte vas a analizar?</h1>
-            <p>
-              Prepararemos las etiquetas, la pista y las métricas adecuadas.
-            </p>
-          </div>
-        </div>
-        <div className="sport-grid">
-          {sports.map((sport) => (
-            <button
-              key={sport.id}
-              className={`sport-card ${sport.available ? "" : "disabled"}`}
-              disabled={!sport.available}
-              onClick={() => onSelect(sport.id)}
-            >
-              <span>{sport.symbol}</span>
-              <div>
-                <strong>{sport.name}</strong>
-                <small>{sport.description}</small>
-              </div>
-              <em>{sport.available ? "Seleccionar →" : "Próximamente"}</em>
-            </button>
-          ))}
-        </div>
-        <div className="sport-account-line">
-          <span>{accountInitials(account)}</span>
-          Sesión iniciada como <strong>{account.name}</strong>
-        </div>
-      </section>
-    </div>
-  );
-}
-
 function SessionStage({
   project,
   canContinue,
@@ -347,7 +291,7 @@ function SessionStage({
       <AccessBrand />
       <section className="session-stage">
         <div className="access-card-heading centered">
-          <span className="access-step">03</span>
+          <span className="access-step">02</span>
           <div>
             <span className="eyebrow">Sesión de trabajo</span>
             <h1>¿Cómo quieres empezar?</h1>
@@ -412,12 +356,10 @@ function SessionStage({
 export function AccessFlow({
   account,
   authenticated,
-  sport,
   project,
   canContinue,
   onAccountChange,
   onAuthenticated,
-  onSelectSport,
   onDemo,
   onExample,
   onNew,
@@ -425,6 +367,7 @@ export function AccessFlow({
   onOpen,
 }) {
   if (!authenticated) {
+    if (cloudEnabled && !window.scoutDesktop) return <main className="access-screen"><CloudAccess onAuthenticated={onAuthenticated} onDemo={onDemo} /></main>;
     return (
       <main className="access-screen">
         <AccountStage
@@ -433,13 +376,6 @@ export function AccessFlow({
           onAuthenticated={onAuthenticated}
           onDemo={onDemo}
         />
-      </main>
-    );
-  }
-  if (!sport) {
-    return (
-      <main className="access-screen">
-        <SportStage account={account} onSelect={onSelectSport} />
       </main>
     );
   }

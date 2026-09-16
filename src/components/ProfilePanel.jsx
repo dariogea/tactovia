@@ -109,6 +109,8 @@ export function ProfilePanel({
             Salir de la demo
           </button>
         </article>
+      ) : account.isCloud ? (
+        <article className="settings-section"><h2>Cuenta online</h2><p>{account.email}</p><p>Los análisis y la biblioteca se sincronizan de forma privada. Los vídeos, imágenes y datos de contacto permanecen en este dispositivo.</p></article>
       ) : (
         <article className="settings-section profile-account-card">
           <div className="section-heading">

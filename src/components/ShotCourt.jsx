@@ -3,18 +3,15 @@ import { shotZones, zoneStats } from "../lib/shotZones.js";
 function CourtMarkings() {
   return (
     <g className="court-markings" aria-hidden="true">
-      <rect x="10" y="10" width="480" height="450" rx="2" />
-      <path d="M170 10V235H330V10" />
-      <path d="M170 235A80 80 0 0 0 330 235" />
-      <path className="court-dashed" d="M170 235A80 80 0 0 1 330 235" />
-      <path d="M205 48A45 45 0 0 0 295 48" />
-      <circle cx="250" cy="70" r="12" />
-      <path d="M220 48H280" />
-      <path d="M35 10V95M465 10V95M35 95A216 216 0 0 0 465 95" />
-      <path d="M170 10H330" />
-      <path d="M214 10V34M286 10V34" />
-      <path d="M91 460A159 159 0 0 1 409 460" />
-      <circle cx="250" cy="460" r="28" />
+      <rect x="10" y="10" width="480" height="448" />
+      <path d="M171.6 10V195.6H328.4V10" />
+      <path d="M192.4 195.6A57.6 57.6 0 0 0 307.6 195.6" />
+      <path className="court-dashed" d="M192.4 195.6A57.6 57.6 0 0 1 307.6 195.6" />
+      <path d="M210 48.4V60.4A40 40 0 0 0 290 60.4V48.4" />
+      <circle cx="250" cy="60.4" r="7.2" />
+      <path d="M221.2 48.4H278.8" />
+      <path d="M38.8 10V105.684A216 216 0 0 0 461.2 105.684V10" />
+      <path d="M192.4 458A57.6 57.6 0 0 1 307.6 458" />
     </g>
   );
 }
@@ -67,7 +64,7 @@ function CourtSvg({
                   ? `${zone.name}, ${zone.points} puntos`
                   : `${zone.name}: ${row?.made || 0} de ${row?.attempts || 0}`
               }
-              onClick={() => interactive && onChange(value === zone.id ? zone.id : zone.id)}
+              onClick={() => interactive && onChange(zone.id)}
               onDoubleClick={(event) => {
                 if (!interactive) return;
                 event.preventDefault();

@@ -1,4 +1,13 @@
 /* Tactovia Studio: shared surfaces, typography and workspace geometry. */
+.cloud-access { max-width: 520px; width: 100%; }
+.cloud-access > img { max-width: 180px; }
+.cloud-access-actions { display: flex; gap: 10px; flex-wrap: wrap; margin-top: 20px; }
+.cloud-analysis-list { display: grid; gap: 8px; max-height: 50vh; overflow: auto; }
+.cloud-analysis-list > article { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 8px; align-items: center; }
+.cloud-analysis-open { display: flex; justify-content: space-between; gap: 16px; text-align: left; white-space: normal; border: 1px solid var(--line); border-radius: 12px; background: var(--surface); color: var(--text); padding: 12px 14px; cursor: pointer; }
+.cloud-analysis-open:hover { background: var(--surface-hover); }
+.cloud-analysis-list strong { overflow-wrap: anywhere; min-width: 0; }
+.cloud-analysis-list small { flex-shrink: 0; color: var(--muted); }
 .studio-shell .project-title {
   text-overflow: ellipsis;
 }
@@ -24,15 +33,15 @@
   }
 }
 html {
-  --bg: #f4f5f7;
+  --bg: #f6f7f9;
   --panel: #fff;
   --panel-2: #f5f6f8;
   --panel-3: #ecf0f2;
   --surface: #fff;
   --surface-soft: #f7f8fa;
   --surface-raised: #fff;
-  --surface-hover: #edf2f2;
-  --text: #202b35;
+  --surface-hover: #edf0f6;
+  --text: #181b23;
   --text-soft: #46535f;
   --muted: #637180;
   --line: #e3e7eb;
@@ -40,7 +49,7 @@ html {
   --shadow-sm: 0 2px 5px #15253603;
   --shadow-md: 0 12px 36px #15253612;
   --studio-sidebar: #fcfcfd;
-  --studio-topbar: #ffffffea;
+  --studio-topbar: #ffffffd9;
   color: var(--text);
   background: var(--bg);
   font-size: 13px;
@@ -52,32 +61,32 @@ html {
     sans-serif;
 }
 html[data-theme="dark"] {
-  --bg: #11161b;
-  --panel: #192128;
-  --panel-2: #1e272f;
-  --panel-3: #263039;
-  --surface: #192128;
-  --surface-soft: #151d24;
-  --surface-raised: #202a33;
-  --surface-hover: #24313a;
+  --bg: #0c0d11;
+  --panel: #15171d;
+  --panel-2: #1b1e26;
+  --panel-3: #242833;
+  --surface: #15171d;
+  --surface-soft: #111319;
+  --surface-raised: #1e222c;
+  --surface-hover: #272c38;
   --text: #e7edf1;
   --text-soft: #b4c0c9;
   --muted: #8d9ca9;
-  --line: #2b363f;
-  --control-bg: #151e25;
+  --line: #2b303c;
+  --control-bg: #111319;
   --shadow-sm: 0 2px 5px #00000008;
   --shadow-md: 0 12px 36px #00000026;
-  --studio-sidebar: #141b21;
-  --studio-topbar: #141b21ec;
+  --studio-sidebar: #101217;
+  --studio-topbar: #101217dc;
 }
 html[data-palette="tactovia"] {
-  --accent: #167b6d;
-  --teal: #228e7e;
-  --focus: #419c90;
+  --accent: #425ecc;
+  --teal: #425ecc;
+  --focus: #6d85ed;
 }
 html[data-theme="dark"][data-palette="tactovia"] {
-  --accent: #258e7f;
-  --teal: #50bbab;
+  --accent: #526bd4;
+  --teal: #acbbff;
 }
 html[data-theme="dark"][data-palette="arena"] {
   --teal: #f5ae70;

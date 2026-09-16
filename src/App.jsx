@@ -1,5 +1,16 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { AccessFlow } from "./components/AccessFlow.jsx";
+import { CloudAnalyses } from "./components/CloudAnalyses.jsx";
+import {
+  writeCloudAnalysis,
+  cloudLogout,
+  readCloudLibrary,
+  writeCloudLibrary,
+} from "./lib/cloud.js";
+import {
+  cloudDocument,
+  cloudLibraryDocument,
+} from "./lib/cloudDocument.js";
 import { BrandLogo, BrandSplash } from "./components/Brand.jsx";
 import { EventEditor } from "./components/EventEditor.jsx";
 import { ExportClipsModal } from "./components/ExportClipsModal.jsx";
@@ -234,7 +245,6 @@ function App() {
     readDataLibrary(readLocalAccount()?.id || ""),
   );
   const [authenticated, setAuthenticated] = useState(false);
-  const [selectedSport, setSelectedSport] = useState("");
   const [workspaceReady, setWorkspaceReady] = useState(false);
   const [projectFilePath, setProjectFilePath] = useState("");
   const [videoUrl, setVideoUrl] = useState("");
@@ -263,6 +273,11 @@ function App() {
   const [focusMode, setFocusMode] = useState(false);
   const [notice, setNotice] = useState("");
   const [busy, setBusy] = useState("");
+  const [cloudBrowser, setCloudBrowser] = useState(false);
+  const cloudReference = useRef(null);
+  const cloudSaving = useRef(false);
+  const cloudLibraryReference = useRef(null);
+  const cloudLibraryBaseline = useRef("");
   const [dataExportFormat, setDataExportFormat] = useState("xlsx");
   const [databaseSnapshot, setDatabaseSnapshot] = useState(null);
   const [databaseLoading, setDatabaseLoading] = useState(false);
@@ -500,6 +515,79 @@ function App() {
     libraryHydrated,
   ]);
   useEffect(() => {
+    if (!authenticated || !account?.isCloud) return;
+    let active = true;
+    setLibraryHydrated(false);
+    readCloudLibrary()
+      .then((row) => {
+        if (!active) return;
+        if (row?.document && Array.isArray(row.document.teams)) {
+          const library = {
+            teams: row.document.teams.map(enrichTeam),
+            competitions: Array.isArray(row.document.competitions)
+              ? row.document.competitions
+              : [],
+            freeAgents: Array.isArray(row.document.freeAgents)
+              ? row.document.freeAgents
+              : [],
+            libraryFolders: Array.isArray(row.document.libraryFolders)
+              ? row.document.libraryFolders
+              : [],
+          };
+          cloudLibraryReference.current = { revision: row.revision };
+          cloudLibraryBaseline.current = JSON.stringify(
+            cloudLibraryDocument(library),
+          );
+          setDataLibrary(library);
+        } else {
+          cloudLibraryReference.current = null;
+          cloudLibraryBaseline.current = "";
+        }
+        setLibraryHydrated(true);
+      })
+      .catch((error) => {
+        if (!active) return;
+        setDatabaseError(
+          `${error.message} Se está usando la copia local de la biblioteca.`,
+        );
+        setLibraryHydrated(true);
+      });
+    return () => {
+      active = false;
+    };
+  }, [authenticated, account?.id, account?.isCloud]);
+  useEffect(() => {
+    if (
+      !authenticated ||
+      !account?.isCloud ||
+      !libraryHydrated
+    )
+      return;
+    const document = cloudLibraryDocument(dataLibrary);
+    const serialized = JSON.stringify(document);
+    if (serialized === cloudLibraryBaseline.current) return;
+    const timer = window.setTimeout(async () => {
+      try {
+        const row = await writeCloudLibrary(
+          document,
+          cloudLibraryReference.current,
+        );
+        cloudLibraryReference.current = { revision: row.revision };
+        cloudLibraryBaseline.current = serialized;
+        setDatabaseError("");
+      } catch (error) {
+        setDatabaseError(error.message);
+      }
+    }, 1200);
+    return () => window.clearTimeout(timer);
+  }, [
+    authenticated,
+    account?.id,
+    account?.isCloud,
+    dataLibrary,
+    libraryHydrated,
+  ]);
+  useEffect(() => {
     if (!authenticated || !account || account.isDemo) return;
     const timer = window.setTimeout(() => {
       try {
@@ -515,7 +603,7 @@ function App() {
   }, [authenticated, account?.id, account?.isDemo, preferences]);
   useEffect(() => {
     setHistory({ past: [], future: [] });
-    setSessionSaved(project.updatedAt);
+    setSessionSaved(account?.isCloud && cloudReference.current?.projectId !== project.id ? "" : project.updatedAt);
   }, [project.id]);
   useEffect(() => {
     setSelectedEventIds(
@@ -1141,6 +1229,7 @@ function App() {
 
   async function openProject() {
     if (!confirmLeave()) return false;
+    if (account?.isCloud) { setCloudBrowser(true); return false; }
     if (!desktop) {
       webProjectInputRef.current?.click();
       return false;
@@ -1186,6 +1275,7 @@ function App() {
         throw new Error("El archivo no contiene un análisis válido.");
       }
       const migrated = migrateProject(parsed);
+      cloudReference.current = null;
       setProject(migrated);
       setProjectFilePath("");
       setSelectedEventIds(new Set());
@@ -1206,6 +1296,7 @@ function App() {
 
   async function saveProject() {
     if (busy) return;
+    if (account?.isCloud) { await saveOnline(); return; }
     if (!desktop) {
       downloadText(
         `${safeDownloadName(project.projectName)}.scout.json`,
@@ -1296,6 +1387,7 @@ function App() {
 
   function newProject() {
     if (!confirmLeave()) return;
+    cloudReference.current = null;
     setProject(createProjectFromDataLibrary(dataLibrary));
     setProjectFilePath("");
     setVideoUrl("");
@@ -1310,6 +1402,7 @@ function App() {
 
   function startNewSession() {
     if (!confirmLeave()) return;
+    cloudReference.current = null;
     setProject(createProjectFromDataLibrary(dataLibrary));
     setProjectFilePath("");
     setVideoUrl("");
@@ -1346,7 +1439,6 @@ function App() {
     });
     setPreferences(structuredClone(defaultPreferences));
     setAuthenticated(true);
-    setSelectedSport("");
     setProject(createBlankProject());
     setProjectFilePath("");
     setVideoUrl("");
@@ -1359,15 +1451,24 @@ function App() {
     setWorkspaceReady(false);
   }
 
-  function logout() {
+  async function logout() {
     if (!confirmLeave()) return;
+    if (cloudSaving.current) return;
+    if (account?.isCloud) {
+      try { await cloudLogout(); } catch { notify("Sesión cerrada aquí. No se pudo revocar la sesión remota por falta de conexión."); }
+      setAccount(readLocalAccount());
+      setProject(createBlankProject());
+    }
+    cloudReference.current = null;
+    cloudLibraryReference.current = null;
+    cloudLibraryBaseline.current = "";
+    setCloudBrowser(false);
     setLibraryHydrated(!desktop);
     if (account?.isDemo) {
       setAccount(readLocalAccount());
       setProject(createBlankProject());
     }
     setAuthenticated(false);
-    setSelectedSport("");
     setWorkspaceReady(false);
   }
 
@@ -1818,7 +1919,39 @@ function App() {
     window.addEventListener("pointerup", stop);
   }
 
-  if (!authenticated || !selectedSport || !workspaceReady) {
+  async function saveOnline(asCopy = false) {
+    if (cloudSaving.current || !account?.isCloud) return;
+    cloudSaving.current = true; setBusy("Guardando online");
+    try {
+      const document = cloudDocument({ ...project, playbackPosition: currentTime });
+      const reference = cloudReference.current?.projectId === project.id ? cloudReference.current : null;
+      const row = await writeCloudAnalysis(document, asCopy ? null : reference);
+      cloudReference.current = { id: row.id, revision: row.revision, projectId: project.id };
+      setSessionSaved(project.updatedAt);
+      notify("Análisis guardado en tu espacio privado. El vídeo sigue en este ordenador.");
+    } catch (error) { notify(error.message); }
+    finally { cloudSaving.current = false; setBusy(""); }
+  }
+
+  if (authenticated && account?.isCloud && cloudBrowser) return <>
+    <input ref={webProjectInputRef} className="visually-hidden-file" type="file" accept=".json,.scout.json,application/json" onChange={async event => {
+      await loadWebProject(event.target.files?.[0]); setCloudBrowser(false);
+    }} />
+    <CloudAnalyses onClose={()=>setCloudBrowser(false)} onLocal={()=>webProjectInputRef.current?.click()}
+      onCopy={async ()=>{ await saveOnline(true); setCloudBrowser(false); }}
+      onOpen={row=>{
+        const migrated = migrateProject(row.document);
+        cloudReference.current = {id:row.id,revision:row.revision,projectId:migrated.id};
+        setProject(migrated); setVideoUrl(""); setCurrentTime(Number(migrated.playbackPosition)||0);
+        pendingSeekRef.current = Number(migrated.playbackPosition)||0;
+        setProjectFilePath(""); setSelectedEventIds(new Set()); setActiveIntervals({});
+        setContext({...emptyContext,teamId:migrated.match?.homeTeamId||""});
+        setSessionSaved(migrated.updatedAt); setWorkspaceReady(true); setCloudBrowser(false);
+        notify("Análisis abierto. Selecciona el vídeo local para reproducirlo.");
+      }} />
+  </>;
+
+  if (!authenticated || !workspaceReady) {
     return (
       <>
         {!desktop && (
@@ -1838,13 +1971,15 @@ function App() {
           onExample={openExample}
           account={account}
           authenticated={authenticated}
-          sport={selectedSport}
           project={project}
           canContinue={hasMeaningfulAnalysis(project)}
           onAccountChange={setAccount}
           onAuthenticated={(nextAccount) => {
+            cloudReference.current = null;
+            cloudLibraryReference.current = null;
+            cloudLibraryBaseline.current = "";
             setAccount(nextAccount);
-            setLibraryHydrated(!desktop);
+            setLibraryHydrated(!desktop && !nextAccount.isCloud);
             setDataLibrary(readDataLibrary(nextAccount.id));
             setProject(readAutosave(nextAccount.id));
             setPreferences(readPreferences(nextAccount.id));
@@ -1854,7 +1989,6 @@ function App() {
             setAuthenticated(true);
           }}
           onDemo={startDemoSession}
-          onSelectSport={setSelectedSport}
           onNew={startNewSession}
           onContinue={() => setWorkspaceReady(true)}
           onOpen={openSessionFromGate}
@@ -2007,7 +2141,7 @@ function App() {
               disabled={Boolean(busy)}
             >
               <Icon name="check" size={16} />
-              {sessionSaved === project.updatedAt ? "Guardado" : "Guardar"}
+              {account?.isCloud ? (busy ? "Guardando…" : sessionSaved === project.updatedAt ? "Guardado online" : "Guardar online") : sessionSaved === project.updatedAt ? "Guardado" : "Guardar"}
             </button>
           </div>
         </header>

@@ -144,7 +144,6 @@ async function run() {
     "Balonmano retirado",
   );
   await screenshot("sports-light");
-  await selectorClick(".sport-card:not([disabled])");
   await selectorClick(".session-choice:last-child");
   await check(
     `document.querySelector(".overview-page") && document.querySelectorAll(".recent-event").length===5`,

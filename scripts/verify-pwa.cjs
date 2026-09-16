@@ -86,7 +86,7 @@ async function run() {
   await new Promise((resolve) => setTimeout(resolve, 100));
   assert.ok(
     await win.webContents.executeJavaScript(
-      `document.body.innerText.includes("Baloncesto")`,
+      `Boolean(document.querySelector(".session-stage"))`,
     ),
   );
   console.log("PWA_OK offline=true assets=" + cached.length + " demo=true");
